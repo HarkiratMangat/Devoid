@@ -35,6 +35,6 @@ Do not invent separate conventions for this repo.
 
 **Design:** `node ~/.claude/skills/impeccable/scripts/detect.mjs --json <files>` must return **exactly one finding, `repeating-stripes-gradient`** — the alpha checkerboard and the hatch, both accepted (see `DESIGN.md`). Anything else is a real defect. ⚠️ It runs **degraded** without `htmlparser2`, `css-select`, `css-tree` and `domutils`, and a degraded run returns `[]` while saying so on the line above. An empty result only counts when the header does not say DEGRADED.
 
-**Prototype:** `cd prototype && python3 -m http.server 8731`, then open `http://localhost:8731`. ⚠️ This procedure dies at `PLAN.md` stage 0.1, which moves these files to `web/` — update this line when it does. It uses **real processed assets from the skill's corpus**, deliberately — putting real art in is what found the rubylith-over-red bug that drawn icons had hidden. Do not replace them with synthetic icons.
+**Front end:** `cd "/Applications/Claude Code/Devoid" && npm start` launches the real app (Electron main spawns the server and opens the window). It uses **real processed assets from the skill's corpus**, deliberately — putting real art in is what found the rubylith-over-red bug that drawn icons had hidden. Do not replace them with synthetic icons.
 
 **Anything measured belongs in the docs with its numbers.** This project's history is that unmeasured design claims are wrong about a third of the time.

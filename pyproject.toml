@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "devoid"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "starlette", "uvicorn",
+  # ⚠️ THE ENGINE'S OWN STACK. Omitting these produces a server that cannot
+  # import the skill — measured: ModuleNotFoundError: No module named 'PIL'
+  # from the server's first request. Stage 1.2 is unreachable without them.
+  # Pinned to the versions the skill's 981-label corpus was measured against;
+  # a different numpy is a silent engine-behaviour change with no gate.
+  "pillow==12.3.0", "numpy==2.4.6", "scipy==1.17.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]      # not a runtime dependency; `pip install -e ".[dev]"`
+
+[tool.setuptools]
+packages = ["server"]   # flat-layout autodiscovery fails on this tree
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

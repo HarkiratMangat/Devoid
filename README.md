@@ -26,14 +26,15 @@ The first two are visual questions delivered as prose naming a hex colour and a 
 | `docs/PLAN.md` | the implementation plan — opens with a literal ten-step sequence |
 | `docs/PRODUCT.md` | what it is, who for, the non-negotiable constraints and the measurements behind them |
 | `docs/DESIGN.md` | the visual system — tokens, type, layout, motion, and the checks it has to keep passing |
-| `prototype/` | a working prototype: real state, real interactions, real corpus assets |
+| `web/` | the front end: real state, real interactions, real corpus assets |
+| `server/` | the local HTTP server that fronts the skill |
 
-## Running the prototype
+## Running the app
 
 ```sh
-cd prototype && python3 -m http.server 8731
+npm start
 ```
 
-Then open `http://localhost:8731`. The lamp switches lighting states, clicking a frame opens it, the seam drags, and the drawers summon. ⚠️ **The film strip does not scrub yet** — it highlights and counts, but the artwork is a looping `<img>` that never seeks. Frame-accurate seeking needs a canvas decoder; it is `PLAN.md` 3.3.
+Electron's main process spawns the Python server and opens the window. The lamp switches lighting states, clicking a frame opens it, the seam drags, and the drawers summon. ⚠️ **The film strip does not scrub yet** — it highlights and counts, but the artwork is a looping `<img>` that never seeks. Frame-accurate seeking needs a canvas decoder; it is `PLAN.md` 3.3.
 
 The assets in it are **real outputs from the skill's own corpus**, not icons drawn to flatter the layout — which is how the overlay bug in `docs/DESIGN.md` was found.
