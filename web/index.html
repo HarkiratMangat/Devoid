@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400;62..125,500;62..125,600;62..125,700&family=Spline+Sans+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="canvas.css">
 </head>
 <body>
 
@@ -42,7 +43,11 @@
             <span class="wipetag l">as it came</span>
             <span class="wipetag r">cut</span>
           </div>
+          <!-- the plotter draws here. Sized and placed onto #wipe by canvas.js;
+               inert until a tool is picked up, so the seam still drags. -->
+          <canvas id="regioncanvas" aria-label="Regions drawn on the artwork"></canvas>
         </div>
+        <div id="regiontools"></div>
         <div class="ledger" id="ledger"></div>
         <div class="film">
           <div class="filmhead"><span id="onion">onion skin · 2 frames</span><span id="fcount"></span></div>
@@ -65,5 +70,6 @@
 </div>
 
 <script src="app.js"></script>
+<script src="canvas.js"></script>
 </body>
 </html>
