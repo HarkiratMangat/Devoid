@@ -1,32 +1,35 @@
 /* Devoid — prototype styles.
-   Two lighting states of ONE room: the cutting table under a work lamp, and the
-   light table with the panel on. Not a theme and its inversion; both are designed.
 
-   TWO load-bearing colours, and they are the two answers to the product's only
-   question. Rubylith = this goes. Cyan = this stays / the path / focus.
-   Rubylith doubles as the destructive colour, so there is no second red.
-   Green and amber exist only as status chips, never as surfaces.
+   THE STRUCTURE: there is no mode. The strip IS the app.
+   Nothing selected, the strip fills the space as a contact sheet. Select one and
+   it expands while the rest stay along the edge. Panels are drawers summoned at
+   the table's edge, never a column you pay for permanently. Selection is the only
+   state, so density needs no policy — 1 asset, 12 or 200 are the same layout.
 
-   DEPTH IS ONE STRATEGY: surface-colour shifts. mat -> bench -> raise, a few
-   percent apart. Shadow appears ONLY on things that genuinely float (variant B's
-   panels). A workshop is objects lying ON a table, not hovering above it — and
-   mixing four depth strategies is what made the first draft read busy. */
+   TWO load-bearing colours, and they are the two answers to the only question.
+   Rubylith = this goes. Cyan = this stays / the path / focus. Rubylith doubles as
+   the destructive colour, so there is no second red.
+
+   ⚠️ NO STATE IS COLOUR ALONE. Every state carries a mark or a word as well —
+   measured reason: over 8 real corpus assets, 31% of hurricane's artwork and 21%
+   of paper-plane's sits within RGB distance 90 of rubylith, so hue is not a
+   reliable channel over this content. Check by rendering greyscale.
+
+   DEPTH IS ONE STRATEGY: surface-colour shifts. Shadow only on things that float.
+   Numbers live here, not in DESIGN.md — a doc that restates a token rots. */
 
 :root{
   --ruby:#E2402A; --ruby-bg:#3A150E; --ruby-ink:#FF8168;
   --cyan:#22D3EE; --cyan-bg:#0B2C33; --cyan-ink:#5FE0F5;
-  --ok:#46C98A;  --ok-bg:#12332A;
-  --amber:#E3B04B; --amber-bg:#332608;
+  --ok:#46C98A; --ok-bg:#12332A; --amber:#E3B04B; --amber-bg:#332608;
 
-  --mat:#141C1B; --bench:#1B2423; --raise:#232E2D; --well:#0E1514; --sprocket:#0D1413;
+  --mat:#141C1B; --bench:#1B2423; --raise:#232E2D; --well:#0E1514; --sprocket:#0C1211;
   --score:rgba(255,255,255,.09); --score-2:rgba(255,255,255,.19); --mark:rgba(255,255,255,.34);
   --graphite:#E7EDEB; --graphite-2:#9DAEAA; --graphite-3:#8C9F9B;
   --chk-a:#1A2322; --chk-b:#151D1C;
-  --float:0 2px 8px rgba(0,0,0,.36), 0 18px 44px rgba(0,0,0,.34);
+  --float:0 2px 8px rgba(0,0,0,.4), 0 20px 50px rgba(0,0,0,.4);
 
-  --r:8px; --r2:12px;
-  --ease:cubic-bezier(.23,1,.32,1);
-  /* spacing: tight INSIDE a group, generous BETWEEN groups. uniform is monotone. */
+  --r:8px; --r2:12px; --ease:cubic-bezier(.23,1,.32,1);
   --s1:6px; --s2:10px; --s3:16px; --s4:26px; --s5:38px;
 }
 .lamp-light{
@@ -36,194 +39,151 @@
   --chk-a:#FFFFFF; --chk-b:#E3E2DD;
   --ok:#12734A; --ok-bg:#E1F2E9; --ruby-bg:#FBE6E2; --ruby-ink:#A82D18;
   --amber:#7A5500; --amber-bg:#F7EEDA; --cyan-bg:#DEF3F7; --cyan-ink:#0E6B80;
-  --float:0 1px 3px rgba(20,28,27,.10), 0 14px 36px rgba(20,28,27,.13);
+  --float:0 1px 3px rgba(20,28,27,.10), 0 16px 40px rgba(20,28,27,.14);
 }
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;font-family:Archivo,"Helvetica Neue",Arial,sans-serif;
-  -webkit-font-smoothing:antialiased;background:var(--mat);color:var(--graphite);
-  font-variant-numeric:tabular-nums;font-size:13px;line-height:1.5}
-button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer;
-  font-variant-numeric:inherit}
+html,body{height:100%}
+body{margin:0;font-family:Archivo,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;
+  background:var(--mat);color:var(--graphite);font-variant-numeric:tabular-nums;font-size:13px;line-height:1.5}
+button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer;font-variant-numeric:inherit}
 :focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:4px}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
-/* the checkerboard is the GROUND. 14px cells and ~3% contrast — measured against
-   real corpus art, a bigger cell competes with detailed illustration. */
+/* ⚠️ A detector flags repeating gradients as decorative stripes. This one is the
+   alpha checkerboard — the standard indicator for transparency and this app's
+   ground. Justified exception; do not "fix" it. */
 .chk{background:repeating-conic-gradient(var(--chk-a) 0 25%,var(--chk-b) 0 50%) 0 0/14px 14px}
 .chk-s{background:repeating-conic-gradient(var(--chk-a) 0 25%,var(--chk-b) 0 50%) 0 0/9px 9px}
 
-/* registration marks — corner ticks, how a cut is marked on stock. Reserved for
-   the question bands. Not a border substitute for everything. */
-.reg{--t:13px;--w:1.5px;
-  background-image:linear-gradient(var(--mark) 0 0),linear-gradient(var(--mark) 0 0),
-    linear-gradient(var(--mark) 0 0),linear-gradient(var(--mark) 0 0),
-    linear-gradient(var(--mark) 0 0),linear-gradient(var(--mark) 0 0),
-    linear-gradient(var(--mark) 0 0),linear-gradient(var(--mark) 0 0);
-  background-repeat:no-repeat;
-  background-size:var(--t) var(--w),var(--w) var(--t),var(--t) var(--w),var(--w) var(--t),
-    var(--t) var(--w),var(--w) var(--t),var(--t) var(--w),var(--w) var(--t);
-  background-position:left top,left top,right top,right top,
-    left bottom,left bottom,right bottom,right bottom}
-.reg.hot{--mark:var(--ruby);--t:17px;--w:2px}
-
-/* ── chrome ─────────────────────────────────────────────────────────────── */
-.app{min-height:100vh;display:flex;flex-direction:column;background:var(--mat)}
+.app{height:100%;display:flex;flex-direction:column;background:var(--mat)}
 .chrome{display:flex;align-items:center;gap:var(--s3);padding:var(--s2) var(--s4);
   background:var(--bench);border-bottom:1px solid var(--score);flex:none}
 .wordmark{font-weight:700;font-stretch:125%;font-size:17px;letter-spacing:.02em;
   display:inline-flex;align-items:center;gap:1.5px;line-height:1}
-/* the O's counter, knocked out in rubylith. The app's only question is whether a
-   counter is design or background; the identity answers it. */
+/* the O's counter knocked out in rubylith — the identity answers the question the product asks */
 .wordmark i{width:11px;height:11px;border-radius:50%;border:3px solid currentColor;
   box-sizing:content-box;background:var(--ruby);display:inline-block}
-.seg{display:flex;border:1px solid var(--score-2);border-radius:var(--r);overflow:hidden}
-.seg button{padding:6px 15px;font-size:12px;color:var(--graphite-2);transition:background .15s var(--ease)}
-.seg button:hover{background:var(--raise)}
-.seg button[aria-pressed="true"]{background:var(--raise);color:var(--graphite);font-weight:600}
+.crumb{font-family:"Spline Sans Mono",monospace;font-size:12px;color:var(--graphite-3)}
+.crumb b{color:var(--graphite);font-weight:500}
 .grow{flex:1}
 .btn{border:1px solid var(--score-2);border-radius:var(--r);padding:7px 15px;font-size:12px;
   transition:background .15s var(--ease),transform .09s var(--ease)}
 .btn:hover{background:var(--raise)}
 .btn:active{transform:scale(.97)}
 .btn.go{background:var(--cyan);border-color:var(--cyan);color:#04212A;font-weight:700}
-.btn.go:hover{filter:brightness(1.08);background:var(--cyan)}
-
-/* the lamp: a filament that warms, not a knob that slides */
-.lamp{width:34px;height:34px;border-radius:50%;border:1px solid var(--score-2);
-  display:grid;place-items:center;transition:background .3s var(--ease)}
+.lamp{width:34px;height:34px;border-radius:50%;border:1px solid var(--score-2);display:grid;place-items:center}
 .lamp:hover{background:var(--raise)}
 .lamp b{width:13px;height:13px;border-radius:50%;background:var(--graphite-3);display:block;
   transition:background .32s var(--ease),box-shadow .32s var(--ease)}
-.lamp-light .lamp b{background:#FFC94A;box-shadow:0 0 0 3px rgba(255,201,74,.25),0 0 14px 3px rgba(255,201,74,.5)}
+.lamp-light .lamp b{background:#F0B429;box-shadow:0 0 0 4px rgba(240,180,41,.22)}
 
-.body{flex:1;display:flex;min-height:0}
-.hidden{display:none!important}
+.table{flex:1;display:flex;min-height:0;position:relative}
+.work{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
 
-/* ── BOARD ──────────────────────────────────────────────────────────────── */
-.board{flex:1;padding:var(--s4);display:flex;flex-direction:column;gap:var(--s4);
-  min-width:0;overflow:auto}
-.rule{display:flex;align-items:center;gap:var(--s2);font-family:"Spline Sans Mono",monospace;
-  font-size:11px;color:var(--graphite-3);letter-spacing:.1em;text-transform:uppercase}
-.rule:after{content:"";flex:1;border-top:1px dashed var(--score-2)}
-.rule b{color:var(--ruby);font-weight:500}
-
-.needs{display:flex;flex-direction:column;gap:var(--s3)}
-.ask{display:flex;align-items:stretch;padding:var(--s3);gap:var(--s4);
-  background:var(--bench);border-radius:var(--r2)}
-.ask .art{width:38%;flex:none;min-width:0;height:230px;border-radius:var(--r);
-  display:grid;place-items:center;overflow:hidden;position:relative}
-.ask .art img{width:100%;height:100%;object-fit:contain;display:block;padding:14px}
-.ask .q{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;
-  padding-right:var(--s2)}
-.qt{font-size:clamp(22px,2.3vw,31px);font-weight:700;font-stretch:104%;line-height:1.03;
-  letter-spacing:-.03em;margin:0 0 var(--s2);text-wrap:balance}
-.qs{font-family:"Spline Sans Mono",monospace;font-size:12px;color:var(--graphite-3);
-  line-height:1.55;margin:0 0 var(--s3)}
-.answers{display:flex;gap:var(--s2);max-width:360px}
-.answers button{flex:1;padding:13px 6px;font-size:14px;font-weight:600;border-radius:var(--r);
-  transition:transform .09s var(--ease),filter .15s var(--ease)}
-.answers button:hover{filter:brightness(1.12)}
-.answers button:active{transform:scale(.975)}
-.keep{border:1px solid var(--score-2)}
-.cut{background:var(--ruby);color:#000}
-
-/* the settled row is a CONTACT STRIP, not a grid of cards */
-.strip{display:flex;background:var(--sprocket);padding:var(--s2) var(--s2);gap:var(--s2);
-  border-radius:var(--r2)}
-.perf{width:9px;flex:none;display:flex;flex-direction:column;justify-content:space-around;padding:4px 0}
-.perf i{width:6px;height:9px;border-radius:3px;background:var(--mat);margin:0 auto;display:block}
-.cells{flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
-  gap:var(--s1);min-width:0}
-.cell{background:var(--mat);padding:var(--s2) var(--s2) var(--s1);border-radius:var(--r);
-  min-width:0;text-align:left;display:block;
-  transition:background .18s var(--ease),transform .18s var(--ease)}
-.cell:hover{background:var(--raise);transform:translateY(-2px)}
-.cell .im{height:74px;border-radius:5px;display:grid;place-items:center;overflow:hidden;
-  margin-bottom:var(--s1)}
-.cell .im img{max-width:82%;max-height:82%}
-.cell .lb{display:flex;align-items:center;justify-content:space-between;gap:var(--s1)}
-.nm{font-family:"Spline Sans Mono",monospace;font-size:11px;color:var(--graphite-2);
+/* ── the contact sheet: the strip with nothing selected ─────────────────── */
+.sheet{flex:1;overflow:auto;padding:var(--s4);display:grid;align-content:start;
+  grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:var(--s3)}
+.frame{background:var(--sprocket);border-radius:var(--r2);padding:var(--s2);display:block;
+  text-align:left;transition:background .18s var(--ease),transform .18s var(--ease)}
+.frame:hover{background:var(--raise);transform:translateY(-2px)}
+.frame .win{position:relative;border-radius:var(--r);overflow:hidden;aspect-ratio:1;
+  display:grid;place-items:center}
+.frame img{width:100%;height:100%;object-fit:contain;padding:10px;display:block}
+.frame .cap{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s1);
+  padding:var(--s2) 2px 0}
+.nm{font-family:"Spline Sans Mono",monospace;font-size:11.5px;color:var(--graphite-2);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.chip{font-family:"Spline Sans Mono",monospace;font-size:11px;padding:2px 8px;border-radius:20px;
-  white-space:nowrap;font-weight:500;flex:none}
-.c-ok{background:var(--ok-bg);color:var(--ok)}
-.c-cyan{background:var(--cyan-bg);color:var(--cyan-ink)}
-.c-amber{background:var(--amber-bg);color:var(--amber)}
-.c-run{background:var(--score);color:var(--graphite-3)}
+.st{font-family:"Spline Sans Mono",monospace;font-size:11px;color:var(--graphite-3);white-space:nowrap}
+.st.q{color:var(--ruby-ink)}
 
-.runbar{border-top:1px solid var(--score);padding:var(--s2) var(--s4);display:flex;
-  align-items:center;gap:var(--s4);background:var(--bench);flex:none}
-.stat{font-family:"Spline Sans Mono",monospace;font-size:11.5px;color:var(--graphite-2)}
-.dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:1px}
+/* grease-pencil marks, drawn ON the frame the way a contact sheet is annotated.
+   Shape carries the state; colour only reinforces it. */
+.pencil{position:absolute;inset:0;pointer-events:none}
+.pencil path,.pencil circle{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;
+  vector-effect:non-scaling-stroke}
 
-/* ── BENCH ──────────────────────────────────────────────────────────────── */
-.rail{width:118px;flex:none;background:var(--sprocket);border-right:1px solid var(--score);
-  padding:var(--s2);display:flex;flex-direction:column;gap:var(--s1);overflow:auto}
-.rail button{padding:var(--s1);background:var(--mat);border-radius:var(--r);display:block;width:100%;
-  transition:background .18s var(--ease)}
-.rail button:hover{background:var(--raise)}
-.rail button[aria-current="true"]{background:var(--raise);box-shadow:inset 0 0 0 1px var(--cyan)}
-.rail .im{height:56px;border-radius:5px;display:grid;place-items:center;overflow:hidden}
-.rail .im img{max-width:84%;max-height:84%}
+/* ── one asset open ─────────────────────────────────────────────────────── */
+.open{flex:1;display:flex;flex-direction:column;min-height:0}
+.openhead{flex:none;padding:var(--s3) var(--s4) 0;display:flex;align-items:baseline;gap:var(--s3)}
+.openhead h1{margin:0;font-size:26px;font-weight:700;font-stretch:104%;letter-spacing:-.03em}
+.openhead p{margin:0;font-family:"Spline Sans Mono",monospace;font-size:12px;color:var(--graphite-3)}
+.stage{flex:1;display:grid;place-items:center;padding:var(--s4);min-height:0;position:relative}
 
-.canvas{flex:1;display:flex;flex-direction:column;min-width:0}
-.plate{flex:1;display:grid;place-items:center;padding:var(--s5);position:relative;min-height:0}
-.plate img{max-width:min(520px,100%);max-height:100%;display:block}
-.mattes{position:absolute;top:var(--s3);right:var(--s3);display:flex;gap:var(--s1)}
-.mattes button{width:32px;height:32px;border:1px solid var(--score-2);border-radius:var(--r);
-  transition:transform .16s var(--ease)}
-.mattes button:hover{transform:scale(1.09)}
-.mattes button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--cyan)}
-.coord{position:absolute;left:var(--s3);bottom:var(--s3);font-family:"Spline Sans Mono",monospace;
-  font-size:11px;color:var(--cyan-ink);background:var(--cyan-bg);padding:4px 9px;border-radius:var(--r)}
+/* THE WIPE — the seam is the cut line. Drag it across a playing loop and the
+   background dissolves into transparency. One control, and it is the product's
+   thesis as a gesture. */
+.wipe{position:relative;width:min(560px,100%,72vh);aspect-ratio:1;
+  border-radius:var(--r2);overflow:hidden;cursor:ew-resize;touch-action:none}
+.wipe>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:var(--s3)}
+.wipe .after{clip-path:inset(0 0 0 var(--seam,50%))}
+.wipe .aftbg{position:absolute;inset:0;clip-path:inset(0 0 0 var(--seam,50%))}
+.seam{position:absolute;top:0;bottom:0;left:var(--seam,50%);width:0;
+  border-left:1.5px dashed var(--cyan);pointer-events:none}
+.seam:after{content:"";position:absolute;top:50%;left:-9px;width:18px;height:34px;
+  transform:translateY(-50%);border-radius:4px;background:var(--cyan);
+  box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.wipetag{position:absolute;top:var(--s2);font-family:"Spline Sans Mono",monospace;font-size:11px;
+  padding:3px 9px;border-radius:20px;background:var(--bench);color:var(--graphite-2)}
+.wipetag.l{left:var(--s2)} .wipetag.r{right:var(--s2)}
 
-.film{background:var(--sprocket);border-top:1px solid var(--score);padding:var(--s2) var(--s3) var(--s3);flex:none}
-.filmhead{display:flex;justify-content:space-between;align-items:center;gap:var(--s3);
-  margin-bottom:var(--s2);font-family:"Spline Sans Mono",monospace;font-size:11px;color:var(--graphite-3)}
+/* THE LEDGER — what this setting is about to destroy. Numbers the engine already
+   computes and currently discards. */
+.ledger{flex:none;display:flex;align-items:center;gap:var(--s4);padding:var(--s2) var(--s4);
+  background:var(--bench);border-top:1px solid var(--score);font-family:"Spline Sans Mono",monospace;
+  font-size:12px;color:var(--graphite-2);flex-wrap:wrap}
+.ledger b{color:var(--graphite);font-weight:500}
+.ledger .loss{color:var(--ruby-ink)}
+.ledger .safe{color:var(--ok)}
+.ledger .blank{color:var(--amber)}
+
+.film{flex:none;background:var(--sprocket);border-top:1px solid var(--score);padding:var(--s2) var(--s3) var(--s3)}
+.filmhead{display:flex;justify-content:space-between;gap:var(--s3);margin-bottom:var(--s2);
+  font-family:"Spline Sans Mono",monospace;font-size:12px;color:var(--graphite-3)}
 .frames{display:flex;gap:2px}
 /* no easing on the playhead — scrubbing must feel like dragging a physical strip */
-.frames button{flex:1;height:42px;background:var(--mat);border-radius:3px;
+.frames button{flex:1;height:40px;background:var(--mat);position:relative;
   border-top:3px solid transparent;border-bottom:3px solid transparent}
 .frames button:hover{background:var(--raise)}
 .frames button.ghost{opacity:.4}
 .frames button[aria-current="true"]{background:var(--raise);border-color:var(--cyan)}
+/* flagged frames carry a NOTCH as well as the colour — see the greyscale rule */
 .frames button.flag{border-bottom-color:var(--ruby)}
+.frames button.flag:after{content:"";position:absolute;left:50%;bottom:-3px;width:5px;height:5px;
+  transform:translateX(-50%) rotate(45deg);background:var(--ruby)}
 
-/* ── inspector ──────────────────────────────────────────────────────────── */
-.insp{width:262px;flex:none;background:var(--bench);border-left:1px solid var(--score);
-  padding:var(--s3) var(--s3);overflow:auto}
-.grp+.grp{margin-top:2px}
-.grp>.h{width:100%;padding:11px 2px;font-size:13px;font-weight:600;display:flex;
-  justify-content:space-between;align-items:center;gap:var(--s2);
-  border-bottom:1px dashed var(--score);text-align:left}
-.grp>.h em{font-family:"Spline Sans Mono",monospace;font-size:11px;font-style:normal;
-  font-weight:400;color:var(--graphite-3)}
-.grp[open]>.h{border-bottom-color:var(--score-2)}
-.grp .in{padding:var(--s1) 0 var(--s2)}
-.ctl{padding:8px 2px;display:flex;align-items:center;gap:var(--s2)}
+/* the edge strip: the rest of the queue while one is open */
+.edge{flex:none;width:108px;background:var(--sprocket);border-right:1px solid var(--score);
+  padding:var(--s2);overflow:auto;display:flex;flex-direction:column;gap:var(--s1)}
+.edge button{padding:var(--s1);background:var(--mat);border-radius:var(--r);display:block;width:100%;
+  position:relative;transition:background .18s var(--ease)}
+.edge button:hover{background:var(--raise)}
+.edge button[aria-current="true"]{background:var(--raise);box-shadow:inset 0 0 0 1.5px var(--cyan)}
+.edge .win{position:relative;border-radius:5px;overflow:hidden;aspect-ratio:1;display:grid;place-items:center}
+.edge img{width:100%;height:100%;object-fit:contain;padding:5px}
+
+/* ── drawers: summoned, and they open beside what they affect ───────────── */
+.tabs{flex:none;width:38px;background:var(--bench);border-left:1px solid var(--score);
+  display:flex;flex-direction:column;align-items:center;gap:var(--s1);padding:var(--s2) 0}
+.tabs button{writing-mode:vertical-rl;padding:var(--s2) 4px;font-size:11.5px;border-radius:var(--r);
+  color:var(--graphite-2);letter-spacing:.02em;transition:background .15s var(--ease)}
+.tabs button:hover{background:var(--raise);color:var(--graphite)}
+.tabs button[aria-expanded="true"]{background:var(--raise);color:var(--graphite);font-weight:600;
+  box-shadow:inset 2px 0 0 var(--cyan)}
+.drawer{flex:none;width:250px;background:var(--bench);border-left:1px solid var(--score);
+  padding:var(--s3);overflow:auto;box-shadow:var(--float)}
+.drawer h2{margin:0 0 var(--s2);font-size:14px;font-weight:600}
+.ctl{padding:9px 2px;display:flex;align-items:center;gap:var(--s2);border-bottom:1px dashed var(--score)}
+.ctl:last-child{border-bottom:none}
 .ctl .lab{flex:1;font-size:12.5px;color:var(--graphite-2)}
 .auto{font-family:"Spline Sans Mono",monospace;font-size:11px;padding:3px 9px;border-radius:20px;
   background:var(--cyan-bg);color:var(--cyan-ink);font-weight:500}
 .val{font-family:"Spline Sans Mono",monospace;font-size:11.5px;border:1px solid var(--score-2);
   border-radius:var(--r);padding:3px 9px}
 
-/* ── the rubylith wash ──────────────────────────────────────────────────── */
-/* ⚠️ HATCH, NOT JUST TINT. Measured over 8 real corpus assets: 31% of hurricane's
-   artwork and 21% of paper-plane's sits within RGB distance 90 of rubylith, so a
-   flat red tint over red art shows NOTHING — and showing what is about to be
-   destroyed is the overlay's entire job. Hatching is hue-independent, and it is
-   how removed material is marked in a technical drawing. */
-.wash{position:absolute;pointer-events:none;opacity:0;border:2px solid var(--ruby);
-  border-radius:3px;animation:wash .28s var(--ease) .12s forwards;
-  left:var(--rx);top:var(--ry);width:var(--rw);height:var(--rh)}
-.wash:before,.wash:after{content:"";position:absolute;inset:0}
-.wash:before{background:var(--ruby);opacity:.30;mix-blend-mode:multiply}
-/* the hue-independent channel: hatching survives over red artwork, where a tint
-   alone measured invisible on 31% of hurricane's pixels */
-.wash:after{background:repeating-linear-gradient(45deg,
-  rgba(226,64,42,.85) 0 1.5px, transparent 1.5px 8px)}
-@keyframes wash{to{opacity:1}}
-@media (prefers-reduced-motion:reduce){.wash{opacity:1;animation:none}}
+/* ── the empty table: emptiness IS the subject, so it needs no illustration ─ */
+.empty{flex:1;display:grid;place-items:center;text-align:center}
+.empty p{margin:var(--s3) 0 0;font-size:15px;color:var(--graphite-2)}
+.empty .big{font-size:clamp(28px,5vw,44px);font-weight:700;font-stretch:112%;letter-spacing:-.03em;
+  color:var(--graphite);margin:0}

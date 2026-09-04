@@ -56,13 +56,31 @@ These are not preferences. Each was measured, and each has already cost somethin
 
 **Advice always ships with an undo.** The app may suggest ("the erosion ate a thin stroke — try 1?"), because a suggestion with a one-click revert of exactly what it changed costs nothing when wrong. A suggestion without one does not ship.
 
-## The two lanes
+## The shape: there is no mode
 
-**Board** — drop a pile. Everything analyses in parallel; most come back clean; the ones with questions say so on the card and are answered in place. A modal would serialise what should be parallel.
+**The strip is the app.** Nothing selected and it fills the space as a contact sheet; select one and it opens while the rest stay along the edge; panels are drawers summoned at the edge and opened beside what they affect. **Selection is the only state**, which is what makes density need no policy — one asset, twelve and two hundred are the same layout.
 
-**Bench** — one asset, as long as it takes. The canvas is the point: regions are *drawn*, not typed as coordinates.
+This replaced a two-lane Board/Bench design that had already been approved. It failed a simple test: the coin-flip refusal fires on 12.8% of assets, so a dedicated lane served about one and a half items per batch, while review — which every asset needs, every time — had no home of its own.
 
-**The Bench is reachable, never required.** It must remain possible to drop files, answer the questions, and export without opening a single panel. If that stops being true, the progressive disclosure has failed and the app has become a 63-control form.
+**The drawers are reachable, never required.** It must stay possible to drop files, answer, and save without opening one. If that stops being true, the disclosure has failed and the app has become a 63-control form.
+
+## The core interaction: show both answers, ask which is right
+
+The engine asks *"is this enclosed interior design, or background showing through?"* — an analyst's question about authorial intent. **The app should ask an owner's question instead.**
+
+The two answers differ by one flag, and a 1-frame preview is measured pixel-exact to an 8-bit-alpha format. So render both and let the person **drag a seam between them**. That is a strictly easier judgement, and a measurably more accurate one: the skill's own history records a dog-tag icon where the region "looked plausible", `suggested_command` protected two chain-holes the user wanted removed, and **nobody looking at the two renders would have picked the wrong one.**
+
+It generalises to every flag with a visible consequence — erosion, feather band, fade recovery, dither mode. **That is what dissolves the tension between "usable by someone unacquainted" and "expose many more options": options presented as outcomes to choose between need no learning at all.** Most of the 63 flags do not need hiding or progressive disclosure. They need rendering.
+
+## Everything animates, and that is functional
+
+These are animated images. The defect classes this project actually records — dither crawl on every edge, flicker localised to specific rotation phases — are **only visible in motion**. An interface for animated images built out of still frames cannot show its own subject's bugs. Contact-sheet frames play, the open asset plays, both sides of the seam play.
+
+## It is also a labelling instrument, and that may be its strongest justification
+
+Every answer is a labelled data point for the question the engine refuses: outline colour, enclosure ratio, frame counts, bbox, content type, verdict. The repo holds **714 hand-written labels** for `edge_hardness` and **zero** for the protection decision, and the project's stated end goal is full autonomy.
+
+Capturing them costs one appended line. **Retrofitting discards every answer given before it existed, so it is designed in from the start.** After fifty real jobs it is a dataset for the exact decision that currently blocks autonomy — and if it turns out not to be learnable, that is the first evidence rather than an assumption.
 
 ## Measured facts that shape the build
 
@@ -89,3 +107,5 @@ Not a general background remover. The engine is chroma-key removal against a fla
 Not a replacement for the skill. If the two ever disagree, the skill is right.
 
 Not a shared or hosted service. It runs on this machine, against local files, with the Mac awake.
+
+⚠️ **And a cheaper product exists that was never costed against this one.** A self-contained HTML review page emitted by the *skill itself* — one file, no packaging, opens anywhere, and works inside claude.ai sessions, which is where this skill actually gets used most. It captures most of the verification value for a fraction of the effort. **It cannot draw regions**, and the region canvas is the one thing no CLI and no static page can offer. That is Devoid's genuinely non-substitutable reason to exist, and it is narrower than "a nicer front end".

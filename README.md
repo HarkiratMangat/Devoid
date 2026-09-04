@@ -12,16 +12,18 @@ The first two are visual questions delivered as prose naming a hex colour and a 
 
 `--recommend` already returns all three as structured JSON before anything renders, so Devoid reads the questions first, answers them, and `--auto` never refuses.
 
-## Two lanes
+## The shape
 
-**Board** — drop a pile. Everything analyses at once, most comes back settled, and whatever needs a decision is pulled forward at a size you can actually judge.
+**There is no mode — the strip is the app.** Nothing selected and it fills the space as a contact sheet; select one and it opens while the rest stay along the edge; panels are drawers summoned at the edge. Selection is the only state, so one asset and two hundred are the same layout.
 
-**Bench** — one asset, as long as it takes. Regions are drawn on the artwork rather than typed as coordinates.
+**The core interaction is a seam you drag.** Two renders of the same asset, one dashed cut line between them, both playing. Instead of *"is this region design or background?"* — an analyst's question — you see both answers and pick. It generalises to every flag with a visible consequence.
 
 ## Layout
 
 | | |
 |---|---|
+| `docs/HANDOFF.md` | **read first** — where the work stands, what is decided, what was rejected and why |
+| `docs/PLAN.md` | the implementation plan, in stages |
 | `docs/PRODUCT.md` | what it is, who for, the non-negotiable constraints and the measurements behind them |
 | `docs/DESIGN.md` | the visual system — tokens, type, layout, motion, and the checks it has to keep passing |
 | `prototype/` | a working prototype: real state, real interactions, real corpus assets |
@@ -32,6 +34,6 @@ The first two are visual questions delivered as prose naming a hex colour and a 
 cd prototype && python3 -m http.server 8731
 ```
 
-Then open `http://localhost:8731`. The lamp switches lighting states, the questions are answerable, clicking a settled cell opens it on the Bench, the filmstrip scrubs, and the matte toggles.
+Then open `http://localhost:8731`. The lamp switches lighting states, clicking a frame opens it, the seam drags, the film strip scrubs, and the drawers summon.
 
 The assets in it are **real outputs from the skill's own corpus**, not icons drawn to flatter the layout — which is how the overlay bug in `docs/DESIGN.md` was found.
