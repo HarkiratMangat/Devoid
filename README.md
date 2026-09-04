@@ -22,8 +22,8 @@ The first two are visual questions delivered as prose naming a hex colour and a 
 
 | | |
 |---|---|
-| `docs/HANDOFF.md` | **read first** — where the work stands, what is decided, what was rejected and why |
-| `docs/PLAN.md` | the implementation plan, in stages |
+| `docs/HANDOFF.md` | **read first** — state of the work, decisions, rejected options, and the model to run the build session on |
+| `docs/PLAN.md` | the implementation plan — opens with a literal ten-step sequence |
 | `docs/PRODUCT.md` | what it is, who for, the non-negotiable constraints and the measurements behind them |
 | `docs/DESIGN.md` | the visual system — tokens, type, layout, motion, and the checks it has to keep passing |
 | `prototype/` | a working prototype: real state, real interactions, real corpus assets |

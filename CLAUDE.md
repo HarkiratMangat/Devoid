@@ -27,6 +27,10 @@ Do not invent separate conventions for this repo.
 
 **Advice always ships with an undo** of exactly what it changed. A suggestion without one does not ship.
 
+**Two append-only logs, two schemas, one writer each.** `labels/protection.jsonl` records the engine's hardest decision and may be analysed on its own; `jobs.jsonl` records your work. They look alike and must not be merged. No database until a lookup is measurably slow, and if one arrives it is a SQLite index **rebuilt from the log**, so the log stays the truth and a schema change never needs a migration.
+
+⚠️ **`labels/protection.jsonl` is pointed at from the skill repo** (`scripts/harness/labels/README.md`) because nothing there would otherwise surface it. **If this path moves, fix that pointer.**
+
 ## Testing
 
 **Design:** `node ~/.claude/skills/impeccable/scripts/detect.mjs --json <files>` must return **exactly one finding, `repeating-stripes-gradient`** — the alpha checkerboard and the hatch, both accepted (see `DESIGN.md`). Anything else is a real defect. ⚠️ It runs **degraded** without `htmlparser2`, `css-select`, `css-tree` and `domutils`, and a degraded run returns `[]` while saying so on the line above. An empty result only counts when the header does not say DEGRADED.

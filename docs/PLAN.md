@@ -8,6 +8,29 @@
 
 ---
 
+## The opening sequence — the first ten things to type
+
+Tick these in order. Each has a visible success condition, so a stall is obvious rather than silent.
+
+| # | command | success looks like |
+|---|---|---|
+| 1 | `cd "/Applications/Claude Code/Devoid" && git checkout -b feat/stage-0` | on a branch, not `main` |
+| 2 | `python3 scripts/measure_ledger.py --check` | `ledger matches the measurement (8 assets checked)` — proves the repo is in the state this plan assumes |
+| 3 | `python3 -c "from PIL import features; print(features.check('avif'))"` | `True`. If `False`, stop and read 0.3 |
+| 4 | `node ~/.claude/skills/impeccable/scripts/detect.mjs --json prototype/index.html prototype/app.css` | exactly one finding, `repeating-stripes-gradient`, and **no DEGRADED line** |
+| 5 | `mkdir -p server web tests && git mv prototype/index.html prototype/app.css prototype/app.js prototype/assets web/` | `prototype/` is gone; `web/` holds four entries |
+| 6 | `npm init -y && npm i -D electron` | `package.json` exists, Electron installs |
+| 7 | write `pyproject.toml` (Python ≥3.11, `starlette`, `uvicorn`, `pytest`) and `python3 -m venv .venv && .venv/bin/pip install -e .` | `.venv/bin/python -c "import starlette"` is silent |
+| 8 | `.venv/bin/pytest tests/ -q` against one placeholder test | `1 passed` — **a test runner before there is code to test** |
+| 9 | write `server/app.py` serving `web/` on **8732**, then `.venv/bin/uvicorn server.app:app --port 8732` | `curl -s -o /dev/null -w "%{http_code}" localhost:8732` → `200` |
+| 10 | write `main.js`, then `npm start` | a native window opens on the contact sheet, animating |
+
+⚠️ **Update `README.md` and `CLAUDE.md` at step 5** — both document `cd prototype && python3 -m http.server 8731` as the standing test procedure, and the move breaks it.
+
+⚠️ **Nothing in this sequence renders an asset.** That is 0.4, and it is the point of Stage 0 — steps 1–10 only prove the spine holds.
+
+---
+
 ## Stage 0 — the launch path *(do this before anything interesting)*
 
 **0.1 Repo skeleton and dev loop.** Concretely, because the first version of this task left eleven decisions to invent:
@@ -18,6 +41,7 @@
 - **`package.json`** at the repo root for Electron. `npm i -D electron`.
 - **`devoid`** is `npm start` → Electron main → spawns the Python server → opens the window. There is no browser-tab stage: ⚠️ **opening a browser tab here reproduces exactly the shim the 2026-09-04 decision exists to prevent**, because a browser cannot hand the server a filesystem path.
 - **Port 8732**, not 8731 — 8731 is the prototype's static-file port and reusing it collides with anyone still running it.
+- **`tests/`** with a runner wired at step 8. ⚠️ **Nothing tests the prototype today** — the CLI ancestor carried 52 falsifiers and Devoid carries one script's `--check`. Standing the runner up before there is code to test is the only time it is free.
 - ⚠️ **Stage 0 is exempt from gates 3 and 5** below. It cannot render a real asset or complete a drop-answer-save round trip; requiring it to would make 0.1 unpassable by its own definition.
 
 **0.2 Find the engine, or fail loudly.** Resolve the skill script — env var, then a configured path, then the synced claude.ai bundle — and **say which one was used**. A silent fallback lets the app and the live skill disagree invisibly.
@@ -68,7 +92,7 @@ Six to build, not ten. Missing states are the fastest tell of an unfinished inte
 
 **2.3 Selection.** Click, shift-click, select-all. The drawers act on the selection; today they claim to and cannot.
 
-**2.4 Search.** With no labelled grid, finding one file among two hundred needs it.
+~~**2.4 Search.**~~ **Cut.** Speculative until scrolling actually annoys you. If it comes back, state filters (`needs you`, `not checked`, `failed`) beat a text box — you hunt a problem, not a filename you did not choose.
 
 **2.5 Drag-and-drop with real paths.** Electron's main process hands the server a `NativePath`; the renderer never touches the filesystem. ⚠️ **Keep it behind a one-method `FileSource` boundary anyway** — it is the seam a future web build would need, and it costs nothing now.
 
@@ -79,6 +103,8 @@ Six to build, not ten. Missing states are the fastest tell of an unfinished inte
 ---
 
 ## Stage 3 — the wipe, and what it unlocks
+
+**3.0 Decide when the seam CANNOT help.** The question card survives only below a visible-difference threshold — a sub-half-opacity fade, a three-pixel sliver, anything where two renders look identical. ⚠️ **Pick the number with a render in front of you, not in advance.** Suggested shape: differing alpha px as a fraction of the disputed region's own area, measured on the preview pair. Below it, fall back to the boxed-and-hatched card; above it, the seam.
 
 **3.1 Two-render machinery.** Render a variant pair for one flag at a time, cached. **Previews render to an 8-bit-alpha format even when the output is GIF** — measured pixel-exact there, and GIF differs by the shared palette and dither. When the target is GIF, say so on the preview.
 
@@ -112,9 +138,17 @@ Both have the same fix and it is **not small: decode frames to a canvas.** That 
 
 ## Stage 5 — memory
 
-**5.1 The label log.** ⚠️ **Design it in now; retrofitting discards every answer given before it existed.** One JSON line per decision: outline colour, enclosure ratio, frame counts, bbox, content type, verdict. The repo holds **981 classified labels** for `edge_hardness` (1,038 entries, 57 of them prose notes rather than classifications) and **zero** for the protection decision, while the project's stated goal is autonomy. ⚠️ The skill repo's own docs still say 714 — stale by 267; do not copy that figure forward. This makes Devoid a labelling instrument for its own engine's hardest unsolved problem, which is a far stronger reason to build it than drag-and-drop.
+**5.1 The label log — `labels/protection.jsonl`, tracked, in this repo.** ⚠️ **Design it in now; retrofitting discards every answer given before it existed.**
 
-**5.2 History.** Past jobs, their settings, their verdicts, re-runnable with a tweak.
+⚠️ **Living here costs discoverability, deliberately.** The people who would use these labels are working on the skill's autonomy, in *that* repo, and nothing there surfaces a file in this one. A tracked pointer at `Gif-Background-Remover/scripts/harness/labels/README.md` closes the gap — **keep it accurate if this path moves.** One JSON line per decision: outline colour, enclosure ratio, frame counts, bbox, content type, verdict. The repo holds **981 classified labels** for `edge_hardness` (1,038 entries, 57 of them prose notes rather than classifications) and **zero** for the protection decision, while the project's stated goal is autonomy. ⚠️ The skill repo's own docs still say 714 — stale by 267; do not copy that figure forward. This makes Devoid a labelling instrument for its own engine's hardest unsolved problem, which is a far stronger reason to build it than drag-and-drop.
+
+**5.2 History — `jobs.jsonl`, a separate file and schema from the labels.** Append-only: input path, settings, output path, verdict, timestamp. Re-run with a tweak by loading a line.
+
+**Deliberately separate from `labels/protection.jsonl`.** They look alike and are not: the label log is evidence about the *engine's* hardest decision and may one day be shared or analysed on its own; the job log is a record of *your* work. One writer each, one schema each.
+
+**No stored thumbnails** — point at the output files on disk. A missing file is information: it says that output was deleted.
+
+**No database until a lookup is actually slow.** A linear scan over a few hundred lines is nothing. If it ever stops being nothing, add a SQLite index **rebuilt from the log on startup**, so the log stays the truth, a corrupt index is `rm` and restart, and a schema change never needs a migration.
 
 **5.3 Advice with undo.** Every suggestion paired with a one-click revert of exactly what it changed. **A suggestion without one does not ship.**
 

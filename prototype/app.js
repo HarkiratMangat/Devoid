@@ -182,6 +182,11 @@ function renderFilm(a) {
    ⚠️ The names are the PERSON's words, not the argparse group names — building
    the taxonomy out of the flag groups is the system's structure leaking into
    the language. */
+/* ⚠️ PROVISIONAL. These five groups and their contents are a GUESS at a taxonomy,
+   not a spec — they map to no verified subset of the skill's 63 flags, and an
+   audit warned they would be treated as settled. The vocabulary is right (the
+   person's words, not the argparse group names); the membership is not decided.
+   Revisit at PLAN.md stage 2.7. */
 const DRAWERS = {
   'what to keep':  [['Kept region','val','rect ×1'], ['Cut region','auto','auto · none'], ['Follow it','val','on']],
   'the edge':      [['Trim','val','1 px'], ['Soften','auto','auto · 0'], ['Dither','auto','auto · bayer']],

@@ -1,81 +1,107 @@
 # Devoid — where the work stands
 
-*Written 2026-09-03 23:30 EDT, at the end of the design session. **Read this before PRODUCT.md or DESIGN.md** — those describe the thing; this describes the state of the work.*
+*Written 2026-09-04 12:05 EDT. **Read this before anything else.** The other docs describe the thing; this describes the state of the work.*
 
-*Revised 2026-09-04 after a cold-start audit by a fresh session found 22 findings in it; the severe ones are fixed and the numbers below are re-measured.*
+*Supersedes `2026-09-03-handoff.superseded.md`, which was written at the end of the design session and then carried a day of in-place edits under a stale header — the exact drift its own rule warns about.*
 
-⚠️ **Handoffs go stale. If a later session supersedes this, rename it `.superseded.md` and write a new one** — the sibling repo learned that the hard way and its `docs/handoffs/` is now a graveyard of files that all read as current.
+⚠️ **When this goes stale, rename it `<date>-handoff.superseded.md` and write a new one.** Do not edit it in place. The sibling repo's `docs/handoffs/` is a graveyard of files that all read as current.
 
-## In one paragraph
+## In one line
 
-The design is settled and measured. There is a working prototype that is genuinely interactive, built on real animated corpus assets. **The implementation plan is written (`docs/PLAN.md`) and is the next thing to execute.** Pushed to `github.com/HarkiratMangat/Devoid` (private) on 2026-09-04. The prototype is a prototype — its component code is meant to become the front end, but it has no engine behind it and none of the eleven states in `DESIGN.md` except the happy path.
+**Design is finished, measured and audited. Nothing is built. Start at `PLAN.md` Stage 0.1.**
 
-## What is decided, and will not be re-litigated without new evidence
+## Read in this order
+
+1. **this file** — state, decisions, what was rejected
+2. **`PLAN.md`** — the build order; Stage 0.1 has a literal opening checklist
+3. `PRODUCT.md` — the brief and the non-negotiable constraints
+4. `DESIGN.md` — the visual system and the checks it must keep passing
+
+## Model and effort for the build session
+
+**`Sonnet5-High`.** Premise risk is low — the design is settled and every number is measured and re-runnable. Deliberation load is high but bounded: Stage 0–1 is scaffolding plus one engine boundary across many files.
+
+Session title: `Sonnet5-High · Devoid stage 0 — launch path and engine boundary · <date>`
+
+**Escalate to `Opus5-High` on an event, not pre-emptively:** if the hybrid engine boundary turns out not to work (the skill's module resists in-process import under a server), or if two hypotheses about it are wrong. Those are premise failures, which is what the model axis buys.
+
+## Everything decided
 
 | | |
 |---|---|
 | **Name** | Devoid |
 | **What it is** | a front end for the `gif-background-remover` skill; the skill stays the engine and reimplements nothing |
 | **Structure** | no modes — the strip is the app, selection is the only state, panels are summoned drawers |
-| **Core interaction** | the **wipe**: two renders, one draggable seam, "which is right?" rather than "is this region design or background?" |
+| **Core interaction** | the **wipe**: two renders, one draggable seam, "which is right?" |
+| **Question card** | survives **only when the seam cannot help** — when the two renders differ by less than a visible threshold (a sub-half-opacity fade, a 3px sliver). Seam by default. |
 | **Engine boundary** | hybrid — subprocess to render, in-process import to analyse |
-| **One change asked of the skill** | a `build_parser()` factory so the flag UI is generated from argparse and cannot drift |
-| **Shell** | local HTTP server + web UI inside **Electron from the start** (revised 2026-09-04 — see below) |
+| **Asked of the skill** | a `build_parser()` factory. **Filed** in that repo's tracker as `[P1 · XS]` |
+| **Shell** | local HTTP server + web UI inside **Electron from the start** |
+| **Search** | **deferred.** Cut from Stage 2. Add it the first time scrolling actually annoys you |
+| **History** | append-only `jobs.jsonl` in Devoid, **separate file and schema from the labels** |
+| **Labels** | `labels/protection.jsonl` in Devoid, **tracked** |
 | **Audience** | built for Harkirat, but nothing that *requires* him |
 | **Errors** | advise, always with an undo of exactly what changed |
 | **Lighting** | two designed states, toggled; not a theme and its inversion |
 
-## What was rejected, and why — read this before re-proposing any of it
+⚠️ **The labels live here, and that costs discoverability by design.** The people who would use them are working on the skill's autonomy, in *that* repo, and nothing there would surface a file in this one. A tracked pointer at `Gif-Background-Remover/scripts/harness/labels/README.md` closes the gap; keep it accurate if this path ever moves.
 
-**A future session will re-propose at least one of these.** Rejected options with reasons are the most valuable thing a handoff carries.
+## What was rejected, and why — read before re-proposing any of it
 
-- **Browser-only (Pyodide/WASM).** Not hard — *impossible*. scipy exists in Pyodide; `gifsicle`, `webpmux` and `pillow-avif-plugin` do not, and AVIF is what the Discord-emoji path depends on.
-- **Hosted on a small box (Railway/Fly).** Rejected on measured grounds: on claude.ai's single-CPU sandbox `--target-kb` could not finish inside a tool call and `--verify` exceeded two minutes. It would work and be miserable, which is the worst outcome.
-- **Tauri.** Better engineering and a tenth the bundle, but the canvas — the hardest thing in the build — would run on WKWebView instead of Chromium, and it puts a Rust toolchain between Harkirat and every backend change.
-- **SwiftUI.** No Safari problem, genuinely the best Mac feel, and rejected anyway: the canvas needs simultaneous drag/magnify/hit-test gestures where SwiftUI is fiddly, native controls resist a strong custom identity, and it discards the entire CSS design system. It is the one door the current choice does not leave open.
-- **Board / Bench as two lanes.** Approved, built, then discarded. The coin-flip refusal fires on 12.8% of assets — about 1.5 per batch — so a dedicated lane served almost nothing, while review, which every asset needs every time, had no home.
-- **A `discord-sticker` preset.** The repo records the 256 KB cap but no pixel dimension for stickers. Inventing one to complete a name is exactly the guess the whole design exists to prevent.
-- **Names:** `kerf` (colonised by CNC software — KerfSuite, Kerfio, KerfCAD), `notan` (a Rust game framework plus an app that does Notan analysis on images), `knockout` (Knockout.js), `void` (a reserved word in every C-family language), `matte`/`kisscut`/`weeder`/`counter`/`pegbar`/`offcut`/`holdout`/`frisket` (all considered, all passed over).
+**A future session will re-propose at least one of these.**
 
-## Open, and worth deciding early
+- **Browser-only (Pyodide/WASM).** Not hard — *impossible*. scipy exists in Pyodide; `gifsicle`, `webpmux` and AVIF do not.
+- **Hosted on a small box.** Measured: on claude.ai's single-CPU sandbox `--target-kb` could not finish inside a tool call and `--verify` exceeded two minutes.
+- **Tauri.** A tenth the bundle, but the canvas — the hardest thing in the build — would run on WKWebView, and it puts a Rust toolchain between you and every backend change.
+- **SwiftUI.** Genuinely the best Mac feel, rejected anyway: the canvas needs simultaneous drag/magnify/hit-test gestures where SwiftUI is fiddly, native controls resist a strong custom identity, and it discards the CSS design system. The one door this choice does not leave open.
+- **A `.app` shim before Electron.** Presented as a costless sequence and was not — a browser cannot hand the server a filesystem *path*, only bytes.
+- **Board / Bench as two lanes.** Approved, built, discarded. The refusal fires on 12.8% of assets, so a dedicated lane served ~1.5 items per batch while review, which every asset needs every time, had no home.
+- **A `discord-sticker` preset.** The repo records the 256 KB cap but no pixel dimension. Inventing one is the guess this design exists to prevent.
+- **Names:** `kerf` (CNC software), `notan` (a Rust game framework), `knockout` (Knockout.js), `void` (a reserved word), plus `matte`/`kisscut`/`weeder`/`counter`/`pegbar`/`offcut`/`holdout`/`frisket`.
 
-1. ✅ **CLOSED 2026-09-04 — Electron from the start.** The `.app` shim sequence was presented as costless and was not: a browser cannot hand the server a filesystem *path*, only bytes or a typed string, so the shim stage would have uploaded files into a staging directory (making the skill's "beside the source" convention meaningless) or asked for a pasted path. Electron's main process owns real paths, native dialogs and Finder drag-drop. `PLAN.md` stages 0.5, 2.5 and 6 revised.
-2. **Whether the wipe fully replaces the question band**, or the band remains a fallback for before a render exists.
-3. **Search.** With no labelled grid, finding one named file among two hundred needs it.
-4. **Where history lives** — a real store with thumbnails, or a log of paths and settings.
+## Open, and genuinely open
 
-## What exists, and what it is not
+1. **The seam's "cannot help" threshold.** The card survives only below it, and nobody has picked a number. Suggest: differing alpha px below some fraction of the region's own area, measured on the preview pair. **Decide it with a render in front of you, not in advance.**
+2. **Whether `--auto`'s re-run of `--recommend` is worth eliminating.** In-process analysis saves one `--recommend` (~18s); the `--verify` duplication is filed separately in the skill repo.
+
+## What exists
 
 `prototype/` is **real component code with real state**, meant to become the front end.
 
-**It has:** the contact sheet, the open state, the draggable seam, the ledger, summoned drawers, grease-pencil marks, the lamp, label capture, and **five of the eleven states** — `empty` (written but unreachable: `ASSETS.length === 0` never fires), `needs you`, `running`, `done`, `not checked`.
+**Has:** contact sheet · open state · draggable seam · ledger · summoned drawers · grease-pencil marks · the lamp · label capture · **five of eleven states** (`empty`, `needs you`, `running`, `done`, `not checked`).
 
-**It does not have:** any engine · six states (`loading`, `refused`, `cancelled`, `failed`, `conflict`, `blocked`) · selection · search · history · drag-and-drop · the region canvas · **the matte toggle** (which `DESIGN.md` calls a verification requirement) · **the rubylith hatch** (which `DESIGN.md` mandates) · **frame scrubbing** — the film strip updates its own highlight and counter, but the artwork is a looping `<img>` that never seeks, and making it seek needs a canvas decoder that is now `PLAN.md` 3.3.
+**Does not have:** any engine · six states (`loading`, `refused`, `cancelled`, `failed`, `conflict`, `blocked`) · selection · history · drag-and-drop · the region canvas · **the matte toggle** (which `DESIGN.md` calls a verification requirement) · **the rubylith hatch** (which `DESIGN.md` mandates) · **frame scrubbing** — the strip highlights and counts, but the artwork is a looping `<img>` that never seeks · **any test runner**.
 
-⚠️ **Two of the eight wipe pairs desynchronise** — `growth` drifts 1,220 ms per loop, `paper-plane` 2,400 ms, because the two sides are independent `<img>` loops with different frame counts. The wipe's premise is comparing the same moment. Same fix as scrubbing.
+⚠️ **Two of eight wipe pairs desynchronise** — `growth` drifts 1,220 ms per loop, `paper-plane` 2,400 ms, because the two sides are independent `<img>` loops with different frame counts. The wipe's premise is comparing the same moment. Same fix as scrubbing: decode to canvas. `PLAN.md` 3.3.
 
-Its assets are **real outputs from the skill's corpus, and they animate.** Do not replace them with drawn icons — that substitution is what hid three bugs through four rounds of review.
+⚠️ **The drawer taxonomy in `app.js` is a guess, not a spec.** Five groups in the person's vocabulary, mapping to no verified subset of the 63 flags. Marked provisional in the file. Revisit at Stage 2.7.
 
-## Measurements, and how to re-run them
+## Measurements — all re-runnable, all re-measured 2026-09-04
 
-Both scripts are in `scripts/`. **A quoted number with no re-runnable check is a claim, and claims rot.**
+`scripts/`. **A quoted number with no re-runnable check is a claim, and claims rot.**
 
-- `measure_preview_fidelity.py` — takes no arguments; the asset is named in the script. A 1-frame preview is **visually** identical to an 8-bit-alpha full render (11 px of 409,600, max delta 3) and **not literally** identical; the GIF path flips 8 whole pixels (max delta 255) via the shared palette and dither. Under `--auto` the calibration measures a different curve from one frame and lands on the same level by luck. ⚠️ **An earlier version of the docs claimed "0 — pixel-exact"; it was wrong and unverifiable because the script named no asset.**
-- `measure_overlay_collision.py` — hurricane 30.9%, paper-plane 20.6%, growth 5.0%, megaphone 2.0% of artwork sits inside the overlay colour's neighbourhood. **Re-run before changing `--ruby`** (the CSS custom property, not a skill flag).
-- `measure_ledger.py` — derives the prototype's ledger numbers from the shipped assets. ⚠️ Its `art` column is a **ceiling**, not a defect count: it includes the antialiasing ramp the keyer is meant to remove. Comparable between settings on one asset; never quotable as absolute damage.
+| script | what it says |
+|---|---|
+| `measure_preview_fidelity.py` | takes no arguments; the asset is named. A 1-frame preview is **visually** identical to an 8-bit-alpha full render (11 px of 409,600, **max delta 3**) and **not literally** identical. GIF flips 8 whole pixels (max delta 255) via palette and dither. Under `--auto` the calibration measures a different curve from one frame and lands on the same level *by luck* |
+| `measure_overlay_collision.py` | no arguments; defaults to the shipped outputs. hurricane 30.9%, paper-plane 20.6%, growth 5.0%, megaphone 2.0% of artwork sits inside the overlay colour's neighbourhood |
+| `measure_ledger.py` | derives the prototype's ledger numbers. `--check` fails if `app.js` drifts, proven red-green. ⚠️ Its `art` column is a **ceiling** — it includes the antialiasing ramp the keyer is meant to remove. Comparable between settings on one asset; never absolute damage |
 
-## Cross-repo dependencies
+⚠️ **An earlier version of these docs claimed the preview was "pixel-exact — 0 differing pixels".** It was wrong *and* unverifiable, because the script named no asset. That is the failure mode every number here is now structured against.
 
-- **`Gif-Background-Remover`** — Devoid wants a `build_parser()` factory added. ⚠️ **This is NOT yet filed in that repo's tracker** — the open branch `docs/gif-cli-bridge-findings` carries an unrelated entry about `--auto`'s verify output. File it before Stage 1.6, or the ask evaporates if Devoid stalls. Also stale there: its docs cite **714** `edge_hardness` labels; the real count is **981** classified of 1,038 entries.
-- **`~/.config/dior`** — branch `feat/gif-bridge` holds a complete, tested `dior gif` CLI, **pushed and parked.** Its `gif_wizard.py` is the direct ancestor of Devoid's engine layer and its **52**-falsifier suite is worth porting.
+## Cross-repo
 
-⚠️ **Carry forward from that CLI: it has four remaining places that assume the shape of the skill's JSON without verifying it** (`recommend()`'s list/dict sniffing, a bbox fallback that silently becomes a degenerate rectangle, direct subscripts on the fade dict, an `index()+1` on a flag list). The lesson was learned once and fixed in one function only. **Devoid should import that JSON through a single validation boundary from day one**, and test the boundary rather than every consumer.
+- **`Gif-Background-Remover`** — branch `docs/gif-cli-bridge-findings`, pushed. Carries `build_parser()` `[P1 · XS]`, the `--auto`/`--verify` duplication `[P2 · S]`, and a stale corpus count `[P3 · XS]` (its docs say 714 `edge_hardness` labels; the files hold **981 classified** of 1,038 entries).
+- **`~/.config/dior`** — branch `feat/gif-bridge`, pushed and **parked**. A complete, tested `dior gif` CLI. Its `gif_wizard.py` is the direct ancestor of Devoid's engine layer and its **52**-falsifier suite is worth porting.
 
-## What the previous session got wrong, so this one does not repeat it
+⚠️ **Carry forward from that CLI: four places assume the shape of the skill's JSON without verifying it** — `recommend()`'s list/dict sniffing, a bbox fallback that silently becomes a degenerate rectangle, direct subscripts on the fade dict, an `index()+1` on a flag list. The lesson was learned once and fixed in one function only. **Devoid imports that JSON through a single validation boundary from day one** (`PLAN.md` 1.1), and tests the boundary rather than every consumer.
+
+## What earlier sessions got wrong
 
 - **Designed with art drawn to flatter the design.** Real assets found three bugs in minutes.
-- **Ran a thinking pass that produced zero reversals and reported it as complete.** A run with no reversal is a failed run.
-- **Invoked skills without running their processes** — a mandated pre-code checkpoint was skipped and the work suffered for it.
-- **Trusted an empty result from a tool that had said it was degraded.**
-- **Wrote a doc restating numbers the code owns**, which was stale inside the same commit. This document and `DESIGN.md` now state rules and point at tokens.
-- **Never argued the cost** of replacing working software before designing its replacement. There is a working CLI. The app's genuinely non-substitutable case is the region canvas.
+- **Ran thinking passes that produced zero reversals** and reported them as complete. A run with no reversal is a failed run.
+- **Invoked skills without running their processes.**
+- **Trusted an empty result from a tool that said it was degraded.**
+- **Wrote docs restating numbers the code owns** — stale inside the same commit. These docs state rules and point at tokens.
+- **Never argued the cost** of replacing working software before designing its replacement.
+- **Reported a "clean boundary" with the plan unwritten**, when most of it was not blocked.
+- **Hand-rolled the same verification twice and got it wrong both times** — one regex spanned neighbouring entries, the next rejected optional whitespace. The check now lives in `measure_ledger.py --check`. **Use the script; do not re-derive the check.**
