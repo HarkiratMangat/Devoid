@@ -1,0 +1,52 @@
+# Stage 6 — packaging (PLAN.md 6.2/6.3).
+#
+# This lives in its own file rather than package.json's "build" field because
+# electron-builder refuses to load from package.json while a root-level
+# "directories" key is present, and that key is Stage 0's npm metadata.
+#
+# ⚠️ Signing and notarisation are driven ENTIRELY by environment variables and
+# every one of them is deliberately unset. With none set this produces an
+# unsigned, un-notarised build, which is what a local run wants:
+#   CSC_LINK, CSC_KEY_PASSWORD                            — the signing certificate
+#   APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID  — notarisation
+# See README.md "Packaging". Set notarize: true below once those five exist.
+#
+# ⚠️ The packaged app is NOT standalone. It carries no Python runtime and still
+# spawns .venv/bin/python beside itself. Bundling an interpreter is the rest of
+# 6.3 and is out of scope here — README.md says so plainly.
+
+appId: com.harkirat.devoid
+productName: Devoid
+copyright: Devoid — a front end for the gif-background-remover skill
+
+directories:
+  output: dist
+  buildResources: build
+
+files:
+  - main.js
+  - web/**/*
+  - server/**/*.py
+  - package.json
+  - '!**/__pycache__'
+  - '!**/*.pyc'
+  - '!.venv/**'
+  - '!tests/**'
+  - '!docs/**'
+  - '!scripts/**'
+  - '!prototype/**'
+  - '!dist/**'
+
+mac:
+  category: public.app-category.graphics-design
+  target:
+    - dmg
+    - zip
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  notarize: false
+
+dmg:
+  title: Devoid ${version}
