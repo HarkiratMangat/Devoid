@@ -18,7 +18,7 @@ The design is settled and measured. There is a working prototype that is genuine
 | **Core interaction** | the **wipe**: two renders, one draggable seam, "which is right?" rather than "is this region design or background?" |
 | **Engine boundary** | hybrid — subprocess to render, in-process import to analyse |
 | **One change asked of the skill** | a `build_parser()` factory so the flag UI is generated from argparse and cannot drift |
-| **Shell** | local HTTP server + web UI; `.app` shim now, Electron later |
+| **Shell** | local HTTP server + web UI inside **Electron from the start** (revised 2026-09-04 — see below) |
 | **Audience** | built for Harkirat, but nothing that *requires* him |
 | **Errors** | advise, always with an undo of exactly what changed |
 | **Lighting** | two designed states, toggled; not a theme and its inversion |
@@ -37,7 +37,7 @@ The design is settled and measured. There is a working prototype that is genuine
 
 ## Open, and worth deciding early
 
-1. **The shim has a file-handling hole that Electron closes, and it was not flagged when the sequence was chosen.** A browser cannot hand the server a *path* — only bytes, or a typed path. So the shim stage either uploads multi-megabyte files into a staging directory (which makes "beside the source" meaningless) or asks for a path (which is the CLI experience this exists to escape). **Resolution: a `FileSource` interface with `UploadedBytes` and `NativePath` implementations, so the compromise is scoped and named rather than discovered at task three.** It also strengthens the case for going straight to Electron.
+1. ✅ **CLOSED 2026-09-04 — Electron from the start.** The `.app` shim sequence was presented as costless and was not: a browser cannot hand the server a filesystem *path*, only bytes or a typed string, so the shim stage would have uploaded files into a staging directory (making the skill's "beside the source" convention meaningless) or asked for a pasted path. Electron's main process owns real paths, native dialogs and Finder drag-drop. `PLAN.md` stages 0.5, 2.5 and 6 revised.
 2. **Whether the wipe fully replaces the question band**, or the band remains a fallback for before a render exists.
 3. **Search.** With no labelled grid, finding one named file among two hundred needs it.
 4. **Where history lives** — a real store with thumbnails, or a log of paths and settings.

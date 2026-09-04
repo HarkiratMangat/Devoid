@@ -18,7 +18,7 @@
 
 **0.4 One asset, end to end, ugly.** Server renders a real corpus GIF via subprocess and the browser shows the result. No design. This proves the whole spine and is the point of Stage 0.
 
-**0.5 The `.app` shim.** Double-clickable, starts the server, opens a chromeless window. Ships the `failed` state from 0.3 as its first real screen.
+**0.5 Electron shell.** ⚠️ **Decided 2026-09-04: Electron from the start, not a `.app` shim first.** The shim sequence was presented as costless and is not — a browser cannot hand the server a filesystem *path*, only bytes or a typed string, so the shim stage would either upload multi-megabyte files into a staging directory (making the skill's "beside the source" output convention meaningless) or ask you to paste a path, which is the CLI experience this exists to escape. Electron's main process owns real paths, native dialogs and Finder drag-drop. Main process spawns the server, owns the window, ships the `failed` state from 0.3 as its first real screen.
 
 ---
 
@@ -48,7 +48,7 @@
 
 **2.4 Search.** With no labelled grid, finding one file among two hundred needs it.
 
-**2.5 Drag-and-drop, through the `FileSource` interface.** ⚠️ `UploadedBytes` for the shim, `NativePath` for Electron — see `HANDOFF.md`'s open item 1. Building this without the interface is what makes the Electron migration expensive.
+**2.5 Drag-and-drop with real paths.** Electron's main process hands the server a `NativePath`; the renderer never touches the filesystem. ⚠️ **Keep it behind a one-method `FileSource` boundary anyway** — it is the seam a future web build would need, and it costs nothing now.
 
 **2.6 The tri-state control.** `auto · value` until taken over. **Forced by the engine**: `--auto` applies its recommendation only where an option was left at its default, so a UI that sends every flag makes `--auto` a no-op and the tool stops thinking.
 
@@ -94,11 +94,11 @@
 
 ---
 
-## Stage 6 — Electron
+## Stage 6 — ship it
 
-**6.1 Main process** spawning the server, owning the window. The UI does not change.
-**6.2 `NativePath`** replaces `UploadedBytes`; native dialogs and Finder drag-drop.
-**6.3 Menus, signing, notarisation, packaging.**
+**6.1 Menus** — native app menus, keyboard shortcuts, the About panel.
+**6.2 Signing and notarisation.**
+**6.3 Packaging** — a `.dmg` or a `.app` that runs on a machine that is not this one, with the environment check from 0.3 as the failure path.
 
 ---
 
