@@ -1,0 +1,98 @@
+{
+  "_": [
+    "The exact response shapes web/app.js was written against, transcribed from",
+    "docs/API-CONTRACT.md (frozen 2026-09-04 17:05 EDT) and NOT invented here.",
+    "Stage 1's server lives in a sibling worktree, so the Stage 2 shell could not",
+    "be tested against a live route; this file is what the shell believes, so a",
+    "disagreement between it and the real server is findable by diff rather than",
+    "by a blank screen. Every field the shell reads appears at least once.",
+    "The flag entries are real dests, verified against the skill's own",
+    "scripts/remove_gif_background.py add_argument calls."
+  ],
+
+  "GET /api/flags": {
+    "flags": [
+      { "name": "--protect-region", "dest": "protect_region", "type": "str", "choices": null, "default": null, "help": "Region to keep, as x0,y0,x1,y1", "group": "regions" },
+      { "name": "--remove-region", "dest": "remove_region", "type": "str", "choices": null, "default": null, "help": "Region to cut", "group": "regions" },
+      { "name": "--remove-region-track", "dest": "remove_region_track", "type": "str", "choices": null, "default": null, "help": "Cut a region and follow it across frames", "group": "regions" },
+      { "name": "--edge-cleanup-erosion", "dest": "edge_cleanup_erosion", "type": "int", "choices": null, "default": 0, "help": "Pixels to erode from the edge", "group": "edges" },
+      { "name": "--edge-softening", "dest": "edge_softening", "type": "int", "choices": null, "default": 0, "help": "Soften the cut edge", "group": "edges" },
+      { "name": "--dither-mode", "dest": "dither_mode", "type": "str", "choices": ["bayer", "floyd", "none"], "default": "bayer", "help": "How the palette dithers", "group": "edges" },
+      { "name": "--bg-color", "dest": "bg_color", "type": "str", "choices": null, "default": null, "help": "The background colour to key out", "group": "detection" },
+      { "name": "--pixel-art", "dest": "pixel_art", "type": "bool", "choices": null, "default": false, "help": "Hard-edged pixel art rather than antialiased vector art", "group": "detection" },
+      { "name": "--recover-fade-alpha", "dest": "recover_fade_alpha", "type": "bool", "choices": null, "default": false, "help": "Recover a flattened fade as partial alpha", "group": "fade" },
+      { "name": "--target-kb", "dest": "target_kb", "type": "float", "choices": null, "default": null, "help": "Fit the written file under this size", "group": "size" },
+      { "name": "--min-dimension", "dest": "min_dimension", "type": "int", "choices": null, "default": null, "help": "Never resize below this", "group": "size" },
+      { "name": "--format", "dest": "format", "type": "str", "choices": ["auto", "gif", "webp", "avif", "apng"], "default": "auto", "help": "Output container", "group": "size" }
+    ]
+  },
+
+  "GET /api/assets": [
+    { "id": "a1", "path": "/Users/x/art/megaphone.gif", "ext": "gif", "state": "needs-you", "frames": 144, "ledger": null },
+    { "id": "a2", "path": "/Users/x/art/hurricane.gif", "ext": "gif", "state": "ready", "frames": 120, "ledger": { "bg": 46960, "art": 184, "total": 20640 } },
+    { "id": "a3", "path": "/Users/x/art/paper-plane.webp", "ext": "webp", "state": "loading", "frames": null }
+  ],
+
+  "POST /api/assets/a1/analyze": {
+    "state": "needs-you",
+    "questions": {
+      "ambiguous_protection": [
+        { "region_id": 0, "outline_color": "002864", "bbox_xyxy": [230, 135, 406, 359], "frames_enclosed": 102, "frames_checked": 144, "enclosure_ratio": 0.7083 },
+        { "region_id": 2, "outline_color": "002864", "bbox_xyxy": [88, 41, 150, 96], "frames_enclosed": 61, "frames_checked": 144, "enclosure_ratio": 0.4236 },
+        { "region_id": 3, "outline_color": "f0c850", "bbox_xyxy": [12, 200, 60, 244], "frames_enclosed": 140, "frames_checked": 144, "enclosure_ratio": 0.9722 }
+      ],
+      "nameable_fade": { "color": "ffffff", "faint_px": 1842, "frame_index": 62 },
+      "recommended_format": "webp-or-avif",
+      "not_applicable_reason": null,
+      "alternative_command": null
+    },
+    "engine_version": "b41c9e2",
+    "took_ms": 18240
+  },
+
+  "_note_grouping": [
+    "Three regions, two colours. The shell asks TWO questions, not three:",
+    "region 0 and region 2 share 002864 and are merged into one control, so the",
+    "server's 400 conflicting_colour is unreachable from this UI by construction.",
+    "Submitting expands the colour answer back onto every region_id it covers."
+  ],
+
+  "POST /api/assets/a1/answers": {
+    "request": { "ambiguous_protection": { "0": "protect", "2": "protect", "3": "remove" }, "fade": "artwork" },
+    "response_200": { "state": "ready" },
+    "response_400": { "error": "conflicting_colour", "outline_color": "002864" }
+  },
+
+  "POST /api/assets/a2/render": {
+    "request": {
+      "overrides": { "edge_cleanup_erosion": 1 },
+      "regions": [{ "type": "protect", "bbox_xyxy": [10, 10, 90, 90], "tracked": false }],
+      "goal": { "format": "webp", "target_kb": 256 }
+    },
+    "response": { "job_id": "j7" }
+  },
+
+  "_note_tristate": [
+    "`overrides` carries ONLY the rows deliberately taken over. Everything else",
+    "is absent so --auto keeps applying its own recommendation. A request that",
+    "named all 63 flags would make --auto a no-op and the tool would stop",
+    "thinking; that is the failure this shape exists to prevent."
+  ],
+
+  "GET /api/jobs/j7": {
+    "running": { "state": "running", "progress": 0.42, "ledger": null },
+    "done": { "state": "done", "progress": 1.0, "output_path": "/Users/x/art/hurricane_transparent.webp", "verify": { "checks_skipped": [] }, "ledger": { "bg": 46960, "art": 184, "total": 20640 } },
+    "done_unverified": { "state": "done", "progress": 1.0, "output_path": "/Users/x/art/hurricane_transparent.webp", "verify": "not-checked" },
+    "done_checks_skipped": { "state": "done", "progress": 1.0, "output_path": "/Users/x/art/hurricane_transparent.webp", "verify": { "checks_skipped": ["pixel", "alpha"] } },
+    "conflict": { "state": "conflict", "output_path": "/Users/x/art/hurricane_transparent_v2.webp" },
+    "failed": { "state": "failed", "error": "webpmux is not installed" },
+    "cancelled": { "state": "cancelled" }
+  },
+
+  "_note_notchecked": [
+    "The shell reads `done` as DONE only when verify ran and skipped nothing.",
+    "`verify: \"not-checked\"`, a missing verify, and a non-empty checks_skipped",
+    "all read as `not-checked` — a first-class state with the weight of done and",
+    "failed, because a green tick that was not earned is worse than no tick."
+  ]
+}
