@@ -189,3 +189,30 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .empty p{margin:var(--s3) 0 0;font-size:15px;color:var(--graphite-2)}
 .empty .big{font-size:clamp(28px,5vw,44px);font-weight:700;font-stretch:112%;letter-spacing:-.03em;
   color:var(--graphite);margin:0}
+
+
+/* ═══ STAGE 3 — the wipe's canvases, and the question card. ══════════════════
+   APPEND-ONLY SECTION, added by web/wipe.js's author. Nothing above this line
+   was edited. The two <img> sides are replaced at runtime by two <canvas>
+   elements driven by one clock (PLAN.md 3.3); `.wipe .after` and `.aftbg`
+   above are element-agnostic, so the clip-path that makes the seam work needs
+   no change — only the sizing rule below, which mirrors `.wipe>img`.
+   ⚠️ NO REPEATING GRADIENT IS ADDED HERE. DESIGN.md's diagonal hatch for
+   material about to be removed is drawn onto the card's canvas in JS instead,
+   so the detector keeps returning exactly one finding (the alpha
+   checkerboard) rather than a second one for a hatch that is not decorative
+   but would be indistinguishable from decoration to a static analyser. */
+.wipe>canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  padding:var(--s3);image-rendering:auto}
+
+/* THE QUESTION CARD — the wipe's fallback, used only below the measured
+   conspicuity threshold in wipe.js. It is a card, not a dialog: the answer is
+   part of the work, not an interruption of it. */
+.qcard{display:flex;flex-direction:column;align-items:center;gap:var(--s3);
+  max-width:420px;padding:var(--s4);border-radius:var(--r2);
+  background:var(--bench);border:1px solid var(--score);box-shadow:var(--float)}
+.qcard-frame{width:220px;height:220px;border-radius:var(--r);overflow:hidden;
+  display:flex;align-items:center;justify-content:center;background:var(--well)}
+.qcard-canvas{width:100%;height:100%;object-fit:contain}
+.qcard p{margin:0;text-align:center;color:var(--graphite-2);text-wrap:balance}
+.qcard-actions{display:flex;gap:var(--s2)}

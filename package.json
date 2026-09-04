@@ -1,14 +1,16 @@
 {
   "name": "devoid",
   "version": "1.0.0",
-  "description": "A local desktop app for removing the background from animated images — GIF, WebP, AVIF, APNG, and static PNG/JPEG — and fitting the result to a size or format target.",
+  "description": "A local desktop app for removing the background from animated images \u2014 GIF, WebP, AVIF, APNG, and static PNG/JPEG \u2014 and fitting the result to a size or format target.",
   "main": "main.js",
   "directories": {
     "doc": "docs",
     "test": "tests"
   },
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "vendor:gifuct": "esbuild node_modules/gifuct-js/src/index.js --bundle --format=iife --global-name=gifuct --minify --outfile=web/vendor/gifuct.js",
+    "test:wipe": "node --test tests/test_wipe_sync.mjs"
   },
   "repository": {
     "type": "git",
@@ -21,6 +23,10 @@
   },
   "homepage": "https://github.com/HarkiratMangat/Devoid#readme",
   "devDependencies": {
-    "electron": "^44.2.0"
+    "electron": "^44.2.0",
+    "esbuild": "^0.28.2"
+  },
+  "dependencies": {
+    "gifuct-js": "^2.1.2"
   }
 }
