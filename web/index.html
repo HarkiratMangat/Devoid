@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Devoid</title>
 <script>try{if(localStorage.getItem('devoid-lamp')==='light')document.documentElement.className='lamp-light'}catch(e){}</script>
+<!-- ⚠️ Google Fonts CDN — Stage 6 (PLAN.md edge-case "Offline") self-hosts these two
+     faces under web/fonts/ and swaps these two lines for local @font-face rules. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400;62..125,500;62..125,600;62..125,700&family=Spline+Sans+Mono:wght@400;500&display=swap">
@@ -22,6 +24,14 @@
     <button class="btn go" id="primary">Save 6</button>
   </header>
 
+  <!-- state banners: loading, refused, failed, conflict, blocked, cancelled.
+       Stage 2 owns showing/hiding this and filling #bannertext/#bannerbtn;
+       never colour-only — DESIGN.md's greyscale rule. -->
+  <div class="banner" id="banner" hidden role="status">
+    <span id="bannertext"></span>
+    <button class="btn" id="bannerbtn" hidden></button>
+  </div>
+
   <div class="table">
     <!-- the queue, only while something is open -->
     <nav class="edge" id="edge" aria-label="Everything else" hidden></nav>
@@ -34,6 +44,9 @@
       <div class="open" id="open" hidden>
         <div class="openhead"><h1 id="openname"></h1><p id="openstate"></p></div>
         <div class="stage chk" id="stage">
+          <!-- Stage 3: wipe.js replaces #before/#after (looping <img>) with two
+               synced <canvas> elements decoding shared frame timing (PLAN.md 3.3),
+               and swaps the pair for answer-A vs answer-B (PLAN.md 3.1). -->
           <div class="wipe" id="wipe">
             <div class="aftbg chk-s" id="aftbg"></div>
             <img id="before" src="assets/megaphone.src.gif" alt="">
@@ -42,7 +55,24 @@
             <span class="wipetag l">as it came</span>
             <span class="wipetag r">cut</span>
           </div>
+          <!-- the question card: the wipe's fallback below the seam's visible-
+               difference threshold (PLAN.md 3.0b). Stage 3 owns show/hide + content. -->
+          <div class="qcard" id="qcard" hidden>
+            <div class="qcard-frame" id="qcardframe"></div>
+            <p id="qcardtext"></p>
+            <div class="qcard-actions">
+              <button class="btn" id="qcardno">Background</button>
+              <button class="btn go" id="qcardyes">Artwork</button>
+            </div>
+          </div>
+          <!-- Stage 4: the region-drawing canvas, overlaid on the open asset.
+               Coordinate round-trip (display px -> source px) is PLAN.md 4.1's
+               falsifier-first task. Hidden until a drawing tool is active. -->
+          <canvas id="regioncanvas" hidden></canvas>
         </div>
+        <!-- Stage 4's toolbar: six region tools (protect, remove, remove-track,
+             unprotect, translucent, fade-protect) plus the eyedropper. -->
+        <div class="regiontools" id="regiontools" hidden></div>
         <div class="ledger" id="ledger"></div>
         <div class="film">
           <div class="filmhead"><span id="onion">onion skin · 2 frames</span><span id="fcount"></span></div>
@@ -65,5 +95,7 @@
 </div>
 
 <script src="app.js"></script>
+<script src="wipe.js" defer></script>
+<script src="canvas.js" defer></script>
 </body>
 </html>
