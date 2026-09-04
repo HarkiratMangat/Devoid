@@ -12,3 +12,4 @@ out/
 .devoid-journal.json
 .devoid-journal.json.lock
 .devoid-journal.json.tmp
+.claude/worktrees/
