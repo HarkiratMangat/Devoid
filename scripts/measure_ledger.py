@@ -20,14 +20,35 @@ numbers describe the image on screen rather than a source that is not here.
 from the corner colour and are transparent in the cut — which legitimately
 includes the antialiasing ramp the keyer is supposed to remove. Use it to compare
 settings against each other on one asset, never as an absolute "damage" figure.
-`paper-plane` reports n/a because its cut output is 640x640 while its source is
-260x260, so the two are not comparable pixel-for-pixel.
+⚠️ The `art = None` branch exists for a scale mismatch between a cut output and
+its source. No shipped asset hits it today — paper-plane did until it was resized
+to 260x260 — so that branch and app.js's matching copy are currently DEAD.
 """
 import json, sys, pathlib
 from PIL import Image, ImageSequence
 import numpy as np
 
-A = pathlib.Path(__file__).resolve().parent.parent / "prototype" / "assets"
+def _root():
+    return pathlib.Path(__file__).resolve().parent.parent
+
+def _assets():
+    """⚠️ prototype/ becomes web/ at PLAN.md step 0.1. Resolve, never hardcode —
+    a hardcoded path here broke the very gate the plan calls un-re-derivable."""
+    for d in ("web", "prototype"):
+        p = _root() / d / "assets"
+        if p.is_dir():
+            return p
+    raise SystemExit("no assets directory found under web/ or prototype/")
+
+def _appjs():
+    for d in ("web", "prototype"):
+        p = _root() / d / "app.js"
+        if p.is_file():
+            return p
+    raise SystemExit("app.js not found under web/ or prototype/")
+
+
+A = _assets()
 
 def mid_rgba(p):
     with Image.open(p) as im:
@@ -38,10 +59,13 @@ def mid_rgba(p):
     return None, 0
 
 def measure(stem, ext):
+    A = _assets()
     cut_p, src_p = A / f"{stem}.{ext}", A / f"{stem}.src.gif"
     if not cut_p.exists():
         return None
     cut, frames = mid_rgba(cut_p)
+    # ⚠️ 200 (alpha) and 20 (colour distance, below) are INVENTED thresholds.
+    # They decide every number this script emits. Comparative, not absolute.
     cut_a = cut[..., 3] > 200
     row = {"bg": int((~cut_a).sum()), "total": int(cut_a.sum()), "frames": frames}
     if src_p.exists():
@@ -76,7 +100,7 @@ if "--check" in sys.argv:
     # reporting a mismatch that did not exist. A checker nobody keeps is a checker
     # nobody debugs.
     import re
-    js = (pathlib.Path(__file__).resolve().parent.parent / "prototype" / "app.js").read_text()
+    js = _appjs().read_text()
     blk = js[js.index("const ASSETS = ["):js.index("];", js.index("const ASSETS = ["))]
     bad = []
     for stem, _ in ASSETS:

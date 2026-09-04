@@ -20,9 +20,9 @@ Three rooms turned out to be one room, each owning a different job: **the cuttin
 - **Select one** → it opens; the rest stay along the edge.
 - **Panels** are drawers summoned at the table's edge and opened beside what they affect, never a column paid for on every screen.
 
-**Selection is the only state.** That is not minimalism for its own sake — it is what makes density need no policy. One asset, twelve and two hundred are the same layout, where a two-lane design has to answer each case separately and answered none of them.
+**Selection is the only state** — of the *structure*. (Multi-select is a separate feature and is not built; see `HANDOFF.md`.) That is not minimalism for its own sake — it is what makes density need no policy. One asset, twelve and two hundred are the same layout, where a two-lane design has to answer each case separately and answered none of them.
 
-This replaced a Board/Bench split. The split failed a simple test: the coin-flip refusal fires on **12.8%** of assets, so a dedicated lane served roughly one and a half items per batch, while review — the thing every asset needs, every time — had no home of its own.
+This replaced a Board/Bench split. The split failed a simple test: the coin-flip refusal fires on **10.2%** of assets (the fade question on 2.6%; 12.8% pooled), so a dedicated lane served roughly one item per batch, while review — the thing every asset needs, every time — had no home of its own.
 
 ## Signature: rubylith, and why it is not only a colour
 
@@ -84,7 +84,9 @@ Felt, not watched. Under 300ms, ease-out never ease-in, only `transform` and `op
 
 **One orchestrated moment, and it belongs to the empty table.** Drop files onto empty checkerboard and they arrive as contact-sheet frames developing, staggered, each one's rubylith wash rising over the region it is about to cut. A batch resolving looks like a contact sheet coming up in a tray. It is information — the wash *is* the finding — and it happens once per session. ⚠️ **Rare moments earn animation; repeated ones must not have it.** Scattering hover-lift across every component is the documented tell of generated design.
 
-`prefers-reduced-motion` drops movement and keeps opacity, so the wash — which carries meaning — survives.
+`prefers-reduced-motion` drops movement and keeps opacity, so the wash — which carries meaning — survives. ⚠️ **The prototype's blanket `animation-duration:.01ms` rule kills opacity transitions too**, which is not what this says; narrow it when the wash lands.
+
+⚠️ **And an animated GIF ignores the preference entirely** — `<img>` playback cannot be paused by CSS. An app whose premise is "everything animates" owes a motion-sensitive user an off switch. Decide it when frames move to canvas (`PLAN.md` 3.3), which makes pausing possible.
 
 ## Copy
 
@@ -114,5 +116,5 @@ The first prototype shipped the happy path and nothing else. A build is not done
 - **Squint.** Blur it; whatever needs you must still dominate.
 - **Swap.** Swapping rubylith for blue must break the *meaning*, not just the look.
 - **Panel-optional.** Drop files, answer, save — without opening a drawer.
-- **Detector.** `node ~/.claude/skills/impeccable/scripts/detect.mjs --json <files>`. ⚠️ **One finding is KNOWN AND ACCEPTED: `repeating-stripes-gradient`.** The only repeating gradients in this codebase are the alpha checkerboard (`.chk`, `.chk-s`) and the rubylith hatch. Both are the domain's own notation — a checkerboard *is* how transparency is drawn, and hatching *is* how removed material is marked — so obeying the detector here would delete the transparency indicator from a transparency tool. **Expect exactly this finding and no other.** Anything else is a real defect. ⚠️ It also runs **degraded** without `htmlparser2`, `css-select`, `css-tree` and `domutils`, returning `[]` *while saying so on the line above*. An empty result only counts when the header does not say DEGRADED.
+- **Detector.** `node ~/.claude/skills/impeccable/scripts/detect.mjs --json <files>`. ⚠️ **One finding is KNOWN AND ACCEPTED: `repeating-stripes-gradient`.** The only repeating gradient in this codebase today is the alpha checkerboard (`.chk`, `.chk-s`) — the hatch is specified but not built, so expect **one** finding, and a second when the hatch lands. Both are the domain's own notation — a checkerboard *is* how transparency is drawn, and hatching *is* how removed material is marked — so obeying the detector here would delete the transparency indicator from a transparency tool. **Expect exactly this finding and no other.** Anything else is a real defect. ⚠️ It also runs **degraded** without `htmlparser2`, `css-select`, `css-tree` and `domutils`, returning `[]` *while saying so on the line above*. An empty result only counts when the header does not say DEGRADED.
 - **Real assets.** Any visual claim is checked against the corpus, never against art drawn for the mockup. Art you draw to demonstrate a design is selected to flatter it — that is how three bugs survived four rounds of review here.

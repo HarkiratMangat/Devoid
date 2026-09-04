@@ -21,7 +21,30 @@ import sys, os, pathlib, collections
 from PIL import Image, ImageSequence
 import numpy as np
 
+def _root():
+    return pathlib.Path(__file__).resolve().parent.parent
+
+def _assets():
+    """⚠️ prototype/ becomes web/ at PLAN.md step 0.1. Resolve, never hardcode —
+    a hardcoded path here broke the very gate the plan calls un-re-derivable."""
+    for d in ("web", "prototype"):
+        p = _root() / d / "assets"
+        if p.is_dir():
+            return p
+    raise SystemExit("no assets directory found under web/ or prototype/")
+
+def _appjs():
+    for d in ("web", "prototype"):
+        p = _root() / d / "app.js"
+        if p.is_file():
+            return p
+    raise SystemExit("app.js not found under web/ or prototype/")
+
+
 RUBY = np.array([0xE2, 0x40, 0x2A])   # keep in sync with --ruby in app.css
+# ⚠️ INVENTED, not measured. Every collision percentage in three documents is a
+# function of this threshold. Nothing validates it; treat the percentages as
+# comparative between assets, not as absolute visibility.
 NEAR = 90                             # RGB euclidean distance judged "same family"
 
 def main(paths):
@@ -52,7 +75,7 @@ if __name__ == "__main__":
     # said WHICH eight — the .src.gif files are sources, not outputs, and passing
     # them measures the wrong thing.
     if len(sys.argv) < 2:
-        A = pathlib.Path(__file__).resolve().parent.parent / "prototype" / "assets"
+        A = _assets()
         paths = sorted(p for p in A.iterdir()
                        if p.suffix in (".gif", ".webp") and not p.name.endswith(".src.gif"))
         if not paths:

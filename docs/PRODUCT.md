@@ -20,9 +20,13 @@ The skill exposes **63 command-line options**. That count is not the friction it
 
 The friction is three questions:
 
-1. **A coin-flip protection decision.** When a candidate region's outline encloses it on *some* frames but not all, whether that enclosed interior is design or background is a statement about intent, and the pixels do not answer it. Measured across 304 real assets: **12.8% refuse this way.** The refusal names a hex colour and a bounding box.
+1. **A coin-flip protection decision.** When a candidate region's outline encloses it on *some* frames but not all, whether that enclosed interior is design or background is a statement about intent, and the pixels do not answer it. Measured across 304 real assets: **10.2% refuse this way.** The refusal names a hex colour and a bounding box.
 2. **A nameable fade** the detector can identify but not classify, for a measured reason — across the 91 assets in that branch, the ramp statistics interleave with assets that render as a translucent ghost of the whole frame, so no threshold separates them.
 3. **The size and format goal**, which the tool deliberately never guesses.
+
+⚠️ **Two rates, and conflating them is a documented trap.** `--auto` stops and asks **something** on **12.8%** of assets (39 of 304: 29 enclosure-only, 8 fade-only, 2 both). The **coin-flip protection question alone** is **10.2%** (31 of 304); the fade question alone is 2.6%. Use 12.8% for "how often does the app interrupt you" and 10.2% for "how often is it *this* question".
+
+⚠️ **Never quote 10.2% on its own as the refusal rate.** `references/lessons.md` records it as the *original pooled* figure, taken before the fade gate existed, and flags it **"STALE IN THE UNSAFE DIRECTION"** — it understated how often `--auto` stops and had already reached three packaged files. Both numbers are real measurements of different things, which is why both are given here.
 
 The first two are visual questions delivered as text. Nobody can answer *"is the region at bbox [230,135,406,359] outlined in 002864 design or background?"* by reading it. **They have to see it.** That is the product.
 
@@ -37,8 +41,19 @@ The first two are visual questions delivered as text. Nobody can answer *"is the
 | `recommended_format` | one of `gif-ok`, `webp-or-apng`, `webp-or-avif` |
 | `not_applicable_reason` / `alternative_command` | why it refuses outright, and what to run instead |
 | `evidence` | human-readable justification, one string per finding |
+| `suggested_command` | ⚠️ **the field `--auto` actually builds its flag list from** — it `shlex.split`s this string and drops the first four tokens. The most important field for the engine boundary, and it is a shell string, not structured argv |
 
-`--auto` derives its refusals from exactly those fields. So Devoid reads the questions **first**, answers them with `--assume-protect` / `--assume-remove` / `--fade-color` / `--assume-no-fade`, and `--auto` never refuses.
+`--auto` derives its refusals from exactly those fields. So Devoid reads the questions **first** and answers them before running:
+
+| question | answer flags |
+|---|---|
+| coin-flip protection | `--assume-protect <hex[,hex]>` or `--assume-remove <hex[,hex]>` |
+| nameable fade — it IS artwork | ⚠️ **`--recover-fade-alpha --fade-color <hex>`, both flags**, and an 8-bit-alpha output |
+| nameable fade — it is not | `--assume-no-fade` |
+
+⚠️ **`--fade-color` on its own is a HARD ERROR, not a warning.** The engine reads it only inside the `--recover-fade-alpha` branch and refuses outright when it is passed alone. **And answering "it is artwork" forces the output container** to `.webp`/`.avif`/`.apng`, which collides with a stated GIF goal — the app resolves that, it does not discover it.
+
+⚠️ **"`--auto` never refuses" is too strong.** Answering both questions removes both *refusals*, but `--recommend` can still return `not_applicable_reason` — a background that changes colour partway through, for instance — for which no assume-flag exists. The engine boundary must handle a refusal that has no answer.
 
 The skill's JSON is already a machine-readable question API. This is why the app is a front end and not a rewrite.
 
@@ -60,7 +75,7 @@ These are not preferences. Each was measured, and each has already cost somethin
 
 **The strip is the app.** Nothing selected and it fills the space as a contact sheet; select one and it opens while the rest stay along the edge; panels are drawers summoned at the edge and opened beside what they affect. **Selection is the only state**, which is what makes density need no policy — one asset, twelve and two hundred are the same layout.
 
-This replaced a two-lane Board/Bench design that had already been approved. It failed a simple test: the coin-flip refusal fires on 12.8% of assets, so a dedicated lane served about one and a half items per batch, while review — which every asset needs, every time — had no home of its own.
+This replaced a two-lane Board/Bench design that had already been approved. It failed a simple test: the coin-flip refusal fires on 10.2% of assets and the fade on 2.6%, so a dedicated lane served about one item per batch, while review — which every asset needs, every time — had no home of its own.
 
 **The drawers are reachable, never required.** It must stay possible to drop files, answer, and save without opening one. If that stops being true, the disclosure has failed and the app has become a 63-control form.
 
@@ -68,7 +83,7 @@ This replaced a two-lane Board/Bench design that had already been approved. It f
 
 The engine asks *"is this enclosed interior design, or background showing through?"* — an analyst's question about authorial intent. **The app should ask an owner's question instead.**
 
-The two answers differ by one flag, and a 1-frame preview is measured pixel-exact to an 8-bit-alpha format. So render both and let the person **drag a seam between them**. That is a strictly easier judgement, and a measurably more accurate one: the skill's own history records a dog-tag icon where the region "looked plausible", `suggested_command` protected two chain-holes the user wanted removed, and **nobody looking at the two renders would have picked the wrong one.**
+The two answers differ by one flag, and a 1-frame preview is measured visually identical to an 8-bit-alpha render — 11 differing pixels of 409,600 at a max delta of 3. So render both and let the person **drag a seam between them**. That is a strictly easier judgement, and a measurably more accurate one: the skill's own history records a dog-tag icon where the region "looked plausible", `suggested_command` protected two chain-holes the user wanted removed, and **nobody looking at the two renders would have picked the wrong one.**
 
 It generalises to every flag with a visible consequence — erosion, feather band, fade recovery, dither mode. **That is what dissolves the tension between "usable by someone unacquainted" and "expose many more options": options presented as outcomes to choose between need no learning at all.** Most of the 63 flags do not need hiding or progressive disclosure. They need rendering.
 
@@ -96,7 +111,7 @@ Capturing them costs one appended line. **Retrofitting discards every answer giv
 
 ⚠️ **An earlier version of this document claimed "0 differing pixels — pixel-exact". That was wrong**, and it was unfalsifiable because the script did not name the asset it had been run on. The corrected claim still supports the design — a max delta of 3 on the WebP path is not visible — but the GIF path's max delta of 255 means whole pixels flip, so **a GIF preview must say that dithering will differ.**
 - Under `--auto`, erosion calibration measures a **different curve** from one frame than from the whole asset — 0:0.5571, 1:0.0303 against 0:0.6151, 1:0.0382 — and both land on level 1. That is luck, not a guarantee. **The preview inherits the calibration rather than re-deriving it.**
-- Runtime dependencies: Python with Pillow, numpy and scipy; the external binaries `gifsicle`, `pngquant` and `webpmux`; and `pillow-avif-plugin` for AVIF. AVIF is what the Discord-emoji path depends on.
+- Runtime dependencies: Python with Pillow, numpy and scipy; the external binaries `gifsicle`, `pngquant` and `webpmux`; and AVIF support. ⚠️ **AVIF is a capability, not a package** — Pillow 12.3 ships it natively and `pillow-avif-plugin` is obsolete here. Test `PIL.features.check('avif')`, **on the interpreter the server actually runs**, not on `python3`.
 - Browser-only execution (Pyodide/WASM) is impossible, not merely hard — scipy exists there, but gifsicle, webpmux and pillow-avif do not.
 - Hosted execution on a small box was rejected on measured grounds: on claude.ai's single-CPU sandbox, `--target-kb` (a 120-rung grid re-encoding every frame) could not finish inside a tool call and `--verify` exceeded two minutes.
 

@@ -6,7 +6,7 @@ It is a front end for the [gif-background-remover](../Gif-Background-Remover) sk
 
 ## Why a front end
 
-The skill exposes **63 command-line options**, but that is not the friction it looks like — its own `--auto` already picks them. The friction is three questions: a coin-flip protection decision that fires on **12.8% of assets** (measured across 304), a fade it can name but not classify, and the size/format goal it deliberately never guesses.
+The skill exposes **63 command-line options**, but that is not the friction it looks like — its own `--auto` already picks them. The friction is three questions: a coin-flip protection decision that fires on **10.2% of assets** (measured across 304; 12.8% pooled with the fade question), a fade it can name but not classify, and the size/format goal it deliberately never guesses.
 
 The first two are visual questions delivered as prose naming a hex colour and a bounding box. Nobody can answer them by reading. **They have to see it.** That is the product.
 

@@ -12,10 +12,15 @@
 
 ## Read in this order
 
-1. **this file** — state, decisions, what was rejected
-2. **`PLAN.md`** — the build order; Stage 0.1 has a literal opening checklist
-3. `PRODUCT.md` — the brief and the non-negotiable constraints
-4. `DESIGN.md` — the visual system and the checks it must keep passing
+⚠️ **Read `DESIGN.md`'s first two sections before this file's "What exists".** This document is written in vocabulary that document defines — *the strip, the contact sheet, drawers, the ledger, grease-pencil marks, the lamp, rubylith, the wipe, the seam, the film strip* — and an audit found a reader backtracking twice.
+
+1. **`DESIGN.md`, sections "The world" and "Structure"** — the vocabulary, five minutes
+2. **this file** — state, decisions, what was rejected
+3. **`PLAN.md`** — the build order; it opens with a literal ten-step sequence
+4. `PRODUCT.md` — the brief and the non-negotiable constraints
+5. the rest of `DESIGN.md` — the visual system and the checks it must keep passing
+
+**Glossary for the two terms that appear nowhere else.** The **wipe** is one asset shown twice with a draggable seam between the two versions. The **question card** is its fallback: the disputed region boxed and hatched on a still frame, with two buttons — used only when two renders look identical.
 
 ## Model and effort for the build session
 
@@ -55,14 +60,17 @@ Session title: `Sonnet5-High · Devoid stage 0 — launch path and engine bounda
 - **Tauri.** A tenth the bundle, but the canvas — the hardest thing in the build — would run on WKWebView, and it puts a Rust toolchain between you and every backend change.
 - **SwiftUI.** Genuinely the best Mac feel, rejected anyway: the canvas needs simultaneous drag/magnify/hit-test gestures where SwiftUI is fiddly, native controls resist a strong custom identity, and it discards the CSS design system. The one door this choice does not leave open.
 - **A `.app` shim before Electron.** Presented as a costless sequence and was not — a browser cannot hand the server a filesystem *path*, only bytes.
-- **Board / Bench as two lanes.** Approved, built, discarded. The refusal fires on 12.8% of assets, so a dedicated lane served ~1.5 items per batch while review, which every asset needs every time, had no home.
+- **Board / Bench as two lanes.** Approved, built, discarded. The coin-flip refusal fires on 10.2% of assets (12.8% pooled with the fade question), so a dedicated lane served ~1 item per batch while review, which every asset needs every time, had no home.
 - **A `discord-sticker` preset.** The repo records the 256 KB cap but no pixel dimension. Inventing one is the guess this design exists to prevent.
 - **Names:** `kerf` (CNC software), `notan` (a Rust game framework), `knockout` (Knockout.js), `void` (a reserved word), plus `matte`/`kisscut`/`weeder`/`counter`/`pegbar`/`offcut`/`holdout`/`frisket`.
 
 ## Open, and genuinely open
 
-1. **The seam's "cannot help" threshold.** The card survives only below it, and nobody has picked a number. Suggest: differing alpha px below some fraction of the region's own area, measured on the preview pair. **Decide it with a render in front of you, not in advance.**
-2. **Whether `--auto`'s re-run of `--recommend` is worth eliminating.** In-process analysis saves one `--recommend` (~18s); the `--verify` duplication is filed separately in the skill repo.
+1. **Per-colour vs per-region answers.** The engine's assume-flags take outline *colours*; the UI asks per *region*, and two regions can share a colour. Group into one question, or refuse a colliding submit. `PLAN.md` 3.0a. **This one may need a skill change** — nothing is filed yet.
+2. **The seam's "cannot help" threshold.** The card survives only below it, and nobody has picked a number. Suggest: differing alpha px below some fraction of the region's own area, measured on the preview pair. **Decide it with a render in front of you, not in advance.**
+3. **What happens when a fade answer collides with a stated format.** Answering "it is artwork" forces `.webp`/`.avif`/`.apng`. If the goal says GIF, the app must override, block, or ask — undecided.
+4. **The `conflict` policy.** `PRODUCT.md` promises both "never overwrite" and "follows the `_v2` escalation". Whether the app asks first or escalates and reports are different products.
+5. **Whether `--auto`'s re-run of `--recommend` is worth eliminating.** In-process analysis saves one `--recommend` (~18s); the `--verify` duplication is filed separately in the skill repo.
 
 ## What exists
 
@@ -72,7 +80,11 @@ Session title: `Sonnet5-High · Devoid stage 0 — launch path and engine bounda
 
 **Does not have:** any engine · six states (`loading`, `refused`, `cancelled`, `failed`, `conflict`, `blocked`) · selection · history · drag-and-drop · the region canvas · **the matte toggle** (which `DESIGN.md` calls a verification requirement) · **the rubylith hatch** (which `DESIGN.md` mandates) · **frame scrubbing** — the strip highlights and counts, but the artwork is a looping `<img>` that never seeks · **any test runner**.
 
-⚠️ **Two of eight wipe pairs desynchronise** — `growth` drifts 1,220 ms per loop, `paper-plane` 2,400 ms, because the two sides are independent `<img>` loops with different frame counts. The wipe's premise is comparing the same moment. Same fix as scrubbing: decode to canvas. `PLAN.md` 3.3.
+⚠️ **Two of eight wipe pairs desynchronise.** `growth` drifts 1,220 ms per loop (123f/2,920 ms source against 85f/1,700 ms cut). `paper-plane` drifts 2,400 ms — and for a **different reason**: its cut WebP carries **no frame durations at all**, so decoding to canvas cannot recover timing the file does not contain. Its frame counts also differ by one (96 source, 97 cut) and nothing explains why. The wipe's premise is comparing the same moment.
+
+⚠️ **The prototype's seam compares source-vs-output, not answer-A-vs-answer-B.** It looks finished and is the wrong pair. `PLAN.md` 3.3.
+
+⚠️ **`app.js`'s only answer path hardcodes `'cut'`** regardless of the seam, and it is the only caller of `logLabel()`. Ported unchanged, the labelling instrument produces a corpus of one constant value. Marked as a stub in the file.
 
 ⚠️ **The drawer taxonomy in `app.js` is a guess, not a spec.** Five groups in the person's vocabulary, mapping to no verified subset of the 63 flags. Marked provisional in the file. Revisit at Stage 2.7.
 
@@ -82,7 +94,7 @@ Session title: `Sonnet5-High · Devoid stage 0 — launch path and engine bounda
 
 | script | what it says |
 |---|---|
-| `measure_preview_fidelity.py` | takes no arguments; the asset is named. A 1-frame preview is **visually** identical to an 8-bit-alpha full render (11 px of 409,600, **max delta 3**) and **not literally** identical. GIF flips 8 whole pixels (max delta 255) via palette and dither. Under `--auto` the calibration measures a different curve from one frame and lands on the same level *by luck* |
+| `measure_preview_fidelity.py` | defaults to a named asset; takes an optional path and frame. A 1-frame preview is **visually** identical to an 8-bit-alpha full render (11 px of 409,600, **max delta 3**) and **not literally** identical. GIF flips 8 whole pixels (max delta 255) via palette and dither. Under `--auto` the calibration measures a different curve from one frame and lands on the same level *by luck* |
 | `measure_overlay_collision.py` | no arguments; defaults to the shipped outputs. hurricane 30.9%, paper-plane 20.6%, growth 5.0%, megaphone 2.0% of artwork sits inside the overlay colour's neighbourhood |
 | `measure_ledger.py` | derives the prototype's ledger numbers. `--check` fails if `app.js` drifts, proven red-green. ⚠️ Its `art` column is a **ceiling** — it includes the antialiasing ramp the keyer is meant to remove. Comparable between settings on one asset; never absolute damage |
 

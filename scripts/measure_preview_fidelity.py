@@ -29,7 +29,7 @@ both wrong and unverifiable, because the script named no asset.
 
 The --auto row is why the app passes the whole-asset calibration into the
 preview instead of letting one frame re-derive it: the curves differed
-(0:0.5407,1:0.0407,2:0.0135 vs 0:0.612,1:0.0354,2:0.0005) and landed on the same
+(0:0.5571,1:0.0303,2:0.0 vs 0:0.6151,1:0.0382,2:0.0) and landed on the same
 level by luck, not by guarantee.
 """
 import subprocess, sys, os, tempfile, json

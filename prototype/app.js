@@ -49,7 +49,7 @@ const onTable = () => S.cleared ? [] : ASSETS;
 
 /* ── the label log ────────────────────────────────────────────────────────
    Every answer is a labelled data point for the question the engine refuses.
-   The repo already holds 714 hand-written labels for edge_hardness and ZERO for
+   The repo already holds 981 classified labels for edge_hardness and ZERO for
    this decision, while the project's stated goal is autonomy. Capturing costs a
    line; retrofitting throws away every answer given before it existed. */
 function logLabel(a, verdict) {
@@ -110,6 +110,9 @@ const renderSheet = () => $('#sheet').replaceChildren(...onTable().map(a => tile
 const renderEdge  = () => $('#edge').replaceChildren(...onTable().map(a => tile(a, false)));
 
 /* ── the wipe ─────────────────────────────────────────────────────────────
+   ⚠️ THIS PROTOTYPE SHOWS SOURCE vs OUTPUT. The product shows ANSWER-A vs
+   ANSWER-B. Same control, different pair — see the stub note at the bottom.
+
    The seam is the cut line. Drag it across a playing loop and the background
    dissolves into transparency — the product's thesis as one gesture, and the way
    every visible flag becomes "which is right?" instead of a number to tune. */
@@ -153,6 +156,9 @@ function renderLedger(a) {
   // corner colour and ended up transparent, which includes the antialiasing ramp
   // the keyer is meant to remove. Comparable BETWEEN settings on one asset, never
   // quotable as absolute damage. The wording says "at most" for that reason.
+  // ⚠️ 500 is INVENTED — the one number in this file that is not derived. It
+  // colours the app's central honesty widget, so it needs a real basis before it
+  // ships. PLAN.md 3.5.
   L.append(el('span', a.px.art > 500 ? 'loss' : 'safe',
     a.px.art == null ? 'artwork loss not comparable at this scale'
                      : `at most ${a.px.art.toLocaleString()} artwork px lost`));
@@ -264,7 +270,18 @@ $('#lamp').addEventListener('click', () => {
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.open) closeAsset(); });
 
-/* answering happens on the open asset: the wipe shows both, you pick one */
+/* ⚠️⚠️ STUB — DO NOT PORT AS-IS. Two things are wrong on purpose, and both look
+   finished:
+
+   1. THE VERDICT IS HARDCODED. This always answers 'cut', whatever the seam says.
+      It is also the only caller of logLabel(), so ported unchanged the labelling
+      instrument — PRODUCT.md's "strongest justification" — produces a corpus of
+      one constant value.
+   2. THE WIPE IS THE WRONG COMPARISON. #before is the untouched SOURCE and #after
+      is the cut output: a before/after. The design specifies two RENDERS OF THE
+      TWO ANSWERS (--assume-protect vs --assume-remove). Before/after cannot
+      discriminate, because both candidate answers look identical on the source
+      side. PLAN.md 3.1 builds the real pair. */
 $('#primary').addEventListener('click', () => {
   const a = onTable().find(x => x.id === S.open);
   if (a && pending(a)) { S.answers[a.id] = 'cut'; logLabel(a, 'cut'); }

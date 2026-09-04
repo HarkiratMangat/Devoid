@@ -16,16 +16,50 @@ Tick these in order. Each has a visible success condition, so a stall is obvious
 |---|---|---|
 | 1 | `cd "/Applications/Claude Code/Devoid" && git checkout -b feat/stage-0` | on a branch, not `main` |
 | 2 | `python3 scripts/measure_ledger.py --check` | `ledger matches the measurement (8 assets checked)` — proves the repo is in the state this plan assumes |
-| 3 | `python3 -c "from PIL import features; print(features.check('avif'))"` | `True`. If `False`, stop and read 0.3 |
-| 4 | `node ~/.claude/skills/impeccable/scripts/detect.mjs --json prototype/index.html prototype/app.css` | exactly one finding, `repeating-stripes-gradient`, and **no DEGRADED line** |
-| 5 | `mkdir -p server web tests && git mv prototype/index.html prototype/app.css prototype/app.js prototype/assets web/` | `prototype/` is gone; `web/` holds four entries |
-| 6 | `npm init -y && npm i -D electron` | `package.json` exists, Electron installs |
-| 7 | write `pyproject.toml` (Python ≥3.11, `starlette`, `uvicorn`, `pytest`) and `python3 -m venv .venv && .venv/bin/pip install -e .` | `.venv/bin/python -c "import starlette"` is silent |
+| 3 | *(moved — see 7b. Checking a capability before the interpreter that needs it exists checks nothing)* | — |
+| 4 | `node ~/.claude/skills/impeccable/scripts/detect.mjs --json prototype/index.html prototype/app.css` | exactly one finding, `repeating-stripes-gradient`, and **no DEGRADED line**. ⚠️ **Judge the output, never the exit code** — the correct result exits **2**, and a run against files that do not exist prints `Warning: cannot access` and exits **0** with `[]`. The documented "no DEGRADED line" guard does not catch that. After step 5 this command's paths are stale and it will "pass" |
+| 5 | `mkdir -p server web tests && git mv prototype/index.html prototype/app.css prototype/app.js prototype/assets web/` then **re-run step 2** | `web/` holds four entries **and `measure_ledger.py --check` still exits 0** |
+| 6 | `npm init -y && npm pkg set main=main.js scripts.start="electron ." && npm pkg delete scripts.test && npm i -D electron` | `package.json` has `start`. ⚠️ **`npm init -y` alone writes `"main": "index.js"` and no `start` script**, so step 10's `npm start` fails with *Missing script: start* |
+| 7 | write `pyproject.toml` — see below for its **exact contents**, which are not obvious — then `python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"` | `.venv/bin/python -c "import starlette, PIL, numpy, scipy"` is silent |
+| 7b | `.venv/bin/python -c "from PIL import features; print(features.check('avif'))"` | `True`. ⚠️ **On `.venv/bin/python`, not `python3`** — measured, the system interpreter has the whole imaging stack and a fresh venv has none of it, so testing `python3` passes while the app's real interpreter cannot import PIL at all |
 | 8 | `.venv/bin/pytest tests/ -q` against one placeholder test | `1 passed` — **a test runner before there is code to test** |
-| 9 | write `server/app.py` serving `web/` on **8732**, then `.venv/bin/uvicorn server.app:app --port 8732` | `curl -s -o /dev/null -w "%{http_code}" localhost:8732` → `200` |
+| 9 | write `server/app.py` serving `web/` on **8732**, then `.venv/bin/uvicorn server.app:app --port 8732 &` | `curl -s -o /dev/null -w "%{http_code}" localhost:8732` → `200`. ⚠️ **Background it** — uvicorn runs in the foreground and a literal reading of this table blocks here forever. Step 10's Electron spawns it properly; this is a one-off check, so kill it after |
 | 10 | write `main.js`, then `npm start` | a native window opens on the contact sheet, animating |
 
-⚠️ **Update `README.md` and `CLAUDE.md` at step 5** — both document `cd prototype && python3 -m http.server 8731` as the standing test procedure, and the move breaks it.
+⚠️ **At step 5, run `rg -l "prototype/" -- . --hidden -g '!.git'` and fix every hit** — do not work from a list, which goes stale. `README.md` and `CLAUDE.md` document the old test procedure, `DESIGN.md` points at `prototype/app.css`, and both measurement scripts used to hardcode the path. **The scripts now resolve `web/` or `prototype/` themselves**, so gate 4 survives the move — but nothing else does automatically.
+
+### `pyproject.toml` — the exact contents, because a literal reading of step 7 fails
+
+```toml
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "devoid"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "starlette", "uvicorn",
+  # ⚠️ THE ENGINE'S OWN STACK. Omitting these produces a server that cannot
+  # import the skill — measured: ModuleNotFoundError: No module named 'PIL'
+  # from the server's first request. Stage 1.2 is unreachable without them.
+  # Pinned to the versions the skill's 981-label corpus was measured against;
+  # a different numpy is a silent engine-behaviour change with no gate.
+  "pillow==12.3.0", "numpy==2.4.6", "scipy==1.17.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]      # not a runtime dependency; `pip install -e ".[dev]"`
+
+[tool.setuptools]
+packages = ["server"]   # flat-layout autodiscovery fails on this tree
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+```
+
+Also create `server/__init__.py`, or step 9's `server.app:app` will not import.
 
 ⚠️ **Nothing in this sequence renders an asset.** That is 0.4, and it is the point of Stage 0 — steps 1–10 only prove the spine holds.
 
@@ -36,7 +70,11 @@ Tick these in order. Each has a visible success condition, so a stall is obvious
 **0.1 Repo skeleton and dev loop.** Concretely, because the first version of this task left eleven decisions to invent:
 
 - `git mv prototype/{index.html,app.css,app.js,assets} web/` — and **update `README.md` and `CLAUDE.md`, which both document `cd prototype && python3 -m http.server 8731` as the standing test procedure.** The move breaks it. `prototype/` does not survive; 2.1 does not repeat this move.
-- `server/` — Python. **`http.server` is not adequate**: it is single-threaded and blocking, which breaks 1.3's cancel and 1.5's concurrency. Use a small ASGI server (`uvicorn` + `starlette`, or `aiohttp`); pick one here and record it, do not defer.
+- `server/` — Python, **`uvicorn` + `starlette`** (recorded here so the table and the prose agree). `http.server` is single-threaded and blocking.
+
+  ⚠️ **ASGI alone does NOT fix that, and the plan previously implied it did.** Measured on this exact stack with `analyze()` called from an `async def` route: a static request took **0.0016 s** idle and **2.1128 s** during an analysis — a **1,290×** stall, exactly what `http.server` would do. The event loop blocks on any synchronous call.
+
+  **So decide the strategy here, at 0.1, not at 1.3:** every call into the engine goes through `run_in_threadpool` (or a plain `def` route, which Starlette threadpools for you), and rendering goes to a subprocess. **Add a falsifier at step 9½: a static request issued during an `analyze()` must return in under 50 ms.** Without it, 1.5's concurrency has nowhere to land and 1.3's cancel cannot work.
 - **`pyproject.toml` with a pinned floor of Python 3.11** and a `.venv` the entry point creates on first run. No global installs.
 - **`package.json`** at the repo root for Electron. `npm i -D electron`.
 - **`devoid`** is `npm start` → Electron main → spawns the Python server → opens the window. There is no browser-tab stage: ⚠️ **opening a browser tab here reproduces exactly the shim the 2026-09-04 decision exists to prevent**, because a browser cannot hand the server a filesystem path.
@@ -62,7 +100,11 @@ Tick these in order. Each has a visible success condition, so a stall is obvious
 
 **1.1 The validation boundary.** ⚠️ **One function takes the skill's raw JSON, asserts what it needs, and returns a typed object. Nothing downstream touches raw JSON.** The CLI ancestor learned this the expensive way and fixed it in exactly one function while four other call sites still assume shape. Test the boundary; do not test every consumer.
 
-**1.2 In-process analysis.** Import the skill module and call `analyze()` directly — verified importable in ~0.3s with no side effects, entry point `analyze(input_path, max_samples=40, tolerance=15)`. Compute once and pass it forward.
+**1.2 In-process analysis.** Import the skill module and call `analyze()` directly. **Verified end to end under a running server**, not just standalone: silent on stdout and stderr, no `sys.exit` (it has a proper `__main__` guard), no mutation of the skill module's own globals, and byte-identical results across separate server processes.
+
+⚠️ **Import cost is `0.20 s` warm and `3.82 s` cold.** The cold number is the one Electron pays on first launch after an install, and the one a packaged `.dmg` pays for every new user — budget it in 0.5 and 6.3, and show the `loading` state during it.
+
+⚠️ Importing does mutate the *process*: `sys.modules` +292, `warnings.filters` +5, and `PIL.Image.OPEN/SAVE` populate lazily on first use. Harmless, but it means an import-time capability probe can read False before anything has run. Compute once and pass it forward.
 
 ⚠️ **Do not budget "~50% back".** The measured 50% is one duplicated `--verify` pass (~30s on top of `--auto`'s ~60s), not three re-derivations of `analyze()`. The real saving from in-process analysis is one `--recommend` (~18s on a 144-frame asset); the verify duplication is a separate fix.
 
@@ -98,19 +140,29 @@ Six to build, not ten. Missing states are the fastest tell of an unfinished inte
 
 **2.6 The tri-state control.** `auto · value` until taken over. **Forced by the engine**: `--auto` applies its recommendation only where an option was left at its default, so a UI that sends every flag makes `--auto` a no-op and the tool stops thinking.
 
-**2.7 Presets as goals.** Every number cited from the skill repo's measurements. No preset whose numbers cannot be cited.
+**2.6b The `conflict` policy — decide, do not inherit.** `PRODUCT.md` promises both "never overwrite" and "follows the `_v2` escalation". Asking before writing and escalating-then-reporting are different products. Pick one.
+
+**2.7 Presets as goals. Every number cited from the skill repo's measurements. No preset whose numbers cannot be cited.
 
 ---
 
 ## Stage 3 — the wipe, and what it unlocks
 
-**3.0 Decide when the seam CANNOT help.** The question card survives only below a visible-difference threshold — a sub-half-opacity fade, a three-pixel sliver, anything where two renders look identical. ⚠️ **Pick the number with a render in front of you, not in advance.** Suggested shape: differing alpha px as a fraction of the disputed region's own area, measured on the preview pair. Below it, fall back to the boxed-and-hatched card; above it, the seam.
+**3.0a ⚠️ THE ANSWER FLAGS ARE KEYED PER OUTLINE COLOUR; THE UI ASKS PER REGION.** `--assume-protect` / `--assume-remove` take hex colours, and the engine filters pending refusals by `outline_color`. But `ambiguous_protection` returns one entry per **region**, each with its own `bbox_xyxy` — and the prototype asks, shows and logs per region.
 
-**3.1 Two-render machinery.** Render a variant pair for one flag at a time, cached. **Previews render to an 8-bit-alpha format even when the output is GIF** — measured pixel-exact there, and GIF differs by the shared palette and dither. When the target is GIF, say so on the preview.
+**Two regions sharing an outline colour cannot be answered differently.** Answering them differently emits `--assume-protect X` and `--assume-remove X` at once, which is incoherent. This is not a corner case: `--recommend` on the 640px megaphone derives **two** colours, `f0c850,002864`.
+
+**Decide before building the interview:** group regions by colour into one question (honest, and the engine's actual granularity), or ask per region and refuse to submit when two answers collide. **Do not discover this at the flag-assembly step.**
+
+**3.0b Decide when the seam CANNOT help.** The question card survives only below a visible-difference threshold — a sub-half-opacity fade, a three-pixel sliver, anything where two renders look identical. ⚠️ **Pick the number with a render in front of you, not in advance.** Suggested shape: differing alpha px as a fraction of the disputed region's own area, measured on the preview pair. Below it, fall back to the boxed-and-hatched card; above it, the seam.
+
+**3.1 Two-render machinery.** Render a variant pair for one flag at a time, cached. **Previews render to an 8-bit-alpha format even when the output is GIF** — measured *visually* identical there (11 px of 409,600, max delta 3), while GIF flips 8 whole pixels via the shared palette and dither. When the target is GIF, say so on the preview.
 
 **3.2 The preview inherits the calibration.** ⚠️ Do not let a single-frame render re-derive erosion from itself; pass the whole-asset calibration in. Measured: the curves differ and landed on the same level by luck.
 
-**3.3 The seam.** Drag, keyboard, and the labels. Prototype has a working version.
+**3.3 The seam.** Drag, keyboard, and the labels.
+
+⚠️ **The prototype's seam compares the WRONG PAIR and looks finished.** It puts the untouched source on the left and the cut output on the right — a before/after. The product needs **the two answers**: an `--assume-protect` render against an `--assume-remove` render. Before/after cannot discriminate, because both candidate answers look identical on the source side. The drag, keyboard and labels are reusable; the pair is not.
 
 ⚠️ **Two things the prototype's version does NOT do, and neither is a polish item.** **(a) The two sides desynchronise.** They are two independently-looping `<img>` elements. Measured: megaphone and hurricane stay in sync (identical frame counts and durations), but `growth` drifts 1,220 ms per loop (123f/2,920 ms source against 85f/1,700 ms cut) and `paper-plane` drifts a full 2,400 ms. **The wipe's entire premise is comparing the same moment**, so on those assets it silently compares two different ones. **(b) The film strip does not scrub.** Clicking a frame updates `aria-current` and the counter and nothing else — the artwork is a looping GIF that never seeks.
 
@@ -159,6 +211,23 @@ Both have the same fix and it is **not small: decode frames to a canvas.** That 
 **6.1 Menus** — native app menus, keyboard shortcuts, the About panel. **6.2 Signing and notarisation.** **6.3 Packaging** — a `.dmg` or a `.app` that runs on a machine that is not this one, with the environment check from 0.3 as the failure path.
 
 ---
+
+## Edge cases no stage owns yet — assign each one before it bites
+
+Found by an audit, not by use. Each is a situation that *will* occur and that nothing currently handles.
+
+| situation | what happens today | owner |
+|---|---|---|
+| **Offline.** `index.html` loads Archivo and Spline Sans Mono from Google Fonts, in an app whose whole premise is local | silent fallback to Helvetica — and the width axis and `tabular-nums` are load-bearing in `DESIGN.md` | 6.3 — self-host the two faces |
+| **Motion sensitivity.** An animated `<img>` cannot be paused by CSS | 200 looping images with no off switch, for a user who asked for none | 3.3, once frames decode to canvas |
+| **200 assets decoding at once.** "one, twelve and two hundred are the same layout" is a *layout* claim used as a *performance* one | 200 concurrent decoders at full source resolution | 2.2 — a `loading` state that means something |
+| **Port 8732 already bound** — a second window, a crashed run | uvicorn exits, Electron shows a blank window | 0.5 — probe, then fail loudly or pick the next free port |
+| **Two windows, one log.** "one writer each" is a schema rule, not an enforced one | interleaved partial JSON lines in `jobs.jsonl` — and `PLAN`'s "a corrupt index is `rm` and restart" assumes the *log* cannot corrupt | 5.1 — single-instance lock, or `O_APPEND` line-atomic writes |
+| **The source file moved, renamed, or is on a sleeping disk** | `PLAN` says a missing output "says that output was deleted". It says no such thing | 5.2 — distinguish absent from deleted |
+| **Non-square or very large assets.** `.wipe` and the contact-sheet tile are both `aspect-ratio:1`; the corpus is eight 260×260 squares | a 1920×480 banner letterboxes into a square, and the seam's useful range collapses — while 4.1's coordinate round-trip has to land on source pixels through it | 4.1 |
+| **Filenames with spaces or quotes.** `--auto` builds its flags by `shlex.split`ing `suggested_command`, a shell *string* | undefined — the corpus has no such filename; a Finder drag will | 1.1, at the validation boundary |
+| **Nested concurrency.** 1.5 runs `default_jobs()` = 6 jobs, and the skill's own `--target-kb` fit probes its own pool (~6 workers) | 6 × 6 workers at ~488 MB per analyse, on a 16 GB machine. Cancel may also orphan the inner pool | 1.3 and 1.5 together |
+| **Two engine versions.** 0.2 may resolve the synced claude.ai bundle, which is a *different version* of the skill | the validation boundary checks JSON *shape*, not engine *version*; two installs whose `--recommend` differ semantically both validate | 1.1 — record the engine's version alongside every result |
 
 ## Gates before calling any stage done
 
