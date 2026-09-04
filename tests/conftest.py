@@ -67,24 +67,8 @@ def isolated_logs(tmp_path, monkeypatch):
     ``labels/protection.jsonl`` — the label log is evidence, and salting it with
     test rows would quietly corrupt the corpus it exists to build.
     """
-    from server import labels, render
+    from server import jobs, labels
 
     monkeypatch.setattr(labels, "LABELS_PATH", tmp_path / "labels" / "protection.jsonl")
-    monkeypatch.setattr(render, "JOBS_PATH", tmp_path / "jobs.jsonl")
+    monkeypatch.setattr(jobs, "JOBS_PATH", tmp_path / "jobs.jsonl")
     return tmp_path
-=======
-"""Put the repo root ahead of everything on `sys.path`.
-
-pytest's prepend import mode inserts `tests/`, not the root, so `import server`
-would otherwise resolve to whatever editable install happens to be in the venv —
-which is not necessarily this checkout. Tests must exercise the tree they sit in.
-"""
-
-import sys
-from pathlib import Path
-
-ROOT = str(Path(__file__).resolve().parent.parent)
-if ROOT in sys.path:
-    sys.path.remove(ROOT)
-sys.path.insert(0, ROOT)
->>>>>>> worktree-agent-ac7cb7077317676c3
