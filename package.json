@@ -6,7 +6,9 @@
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder",
-    "dist:dir": "electron-builder --dir"
+    "dist:dir": "electron-builder --dir",
+    "vendor:gifuct": "esbuild node_modules/gifuct-js/src/index.js --bundle --format=iife --global-name=gifuct --minify --outfile=web/vendor/gifuct.js",
+    "test:wipe": "node --test tests/test_wipe_sync.mjs"
   },
   "author": "Harkirat Mangat",
   "repository": {
@@ -21,6 +23,10 @@
   "homepage": "https://github.com/HarkiratMangat/Devoid#readme",
   "devDependencies": {
     "electron": "^44.2.0",
-    "electron-builder": "^26.15.3"
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2"
+  },
+  "dependencies": {
+    "gifuct-js": "^2.1.2"
   }
 }
