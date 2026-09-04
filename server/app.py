@@ -17,6 +17,7 @@ static path while it runs.
 """
 from __future__ import annotations
 
+import contextlib
 import logging
 import time
 from pathlib import Path
@@ -28,7 +29,7 @@ from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
 from . import assets as registry
-from . import cli, concurrency, engine, flags, labels, preview, render, validate
+from . import cli, concurrency, engine, flags, jobs as jobs_log, journal, labels, preview, render, validate
 
 log = logging.getLogger("devoid.app")
 
@@ -293,6 +294,24 @@ def history(request: Request) -> JSONResponse:
     return JSONResponse(render.read_history(max(1, min(limit, 1000))))
 
 
+async def rerun_history_line(request: Request) -> JSONResponse:
+    """``POST /api/history/{line_id}/rerun`` -- API-CONTRACT.md "History".
+
+    Loads that jobs.jsonl line's settings back onto a freshly-registered asset
+    for the same input path. 404s with ``input_missing`` when the source no
+    longer exists, rather than failing later inside the engine.
+    """
+    line_id = request.path_params["line_id"]
+    row = jobs_log.rerun_row(line_id)
+    if row is None:
+        return _error("no such history line", 404)
+    input_path = row.get("input_path")
+    if not input_path or not Path(input_path).is_file():
+        return _error("input_missing", 404, path=input_path)
+    asset = registry.register(input_path)
+    return JSONResponse({"asset": asset.public(), "settings": row.get("settings") or {}})
+
+
 routes = [
     Route("/api/engine/status", engine_status),
     Route("/api/engine/concurrency", api_concurrency),
@@ -307,8 +326,19 @@ routes = [
     Route("/api/jobs/{id}", job_status, methods=["GET"]),
     Route("/api/jobs/{id}", cancel_job, methods=["DELETE"]),
     Route("/api/history", history),
+    Route("/api/history/{line_id}/rerun", rerun_history_line, methods=["POST"]),
     # ⚠️ The catch-all static mount stays LAST -- it matches everything.
     Mount("/", app=StaticFiles(directory=WEB_DIR, html=True), name="web"),
 ]
 
-app = Starlette(routes=routes)
+@contextlib.asynccontextmanager
+async def _lifespan(app: Starlette):
+    orphans = journal.recover_orphans()
+    if orphans:
+        log.warning("devoid: %d in-flight job(s) from a previous run were not "
+                    "settled -- not auto-resumed, surfaced here so they are not "
+                    "silently forgotten: %s", len(orphans), orphans)
+    yield
+
+
+app = Starlette(routes=routes, lifespan=_lifespan)

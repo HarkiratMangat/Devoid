@@ -35,6 +35,7 @@ def test_engine_status_shape(client):
         "pngquant",
         "webpmux",
         "engine_version",
+        "skill_path",
     }
 
 

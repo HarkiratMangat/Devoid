@@ -401,6 +401,14 @@
   function mountCanvases() {
     if (W.canvasA) return;
     var wipe = $('#wipe'); if (!wipe) return;
+    /* Hand the element over cleanly: web/app.js keeps its own drag listeners
+       attached (harmless, since dragging only ever touches the shared --seam
+       CSS variable both the old <img> and these canvases read) as a fallback
+       for the window before this module loads, but there is no reason to keep
+       them once we are actually driving the content. */
+    if (window.Devoid && typeof window.Devoid.releaseWipe === 'function') {
+      window.Devoid.releaseWipe();
+    }
     var before = $('#before'), after = $('#after');
     W.canvasA = document.createElement('canvas');
     W.canvasA.id = 'wipe-a';

@@ -208,10 +208,17 @@ def avif_available() -> bool:
 
 
 def status() -> dict:
-    """The payload behind ``GET /api/engine/status`` (API-CONTRACT.md "Engine")."""
+    """The payload behind ``GET /api/engine/status`` (API-CONTRACT.md "Engine").
+
+    ``skill_path`` isn't in the frozen contract, but main.js logs it on launch
+    for the "two engine versions" edge case (PLAN.md) -- without it that log
+    line always read "unreported", which defeated the diagnostic it exists for.
+    """
     missing: list[str] = []
     available = True
+    path = None
     try:
+        path = str(skill_path())
         load_skill()
         version = engine_version()
     except EngineUnavailable as exc:
@@ -241,4 +248,5 @@ def status() -> dict:
         "pngquant": bins["pngquant"],
         "webpmux": bins["webpmux"],
         "engine_version": version,
+        "skill_path": path,
     }

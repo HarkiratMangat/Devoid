@@ -32,6 +32,7 @@ def test_status_matches_the_contract():
         "pngquant",
         "webpmux",
         "engine_version",
+        "skill_path",
     }
     assert isinstance(s["missing"], list)
     assert s["engine_version"].startswith("sha256:")

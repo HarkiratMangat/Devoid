@@ -44,9 +44,16 @@ _lock = threading.Lock()
 #: PLAN.md 3.0b: below this, two renders look identical and the seam CANNOT help,
 #: so the question card is the honest fallback. Expressed as differing alpha px as
 #: a fraction of the disputed region's own area, measured on the preview pair.
-#: ⚠️ **This number is provisional and Stage 3 owns picking it with a render in
-#: front of it, not in advance.** It is exposed as `seam_useful` rather than
-#: hidden, so a wrong value is visible instead of silently steering the UI.
+#: ⚠️ **SUPERSEDED, left in place deliberately.** web/wipe.js does not read this
+#: field at all -- it computes its own gate client-side (a conspicuity score:
+#: differing-px-fraction times mean |Δalpha|/255, threshold 0.003, derived by
+#: actually measuring the three real ambiguous-protection regions in this
+#: corpus, plus a 0.02 region-fraction floor for the sub-half-opacity-fade case
+#: this cruder single-number version cannot separate from a real answer -- see
+#: wipe.js's own header for the full derivation). `seam_useful` stays exposed
+#: as a second opinion for a future consumer that has no decoded frames to
+#: measure from itself (a server-side batch view, say), not because it is the
+#: one this app's UI actually trusts.
 SEAM_THRESHOLD = 0.02
 
 
