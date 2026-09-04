@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Devoid</title>
+<script>try{var t=localStorage.getItem('devoid-lamp');if(t==='light')document.documentElement.className='lamp-light'}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400;62..125,500;62..125,600;62..125,700&family=Spline+Sans+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div class="app">
+  <header class="chrome">
+    <span class="wordmark" aria-label="Devoid">DEV<i aria-hidden="true"></i>ID</span>
+    <div class="seg" role="group" aria-label="Lane">
+      <button id="lane-board" aria-pressed="true">Board</button>
+      <button id="lane-bench" aria-pressed="false">Bench</button>
+    </div>
+    <span class="grow"></span>
+    <span class="stat" id="preview-label" hidden>preview</span>
+    <div class="seg" id="preview-modes" role="group" aria-label="Preview fidelity" hidden>
+      <button aria-pressed="true">1 frame</button><button aria-pressed="false">3</button><button aria-pressed="false">full</button>
+    </div>
+    <button class="btn" id="add">Add files</button>
+    <button class="lamp" id="lamp" aria-label="Lighting" title="Work lamp / light table"><b></b></button>
+    <button class="btn go" id="export">Export 6</button>
+  </header>
+
+  <div class="body">
+
+    <!-- ── BOARD ─────────────────────────────────────────────────────── -->
+    <div class="board chk" id="board">
+      <p class="rule"><b id="need-count">2 need you</b></p>
+      <div class="needs" id="needs"></div>
+      <p class="rule" id="settled-rule">6 settled</p>
+      <div class="strip">
+        <span class="perf" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <div class="cells" id="cells"></div>
+        <span class="perf" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      </div>
+    </div>
+
+    <!-- ── BENCH ─────────────────────────────────────────────────────── -->
+    <div class="rail hidden" id="rail"></div>
+    <div class="canvas hidden" id="canvas">
+      <div class="plate chk" id="plate">
+        <img id="plate-img" alt="">
+        <div class="mattes" role="group" aria-label="Matte">
+          <button class="chk-s" data-matte="chk" aria-pressed="true" aria-label="Checkerboard"></button>
+          <button data-matte="#fff" style="background:#fff" aria-label="White"></button>
+          <button data-matte="#000" style="background:#000" aria-label="Black"></button>
+          <button data-matte="#00B140" style="background:#00B140" aria-label="Chroma green"></button>
+        </div>
+        <span class="coord" id="coord">protect · rect:104,40,94,128</span>
+      </div>
+      <div class="film">
+        <div class="filmhead">
+          <span>onion skin · 2 frames</span>
+          <span id="film-count">62 / 144 · 9 flagged</span>
+        </div>
+        <div class="frames" id="frames"></div>
+      </div>
+    </div>
+
+    <!-- ── inspector ─────────────────────────────────────────────────── -->
+    <aside class="insp" id="insp"></aside>
+  </div>
+
+  <div class="runbar" id="runbar">
+    <span class="stat"><span class="dot" style="background:var(--ok)"></span><span id="s-done">6 done</span></span>
+    <span class="stat"><span class="dot" style="background:var(--ruby)"></span><span id="s-need">2 need you</span></span>
+    <span class="stat"><span class="dot" style="background:var(--cyan)"></span>1 running · <span id="s-frames">88/144</span> frames</span>
+    <span class="grow"></span>
+    <div class="seg" role="group" aria-label="Thoroughness">
+      <button id="m-quick" aria-pressed="true">quick</button><button id="m-thorough" aria-pressed="false">thorough</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
