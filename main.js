@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, dialog, shell } = require('electron');
+const { app, BrowserWindow, Menu, dialog, shell, ipcMain } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
 const http = require('http');
@@ -36,10 +36,24 @@ function createWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
+      preload: path.join(__dirname, 'web', 'preload.js'),
     },
   });
   mainWindow.loadURL(`http://127.0.0.1:${activePort}`);
 }
+
+// `web/app.js`'s "Add files" button goes through this (FileSource.pick, PLAN
+// 2.5), reusing the same dialog + filters Stage 6's File > Open menu item
+// uses. web/preload.js exposes it as window.devoid.pickFiles().
+ipcMain.handle('pick-files', async () => {
+  if (!mainWindow) return [];
+  const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+    title: 'Open images',
+    properties: ['openFile', 'multiSelections'],
+    filters: IMAGE_FILTERS,
+  });
+  return canceled ? [] : filePaths;
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Stage 6 — ship it. Everything below this line is additive; it is one block so

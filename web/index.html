@@ -7,6 +7,7 @@
 <script>try{if(localStorage.getItem('devoid-lamp')==='light')document.documentElement.className='lamp-light'}catch(e){}</script>
 <link rel="stylesheet" href="fonts.css">
 <link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="canvas.css">
 </head>
 <body>
 
@@ -15,6 +16,7 @@
     <span class="wordmark" aria-label="Devoid">DEV<i aria-hidden="true"></i>ID</span>
     <span class="crumb" id="crumb"></span>
     <span class="grow"></span>
+    <button class="btn" id="selectall">Select all</button>
     <button class="btn" id="add">Add files</button>
     <button class="lamp" id="lamp" aria-label="Lighting"><b></b></button>
     <button class="btn go" id="primary">Save 6</button>
@@ -24,6 +26,8 @@
        Stage 2 owns showing/hiding this and filling #bannertext/#bannerbtn;
        never colour-only — DESIGN.md's greyscale rule. -->
   <div class="banner" id="banner" hidden role="status">
+    <span class="bmark" id="bannermark" aria-hidden="true"></span>
+    <b class="bword" id="bannerword"></b>
     <span id="bannertext"></span>
     <button class="btn" id="bannerbtn" hidden></button>
   </div>
@@ -69,6 +73,10 @@
         <!-- Stage 4's toolbar: six region tools (protect, remove, remove-track,
              unprotect, translucent, fade-protect) plus the eyedropper. -->
         <div class="regiontools" id="regiontools" hidden></div>
+        <!-- Stage 2: the questions the engine refused to answer, grouped BY
+             OUTLINE COLOUR (API-CONTRACT "Per-colour vs per-region"). Filled
+             and shown by app.js; the wipe that illustrates them is #wipe. -->
+        <div class="questions" id="questions" hidden></div>
         <div class="ledger" id="ledger"></div>
         <div class="film">
           <div class="filmhead"><span id="onion">onion skin · 2 frames</span><span id="fcount"></span></div>
