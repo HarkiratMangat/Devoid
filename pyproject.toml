@@ -17,10 +17,18 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest"]      # not a runtime dependency; `pip install -e ".[dev]"`
+# not runtime dependencies; `pip install -e ".[dev]"`
+# ⚠️ httpx2 is what `starlette.testclient` imports on starlette 1.6 — plain httpx
+# still works but warns it is deprecated, and tests/test_api.py is the only way
+# the API contract is checked at all.
+dev = ["pytest", "httpx2"]
 
 [tool.setuptools]
 packages = ["server"]   # flat-layout autodiscovery fails on this tree
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# ⚠️ The repo root, so `import server` resolves to THIS checkout rather than to
+# whatever the editable install happens to point at (a git worktree makes those
+# two different directories, and the wrong one passes silently).
+pythonpath = ["."]
