@@ -7,8 +7,11 @@ to that colour that the wash would be invisible over it.
 
     python3 scripts/measure_overlay_collision.py <transparent.gif|webp> ...
 
-Result at the time of writing, over 8 real corpus outputs:
-    hurricane 31.0%   paper-plane 20.6%   growth 4.7%   the other five <=1.5%
+Result 2026-09-04, over the 8 shipped outputs (pass prototype/assets/*.gif and
+the one .webp; the .src.gif files are the SOURCES, not outputs):
+    hurricane 30.9%   paper-plane 20.6%   growth 5.0%   megaphone 2.0%
+    galaxy, rocket, satellite, secure all below 1%
+Measured on the MIDDLE frame of each asset.
 
 That is why the wash carries a diagonal HATCH as well as the tint — hatching is
 hue-independent, and hue alone is not a channel this content supports. If a

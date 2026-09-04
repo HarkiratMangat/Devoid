@@ -2,7 +2,7 @@
 
 A local desktop app for removing backgrounds from animated images. It is a front end for the `gif-background-remover` skill at `/Applications/Claude Code/Gif-Background-Remover`, which stays the engine and the source of truth for every algorithm. Devoid reimplements no image processing.
 
-**Read `docs/PRODUCT.md` first**, then `docs/DESIGN.md`. They carry the constraints, the measurements behind them, and the visual system. This file is only what a session needs to work here.
+**Read `docs/HANDOFF.md` first** — it says where the work stands and what was already rejected. Then `docs/PLAN.md` for the build order, `docs/PRODUCT.md` for the brief, `docs/DESIGN.md` for the visual system. They carry the constraints, the measurements behind them, and the visual system. This file is only what a session needs to work here.
 
 ## Conventions — inherited from Dior's Builds, unchanged
 
@@ -29,8 +29,8 @@ Do not invent separate conventions for this repo.
 
 ## Testing
 
-**Design:** `node ~/.claude/skills/impeccable/scripts/detect.mjs --json <files>` must return zero findings. ⚠️ It runs **degraded** without `htmlparser2`, `css-select`, `css-tree` and `domutils`, and a degraded run returns `[]` while saying so on the line above. An empty result only counts when the header does not say DEGRADED.
+**Design:** `node ~/.claude/skills/impeccable/scripts/detect.mjs --json <files>` must return **exactly one finding, `repeating-stripes-gradient`** — the alpha checkerboard and the hatch, both accepted (see `DESIGN.md`). Anything else is a real defect. ⚠️ It runs **degraded** without `htmlparser2`, `css-select`, `css-tree` and `domutils`, and a degraded run returns `[]` while saying so on the line above. An empty result only counts when the header does not say DEGRADED.
 
-**Prototype:** `cd prototype && python3 -m http.server 8731`, then open `http://localhost:8731`. It uses **real processed assets from the skill's corpus**, deliberately — putting real art in is what found the rubylith-over-red bug that drawn icons had hidden. Do not replace them with synthetic icons.
+**Prototype:** `cd prototype && python3 -m http.server 8731`, then open `http://localhost:8731`. ⚠️ This procedure dies at `PLAN.md` stage 0.1, which moves these files to `web/` — update this line when it does. It uses **real processed assets from the skill's corpus**, deliberately — putting real art in is what found the rubylith-over-red bug that drawn icons had hidden. Do not replace them with synthetic icons.
 
 **Anything measured belongs in the docs with its numbers.** This project's history is that unmeasured design claims are wrong about a third of the time.

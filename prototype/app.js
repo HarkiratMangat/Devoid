@@ -11,19 +11,25 @@
    interface for animated images built out of still images cannot show its own
    subject's bugs. */
 
+/* ⚠️ EVERY NUMBER BELOW IS DERIVED, NOT WRITTEN.
+   px:  scripts/measure_ledger.py  — measured on the SHIPPED 260x260 assets, so the
+        ledger describes the image on screen rather than a source that is not here.
+   ask: the engine's own --recommend output. megaphone is the ONLY asset in this set
+        with a real ambiguous_protection region; hurricane previously carried an
+        invented one whose "outline colour" was really a histogram entry from
+        measure_overlay_collision.py. One question in eight is also the honest rate
+        — the refusal fires on 12.8% of assets. */
 const ASSETS = [
   { id:'megaphone', ext:'gif', frames:144, flagged:[14,38,61,95,120],
-    ask:{ color:'002864', enclosed:102, checked:144 },
-    px:{ bg:41208, art:0, total:151402 } },
-  { id:'hurricane', ext:'gif', frames:120, flagged:[9,27,52,88],
-    ask:{ color:'f06030', enclosed:44, checked:120 },
-    px:{ bg:38911, art:0, total:129440 } },
-  { id:'galaxy',      ext:'gif',  frames:129, state:'done', size:'1.9 MB', px:{bg:52104,art:0,total:88300} },
-  { id:'rocket',      ext:'gif',  frames:177, state:'done', size:'2.4 MB', px:{bg:61200,art:0,total:101210} },
-  { id:'growth',      ext:'gif',  frames:85,  state:'ready', px:{bg:33012,art:0,total:81500} },
+    ask:{ color:'002864', enclosed:102, checked:144 },   // --recommend, region_id 2
+    px:{ bg:51582, art:559, total:16018 } },
+  { id:'hurricane',   ext:'gif',  frames:120, state:'ready', px:{bg:46960,art:184,total:20640} },
+  { id:'galaxy',      ext:'gif',  frames:129, state:'done', size:'1.9 MB', px:{bg:53182,art:24,total:14418} },
+  { id:'rocket',      ext:'gif',  frames:177, state:'done', size:'2.4 MB', px:{bg:50726,art:462,total:16874} },
+  { id:'growth',      ext:'gif',  frames:85,  state:'ready', px:{bg:53899,art:2662,total:13701} },
   { id:'satellite',   ext:'gif',  frames:120, state:'run', done:88, px:null },
   { id:'paper-plane', ext:'webp', frames:98,  state:'unchecked', px:null },
-  { id:'secure',      ext:'gif',  frames:50,  state:'done', size:'640 KB', px:{bg:71000,art:1340,total:207500} },
+  { id:'secure',      ext:'gif',  frames:50,  state:'done', size:'640 KB', px:{bg:33106,art:10,total:34494} },
 ];
 
 const $ = s => document.querySelector(s);
@@ -137,10 +143,14 @@ function renderLedger(a) {
     return;
   }
   L.append(el('span', null, `removes ${a.px.bg.toLocaleString()} background px`));
-  L.append(el('span', a.px.art ? 'loss' : 'safe',
-    a.px.art ? `loses ${a.px.art.toLocaleString()} artwork px`
-             : 'keeps 100% of the artwork'));
-  L.append(el('span', null, `${(a.px.total - a.px.art).toLocaleString()} px of artwork survive`));
+  // ⚠️ `art` is a CEILING — it counts every source pixel that differed from the
+  // corner colour and ended up transparent, which includes the antialiasing ramp
+  // the keyer is meant to remove. Comparable BETWEEN settings on one asset, never
+  // quotable as absolute damage. The wording says "at most" for that reason.
+  L.append(el('span', a.px.art > 500 ? 'loss' : 'safe',
+    a.px.art == null ? 'artwork loss not comparable at this scale'
+                     : `at most ${a.px.art.toLocaleString()} artwork px lost`));
+  L.append(el('span', null, `${a.px.total.toLocaleString()} px of artwork survive`));
 }
 
 /* ── frames ───────────────────────────────────────────────────────────────── */

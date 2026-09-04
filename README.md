@@ -34,6 +34,6 @@ The first two are visual questions delivered as prose naming a hex colour and a 
 cd prototype && python3 -m http.server 8731
 ```
 
-Then open `http://localhost:8731`. The lamp switches lighting states, clicking a frame opens it, the seam drags, the film strip scrubs, and the drawers summon.
+Then open `http://localhost:8731`. The lamp switches lighting states, clicking a frame opens it, the seam drags, and the drawers summon. ⚠️ **The film strip does not scrub yet** — it highlights and counts, but the artwork is a looping `<img>` that never seeks. Frame-accurate seeking needs a canvas decoder; it is `PLAN.md` 3.3.
 
 The assets in it are **real outputs from the skill's own corpus**, not icons drawn to flatter the layout — which is how the overlay bug in `docs/DESIGN.md` was found.

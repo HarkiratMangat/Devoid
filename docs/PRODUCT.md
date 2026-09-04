@@ -1,6 +1,6 @@
 # Devoid — product context
 
-*Written 2026-09-03 21:15 EDT. The durable brief. What this is, who it serves, and the constraints that are not negotiable. Visual decisions live in `DESIGN.md`; the build order lives in `specs/`.*
+*Written 2026-09-03 21:15 EDT, revised 2026-09-04. The durable brief. What this is, who it serves, and the constraints that are not negotiable. **Read `HANDOFF.md` first** for where the work stands; visual decisions live in `DESIGN.md`; the build order is `PLAN.md`.*
 
 ## What it is
 
@@ -78,7 +78,7 @@ These are animated images. The defect classes this project actually records — 
 
 ## It is also a labelling instrument, and that may be its strongest justification
 
-Every answer is a labelled data point for the question the engine refuses: outline colour, enclosure ratio, frame counts, bbox, content type, verdict. The repo holds **714 hand-written labels** for `edge_hardness` and **zero** for the protection decision, and the project's stated end goal is full autonomy.
+Every answer is a labelled data point for the question the engine refuses: outline colour, enclosure ratio, frame counts, bbox, content type, verdict. The repo holds **981 classified labels** for `edge_hardness` — 1,038 entries, 57 of them prose notes — and **zero** for the protection decision, while the project's stated end goal is full autonomy. ⚠️ The skill repo's own docs still cite 714; it is stale by 267.
 
 Capturing them costs one appended line. **Retrofitting discards every answer given before it existed, so it is designed in from the start.** After fifty real jobs it is a dataset for the exact decision that currently blocks autonomy — and if it turns out not to be learnable, that is the first evidence rather than an assumption.
 
@@ -86,15 +86,25 @@ Capturing them costs one appended line. **Retrofitting discards every answer giv
 
 - On an M1 Pro, a 144-frame 640×640 asset: `--recommend` ≈ 18s, `--auto` ≈ 60s, `--verify` ≈ 30s.
 - `analyze()` is single-threaded and CPU-bound, peaking at **488 MB RSS**. Concurrency must come from `machine.default_jobs()` in the skill's harness — measured at **6** on this machine (6 performance cores; memory would allow 8) — not from `os.cpu_count()`, which reports 8 and includes efficiency cores.
-- **A 1-frame preview is pixel-exact when it renders to an 8-bit-alpha format.** Measured on frame 62 of a 144-frame asset with identical explicit flags: **0 differing alpha pixels of 409,600** for WebP; 104 (0.025%) for GIF, caused by the shared palette and Bayer dithering, neither of which one frame can reproduce.
-- Under `--auto`, erosion calibration measured a **different curve** from one frame than from the whole asset. Both landed on the same level in the one case tested; that is luck, not a guarantee. The preview must inherit the calibration from the full-asset analysis rather than re-deriving it.
+- **A 1-frame preview is visually identical to the full render for an 8-bit-alpha format, but not literally identical.** Reproduce with `scripts/measure_preview_fidelity.py` (no arguments — the asset is named in the script). On frame 62 of a 144-frame 640×640 asset:
+
+| render | differing alpha px | max delta | what it is |
+|---|---|---|---|
+| explicit flags → WebP | 11 / 409,600 (0.003%) | **3** of 255 | eleven pixels ~1% off in opacity — invisible |
+| explicit flags → GIF | 8 / 409,600 (0.002%) | **255** | eight pixels fully flipped, by the shared palette and Bayer dither |
+| `--auto` → GIF | 154 / 409,600 (0.038%) | 255 | the above, plus the calibration below |
+
+⚠️ **An earlier version of this document claimed "0 differing pixels — pixel-exact". That was wrong**, and it was unfalsifiable because the script did not name the asset it had been run on. The corrected claim still supports the design — a max delta of 3 on the WebP path is not visible — but the GIF path's max delta of 255 means whole pixels flip, so **a GIF preview must say that dithering will differ.**
+- Under `--auto`, erosion calibration measures a **different curve** from one frame than from the whole asset — 0:0.5571, 1:0.0303 against 0:0.6151, 1:0.0382 — and both land on level 1. That is luck, not a guarantee. **The preview inherits the calibration rather than re-deriving it.**
 - Runtime dependencies: Python with Pillow, numpy and scipy; the external binaries `gifsicle`, `pngquant` and `webpmux`; and `pillow-avif-plugin` for AVIF. AVIF is what the Discord-emoji path depends on.
 - Browser-only execution (Pyodide/WASM) is impossible, not merely hard — scipy exists there, but gifsicle, webpmux and pillow-avif do not.
 - Hosted execution on a small box was rejected on measured grounds: on claude.ai's single-CPU sandbox, `--target-kb` (a 120-rung grid re-encoding every frame) could not finish inside a tool call and `--verify` exceeded two minutes.
 
 ## Architecture, decided
 
-**A local HTTP server plus a web UI.** All filesystem access lives on the server side — no File System Access API, no browser-only storage for anything that matters. This is what keeps the shell a sequence rather than a fork: Chrome under a `.app` shim now, Electron later, pointing at the same server and rendering the same UI with no changes to it.
+**A local HTTP server plus a web UI, inside Electron from the start** *(revised 2026-09-04; the earlier plan was a `.app` shim first)*. All filesystem access lives on the server side — no File System Access API, no browser-only storage for anything that matters.
+
+⚠️ **The shim-then-Electron sequence was presented as costless and was not.** A browser cannot hand the server a filesystem *path*, only bytes or a typed string, so a shim stage would have uploaded multi-megabyte files into a staging directory — making the skill's "beside the source" output convention meaningless — or asked for a pasted path, which is the CLI experience this exists to escape. Electron's main process owns real paths, native dialogs and Finder drag-drop.
 
 **Hybrid engine boundary.** Rendering runs as a **subprocess**, because the work is long and a crash in scipy should cost one job rather than the app. Analysis runs **in-process**, because the reuse win is largest there — the result is computed once and passed forward instead of `--recommend`, `--auto` and `--verify` each re-deriving it.
 
