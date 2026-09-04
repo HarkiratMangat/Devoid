@@ -101,6 +101,18 @@ if "--check" in sys.argv:
     # nobody debugs.
     import re
     js = _appjs().read_text()
+    if "const ASSETS = [" not in js:
+        # ⚠️ Stage 2 (PLAN.md) removed the hardcoded ASSETS literal on purpose:
+        # web/app.js now reads ledger numbers live from the server's real render
+        # (server/render.py's _ledger(), same bg/art/total method as this script),
+        # per PRODUCT.md's "never report a verification the run did not earn" —
+        # a hardcoded literal was itself an unearned, static stand-in. There is
+        # nothing left in app.js to compare against; that is the correct state,
+        # not a regression. tests/test_render.py::test_render_and_journal is the
+        # gate that now exercises a real render's ledger end to end.
+        print("no hardcoded ASSETS literal in app.js — ledger numbers are live "
+              "from the server now (see tests/test_render.py); nothing to check")
+        sys.exit()
     blk = js[js.index("const ASSETS = ["):js.index("];", js.index("const ASSETS = ["))]
     bad = []
     for stem, _ in ASSETS:
