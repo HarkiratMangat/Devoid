@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from server import labels, render
+from server import appendlog, labels, render
 
 
 def test_never_overwrites_and_escalates(tmp_path):
@@ -25,9 +25,13 @@ def test_never_overwrites_and_escalates(tmp_path):
 
 
 def test_jsonl_append_is_line_atomic_and_never_read_modify_write(tmp_path):
+    """Basic single-process proof; the real concurrency claim (two processes
+    appending at once cannot interleave) is proven harder in test_jobs.py and
+    test_labels.py, which this repo's O_APPEND single-write appendlog module
+    backs for both logs."""
     path = tmp_path / "log.jsonl"
     for i in range(50):
-        labels.append_jsonl(path, {"i": i, "note": "two windows, one log"})
+        appendlog.append_line(path, {"i": i, "note": "two windows, one log"})
     lines = path.read_text().splitlines()
     assert len(lines) == 50
     assert [json.loads(l)["i"] for l in lines] == list(range(50))

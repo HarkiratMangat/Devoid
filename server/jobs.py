@@ -52,11 +52,14 @@ STATES = (
     "blocked",
 )
 
-SETTINGS_KEYS = ("overrides", "regions", "goal")
+SETTINGS_KEYS = ("overrides", "regions", "goal", "answers")
 
 
 def _settings(value: object) -> dict:
-    """`{overrides, regions, goal}` -- the exact body the render route took.
+    """`{overrides, regions, goal, answers}` -- the exact body the render route
+    took, `answers` included so a re-run reproduces the region verdicts too
+    (server/render.py's ``cli.answer_argv`` reads it) rather than only the raw
+    ``--assume-*`` overrides.
 
     Kept whole and unexamined beyond its shape: a re-run must reproduce the run,
     and second-guessing the flags here would be a second source of truth.
@@ -72,13 +75,16 @@ def _settings(value: object) -> dict:
     overrides = value.get("overrides") or {}
     regions = value.get("regions") or []
     goal = value.get("goal") or {}
+    answers = value.get("answers") or {}
     if not isinstance(overrides, dict):
         raise ValueError("settings.overrides must be an object")
     if not isinstance(regions, list):
         raise ValueError("settings.regions must be an array")
     if not isinstance(goal, dict):
         raise ValueError("settings.goal must be an object")
-    return {"overrides": overrides, "regions": regions, "goal": goal}
+    if not isinstance(answers, dict):
+        raise ValueError("settings.answers must be an object")
+    return {"overrides": overrides, "regions": regions, "goal": goal, "answers": answers}
 
 
 def validate(row: dict) -> dict:

@@ -214,6 +214,7 @@ def test_history_reads_newest_first(client, tmp_path, fast_asset):
                 settings={},
                 state="done",
                 output_path=f"/tmp/out{i}.webp",
+                engine_version="sha256:test",
             )
         )
     rows = client.get("/api/history?limit=2").json()

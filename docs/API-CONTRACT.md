@@ -65,7 +65,7 @@ never `async def` doing the call directly (measured 1,290x event-loop stall in P
 
 `jobs.jsonl` (repo root, tracked): one line per settled job —
 ```json
-{"ts": "2026-09-04T21:05:00Z", "input_path": "...", "settings": {"overrides": {...}, "regions": [...], "goal": {...}}, "output_path": "...", "verdict": "done|failed|cancelled", "engine_version": "...", "state": "done"}
+{"ts": "2026-09-04T21:05:00Z", "input_path": "...", "settings": {"overrides": {...}, "regions": [...], "goal": {...}, "answers": {...}}, "output_path": "...", "verdict": "done|failed|cancelled", "engine_version": "...", "state": "done"}
 ```
 
 `labels/protection.jsonl` (repo root, tracked): one line per region decision —

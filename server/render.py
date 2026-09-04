@@ -15,9 +15,8 @@ into place only on success, escalating ``_v2``/``_v3`` if the destination exists
 A crashed job therefore leaves no partial file for the next run to skip past by
 escalating, which is how garbage quietly accumulates (1.4).
 
-⚠️ ``jobs.jsonl``'s writer lives here for now. **Stage 5 owns the reader/history
-side and may consolidate this writer into ``server/jobs.py``** — the schema is
-API-CONTRACT.md's and does not change if it moves.
+⚠️ ``jobs.jsonl`` itself is written and read through ``server/jobs.py`` (Stage 5's
+single writer for that log) — this module builds the row and hands it over.
 """
 from __future__ import annotations
 
@@ -35,13 +34,12 @@ import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import cli, engine
-from .labels import append_jsonl, now_iso
+from . import cli, engine, jobs as jobs_log
+from .appendlog import utc_now
 
 log = logging.getLogger("devoid.render")
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-JOBS_PATH = REPO_ROOT / "jobs.jsonl"
 
 #: Seconds between SIGTERM and SIGKILL on a cancel.
 KILL_GRACE_S = 3.0
@@ -120,18 +118,18 @@ def all_jobs() -> list[Job]:
 
 
 def _journal(job: Job) -> None:
-    """One line to ``jobs.jsonl`` when a job settles — API-CONTRACT.md's schema."""
-    append_jsonl(
-        JOBS_PATH,
+    """One line to ``jobs.jsonl`` when a job settles, via ``server.jobs``'s writer
+    (API-CONTRACT.md's schema — the single place that file is appended to)."""
+    jobs_log.append_job(
         {
-            "ts": now_iso(),
+            "ts": utc_now(),
             "input_path": job.input_path,
             "settings": job.settings,
             "output_path": job.output_path,
             "verdict": job.state if job.state in ("done", "failed", "cancelled") else "failed",
             "engine_version": job.engine_version,
             "state": job.state,
-        },
+        }
     )
 
 
@@ -317,23 +315,7 @@ def cancel(job_id: str) -> Job | None:
 
 
 def read_history(limit: int = 50) -> list[dict]:
-    """Most recent ``limit`` lines of ``jobs.jsonl``, newest first.
-
-    A linear scan over a few hundred lines is nothing; PLAN.md 5.2 forbids a
-    database until a lookup is measurably slow.
-    """
-    if not JOBS_PATH.exists():
-        return []
-    rows = []
-    with JOBS_PATH.open("r", encoding="utf-8") as fh:
-        for i, line in enumerate(fh):
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                row = json.loads(line)
-            except ValueError:
-                continue  # a torn line is information, not a reason to fail the read
-            row["line_id"] = i
-            rows.append(row)
-    return list(reversed(rows))[:limit]
+    """Most recent ``limit`` lines of ``jobs.jsonl``, newest first — delegates to
+    ``server.jobs.history``, the single reader for that log (PLAN.md 5.2: a linear
+    scan over a few hundred lines is nothing; no database until one is slow)."""
+    return jobs_log.history(limit=limit)

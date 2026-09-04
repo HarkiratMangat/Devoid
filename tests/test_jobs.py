@@ -27,6 +27,7 @@ SETTINGS = {
     "overrides": {"erosion": 1},
     "regions": [{"type": "protect", "bbox_xyxy": [1, 2, 3, 4], "tracked": False}],
     "goal": {"format": "webp", "target_kb": 256},
+    "answers": {},
 }
 
 
@@ -96,7 +97,7 @@ def test_rerun_settings_loads_that_line_back(tmp_path):
     append_job(a_row(input_path="/in/0.gif"), path=log)
     append_job(a_row(input_path="/in/1.gif", settings={"overrides": {"feather": 2}}), path=log)
 
-    assert rerun_settings(0, path=log) == SETTINGS
+    assert rerun_settings(0, path=log) == {**SETTINGS, "answers": {}}
     assert rerun_settings("1", path=log)["overrides"] == {"feather": 2}
     assert rerun_row(1, path=log)["input_path"] == "/in/1.gif"
 
@@ -129,7 +130,7 @@ def test_bad_rows_are_refused(bad):
 
 def test_settings_shape_is_completed_not_guessed():
     filled = validate(a_row(settings={}))["settings"]
-    assert filled == {"overrides": {}, "regions": [], "goal": {}}
+    assert filled == {"overrides": {}, "regions": [], "goal": {}, "answers": {}}
 
 
 def test_a_torn_trailing_line_is_skipped_not_raised(tmp_path):
