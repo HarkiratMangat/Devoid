@@ -7,3 +7,8 @@ dist/
 out/
 .venv/
 *.egg-info/
+# The in-flight journal (PLAN.md 1.4). Machine state, not history:
+# what it holds is only meaningful to the run that wrote it.
+.devoid-journal.json
+.devoid-journal.json.lock
+.devoid-journal.json.tmp

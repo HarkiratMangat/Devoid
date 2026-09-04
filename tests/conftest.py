@@ -1,4 +1,7 @@
-"""Shared fixtures.
+"""Shared fixtures, and sys.path set up so `import server` resolves to THIS
+checkout rather than whatever the editable install happens to point at (a git
+worktree makes those two different directories, and the wrong one passes
+silently).
 
 ⚠️ **Real corpus assets, always** (PLAN.md gate 3). Never art drawn for the
 occasion — putting real art in is what found the rubylith-over-red bug that drawn
@@ -7,9 +10,16 @@ icons had hidden.
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import pytest
+
+ROOT = str(Path(__file__).resolve().parent.parent)
+if ROOT in sys.path:
+    sys.path.remove(ROOT)
+sys.path.insert(0, ROOT)
+
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ASSETS = REPO_ROOT / "web" / "assets"
@@ -62,3 +72,19 @@ def isolated_logs(tmp_path, monkeypatch):
     monkeypatch.setattr(labels, "LABELS_PATH", tmp_path / "labels" / "protection.jsonl")
     monkeypatch.setattr(render, "JOBS_PATH", tmp_path / "jobs.jsonl")
     return tmp_path
+=======
+"""Put the repo root ahead of everything on `sys.path`.
+
+pytest's prepend import mode inserts `tests/`, not the root, so `import server`
+would otherwise resolve to whatever editable install happens to be in the venv —
+which is not necessarily this checkout. Tests must exercise the tree they sit in.
+"""
+
+import sys
+from pathlib import Path
+
+ROOT = str(Path(__file__).resolve().parent.parent)
+if ROOT in sys.path:
+    sys.path.remove(ROOT)
+sys.path.insert(0, ROOT)
+>>>>>>> worktree-agent-ac7cb7077317676c3
