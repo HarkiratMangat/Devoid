@@ -17,7 +17,7 @@ That is why the wash carries a diagonal HATCH as well as the tint — hatching i
 hue-independent, and hue alone is not a channel this content supports. If a
 future change alters --ruby, re-run this before trusting it.
 """
-import sys, os, collections
+import sys, os, pathlib, collections
 from PIL import Image, ImageSequence
 import numpy as np
 
@@ -48,6 +48,15 @@ def main(paths):
               f"{100*opaque.mean():6.1f}%   {hidden:6.1f}%  {cols}{flag}")
 
 if __name__ == "__main__":
+    # ⚠️ A default corpus, because the first version required eight paths and never
+    # said WHICH eight — the .src.gif files are sources, not outputs, and passing
+    # them measures the wrong thing.
     if len(sys.argv) < 2:
-        sys.exit(__doc__)
-    main(sys.argv[1:])
+        A = pathlib.Path(__file__).resolve().parent.parent / "prototype" / "assets"
+        paths = sorted(p for p in A.iterdir()
+                       if p.suffix in (".gif", ".webp") and not p.name.endswith(".src.gif"))
+        if not paths:
+            sys.exit(__doc__)
+        main([str(p) for p in paths])
+    else:
+        main(sys.argv[1:])

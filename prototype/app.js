@@ -28,7 +28,7 @@ const ASSETS = [
   { id:'rocket',      ext:'gif',  frames:177, state:'done', size:'2.4 MB', px:{bg:50726,art:462,total:16874} },
   { id:'growth',      ext:'gif',  frames:85,  state:'ready', px:{bg:53899,art:2662,total:13701} },
   { id:'satellite',   ext:'gif',  frames:120, state:'run', done:88, px:null },
-  { id:'paper-plane', ext:'webp', frames:98,  state:'unchecked', px:null },
+  { id:'paper-plane', ext:'webp', frames:97,  state:'unchecked', px:{bg:64739,art:354,total:2861} },
   { id:'secure',      ext:'gif',  frames:50,  state:'done', size:'640 KB', px:{bg:33106,art:10,total:34494} },
 ];
 
@@ -39,7 +39,13 @@ const cut = a => `assets/${a.id}.${a.ext}`;
 const raw = a => `assets/${a.id}.src.gif`;
 const pending = a => a.ask && !S.answers[a.id];
 
-const S = { open:null, frame:0, drawer:null, seam:50, answers:{}, labels:[] };
+const S = { open:null, frame:0, drawer:null, seam:50, answers:{}, labels:[], cleared:false };
+
+/* ⚠️ The empty state was written and UNREACHABLE — `ASSETS.length === 0` is never
+   true against a hardcoded list, so the first screen anyone ever sees could not
+   be looked at. `?empty` and the "Clear the table" control make it reachable. */
+if (new URLSearchParams(location.search).has('empty')) S.cleared = true;
+const onTable = () => S.cleared ? [] : ASSETS;
 
 /* ── the label log ────────────────────────────────────────────────────────
    Every answer is a labelled data point for the question the engine refuses.
@@ -100,8 +106,8 @@ function tile(a, big) {
   b.addEventListener('click', () => openAsset(a.id));
   return b;
 }
-const renderSheet = () => $('#sheet').replaceChildren(...ASSETS.map(a => tile(a, true)));
-const renderEdge  = () => $('#edge').replaceChildren(...ASSETS.map(a => tile(a, false)));
+const renderSheet = () => $('#sheet').replaceChildren(...onTable().map(a => tile(a, true)));
+const renderEdge  = () => $('#edge').replaceChildren(...onTable().map(a => tile(a, false)));
 
 /* ── the wipe ─────────────────────────────────────────────────────────────
    The seam is the cut line. Drag it across a playing loop and the background
@@ -206,8 +212,8 @@ function openAsset(id) { S.open = id; S.frame = 0; setSeam(50); render(); }
 function closeAsset()  { S.open = null; render(); }
 
 function render() {
-  const a = ASSETS.find(x => x.id === S.open);
-  const empty = ASSETS.length === 0;
+  const a = onTable().find(x => x.id === S.open);
+  const empty = onTable().length === 0;
   $('#empty').hidden = !empty;
   $('#sheet').hidden = !!a || empty;
   $('#open').hidden  = !a || empty;
@@ -220,14 +226,17 @@ function render() {
     back.addEventListener('click', closeAsset);
     crumb.append(back, el('span', null, '  /  '), el('b', null, `${a.id}.${a.ext}`));
   } else {
-    const q = ASSETS.filter(pending).length;
+    const q = onTable().filter(pending).length;
     crumb.append(el('span', null,
-      q ? `${ASSETS.length} on the table · ${q} need you` : `${ASSETS.length} on the table`));
+      q ? `${onTable().length} on the table · ${q} need you` : `${onTable().length} on the table`));
   }
 
+  $('#add').textContent = S.cleared ? 'Add files' : 'Clear the table';
+  // nothing to save on an empty table — an action offering zero is worse than none
+  $('#primary').hidden = empty;
   $('#primary').textContent = a
     ? (pending(a) ? 'Cut it out' : 'Cut it')
-    : `Save ${ASSETS.filter(x => !pending(x)).length}`;
+    : `Save ${onTable().filter(x => !pending(x)).length}`;
 
   if (a) {
     $('#before').src = raw(a); $('#before').alt = `${a.id} as it came in`;
@@ -241,6 +250,9 @@ function render() {
   renderTabs();
 }
 
+$('#add').addEventListener('click', () => {
+  S.cleared = !S.cleared; S.open = null; render();     // stands in for a file picker
+});
 $('#lamp').addEventListener('click', () => {
   const light = document.documentElement.classList.toggle('lamp-light');
   try { localStorage.setItem('devoid-lamp', light ? 'light' : 'dark'); } catch (e) {}
@@ -249,7 +261,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.open) cl
 
 /* answering happens on the open asset: the wipe shows both, you pick one */
 $('#primary').addEventListener('click', () => {
-  const a = ASSETS.find(x => x.id === S.open);
+  const a = onTable().find(x => x.id === S.open);
   if (a && pending(a)) { S.answers[a.id] = 'cut'; logLabel(a, 'cut'); }
   render();
 });

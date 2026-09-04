@@ -24,7 +24,9 @@
 
 ⚠️ **The synced-bundle path breaks 1.5.** `scripts/harness/` is tracked but NOT packaged, so `machine.default_jobs()` does not exist in the synced bundle. Resolve the harness **separately** from the script, and if it is absent, vendor the twenty lines rather than falling back to `os.cpu_count()` — that constant is wrong in both directions on this machine.
 
-**0.3 The environment check.** Python, Pillow, numpy, scipy, `gifsicle`, `pngquant`, `webpmux`, `pillow-avif-plugin`. Report what is missing and what it costs — **AVIF absent means the Discord-emoji path is dead**, which is a first-class failure state, not a warning. This is the `failed` state's first customer.
+**0.3 The environment check.** Python, Pillow, numpy, scipy, `gifsicle`, `pngquant`, `webpmux`, and AVIF. Report what is missing and what it costs — **AVIF absent means the Discord-emoji path is dead**, which is a first-class failure state, not a warning. This is the `failed` state's first customer.
+
+⚠️ **Test AVIF as a CAPABILITY, never as a package.** `import pillow_avif` fails on this machine and AVIF works perfectly — Pillow 12.3 ships `PIL.AvifImagePlugin` natively and the third-party plugin is obsolete. `'AVIF' in Image.SAVE` is also False until `Image.init()` runs, because Pillow registers plugins lazily. The correct check is `PIL.features.check('avif')`, which is exactly what the skill's own `_avif_available()` does — mirror it rather than inventing one.
 
 **0.4 One asset, end to end, ugly.** Server renders a real corpus GIF via subprocess and the browser shows the result. No design. This proves the whole spine and is the point of Stage 0.
 
