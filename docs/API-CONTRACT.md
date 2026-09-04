@@ -18,6 +18,7 @@ never `async def` doing the call directly (measured 1,290x event-loop stall in P
 ## Assets
 
 - `POST /api/assets` body `{paths: [absolute-path, ...]}` → `[{id, path, ext, state: "loading"}]`. Paths come from Electron's main process (native dialog or drag-drop) — the renderer never touches the filesystem directly (PLAN.md 2.5, `FileSource` boundary).
+  ⚠️ **Main hands those paths to the renderer as a `devoid:open-files` CustomEvent on `window`**, `detail: {paths: [absolute-path, ...]}` — shipped in Stage 6's `main.js` (File ▸ Open…, `Cmd+O`). That event **is** the `FileSource` seam: `web/app.js` listens for it and POSTs the paths here. No bytes cross it, only paths, and a future web build swaps the event's producer without the renderer noticing.
 - `GET /api/assets` → `[{id, path, ext, state, frames?, questions?, ledger?}]`.
 - `POST /api/assets/{id}/analyze` → runs `recommend()` then, only if needed, `analyze()`, **in-process**, through the validation boundary (PLAN.md 1.1). Response:
   ```json

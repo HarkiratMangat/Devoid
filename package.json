@@ -3,13 +3,12 @@
   "version": "1.0.0",
   "description": "A local desktop app for removing the background from animated images — GIF, WebP, AVIF, APNG, and static PNG/JPEG — and fitting the result to a size or format target.",
   "main": "main.js",
-  "directories": {
-    "doc": "docs",
-    "test": "tests"
-  },
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dist": "electron-builder",
+    "dist:dir": "electron-builder --dir"
   },
+  "author": "Harkirat Mangat",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/HarkiratMangat/Devoid.git"
@@ -21,6 +20,7 @@
   },
   "homepage": "https://github.com/HarkiratMangat/Devoid#readme",
   "devDependencies": {
-    "electron": "^44.2.0"
+    "electron": "^44.2.0",
+    "electron-builder": "^26.15.3"
   }
 }
