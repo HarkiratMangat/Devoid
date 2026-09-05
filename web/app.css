@@ -23,20 +23,49 @@
   --cyan:#22D3EE; --cyan-bg:#0B2C33; --cyan-ink:#5FE0F5;
   --ok:#46C98A; --ok-bg:#12332A; --amber:#E3B04B; --amber-bg:#332608;
 
-  --mat:#141C1B; --bench:#1B2423; --raise:#232E2D; --well:#0E1514; --sprocket:#0C1211;
+  /* THE VOID. Deep sky is not black -- long-exposure astrophotography is
+     violet-tinted, which is both truer to the world and sidesteps the
+     near-black-plus-one-acid-accent look every generated dark UI arrives at.
+     ⚠️ Rubylith and cyan are UNCHANGED and are now justified twice over: they
+     are already the two colours of an accretion disk -- hot blue on the inner
+     edge, warm red-orange on the outer. The void did not replace this app's
+     semantics, it explained them. */
+  --void:#06050D; --singularity:#030209; --horizon:#FFE9B8;
+  --star:#FFFFFF; --star-cold:#CFDCFF;
+  --neb-violet:rgba(104,66,186,.42); --neb-blue:rgba(42,96,178,.26);
+
+  --mat:#06050D; --bench:#0F0C1C; --raise:#191430; --well:#030209; --sprocket:#0E0B1A;
   --score:rgba(255,255,255,.09); --score-2:rgba(255,255,255,.19); --mark:rgba(255,255,255,.34);
-  --graphite:#E7EDEB; --graphite-2:#9DAEAA; --graphite-3:#8C9F9B;
-  --chk-a:#1A2322; --chk-b:#151D1C;
+  --graphite:#E8E9F2; --graphite-2:#A6A6BC; --graphite-3:#8E8EA8;
+  /* the checker survives UNDER the stars, barely -- it is notation ("nothing
+     is behind this"), and the docs defend it with evidence, so it is not
+     thrown away for atmosphere. It just stops shouting. */
+  --chk-a:#0C0A16; --chk-b:#08060F;
+
+  /* two star tiles at coprime sizes: the repeat period is their LCM, so the
+     field never visibly tiles. One layer each, not a dozen gradients per node. */
+  --stars-a:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Ccircle cx='23' cy='41' r='.9' fill='%23fff' opacity='.9'/%3E%3Ccircle cx='187' cy='66' r='.7' fill='%23CFDCFF' opacity='.7'/%3E%3Ccircle cx='98' cy='150' r='1.1' fill='%23fff'/%3E%3Ccircle cx='271' cy='119' r='.8' fill='%23fff' opacity='.8'/%3E%3Ccircle cx='54' cy='238' r='.7' fill='%23CFDCFF' opacity='.65'/%3E%3Ccircle cx='219' cy='271' r='.9' fill='%23fff' opacity='.85'/%3E%3Ccircle cx='146' cy='304' r='.6' fill='%23fff' opacity='.5'/%3E%3C/svg%3E");
+  --stars-b:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='470' height='470'%3E%3Ccircle cx='41' cy='88' r='.6' fill='%23fff' opacity='.45'/%3E%3Ccircle cx='203' cy='37' r='.5' fill='%23CFDCFF' opacity='.4'/%3E%3Ccircle cx='317' cy='166' r='.6' fill='%23fff' opacity='.5'/%3E%3Ccircle cx='88' cy='241' r='.5' fill='%23fff' opacity='.35'/%3E%3Ccircle cx='398' cy='299' r='.6' fill='%23CFDCFF' opacity='.45'/%3E%3Ccircle cx='152' cy='352' r='.5' fill='%23fff' opacity='.4'/%3E%3Ccircle cx='259' cy='431' r='.6' fill='%23fff' opacity='.5'/%3E%3Ccircle cx='441' cy='88' r='.5' fill='%23fff' opacity='.38'/%3E%3Ccircle cx='12' cy='401' r='.5' fill='%23CFDCFF' opacity='.4'/%3E%3C/svg%3E");
   --float:0 2px 8px rgba(0,0,0,.4), 0 20px 50px rgba(0,0,0,.4);
 
   --r:8px; --r2:12px; --ease:cubic-bezier(.23,1,.32,1);
   --s1:6px; --s2:10px; --s3:16px; --s4:26px; --s5:38px;
 }
-.lamp-light{
-  --mat:#ECEBE6; --bench:#FFFFFF; --raise:#F6F6F3; --well:#E1E0DA; --sprocket:#D2D1CB;
-  --score:rgba(20,28,27,.11); --score-2:rgba(20,28,27,.22); --mark:rgba(20,28,27,.44);
-  --graphite:#121918; --graphite-2:#505C59; --graphite-3:#5C6966;
-  --chk-a:#FFFFFF; --chk-b:#E3E2DD;
+/* EMITTING. The white hole -- the exact physical inverse: it gives back what
+   the other takes. Functionally it is still the bright ground you need to
+   check dark artwork against, so nothing is lost by the metaphor; the stars
+   invert into dark motes so both states have the same grain. */
+.emitting{
+  --void:#EFEEF6; --singularity:#D6D5E4; --horizon:#B08029;
+  --star:#12111A; --star-cold:#3A3654;
+  --neb-violet:rgba(120,96,190,.13); --neb-blue:rgba(60,110,180,.10);
+
+  --mat:#EFEEF6; --bench:#FFFFFF; --raise:#F7F6FC; --well:#E2E1EE; --sprocket:#D6D5E4;
+  --score:rgba(18,17,26,.11); --score-2:rgba(18,17,26,.22); --mark:rgba(18,17,26,.44);
+  --graphite:#12111A; --graphite-2:#4E4C60; --graphite-3:#55536A;
+  --chk-a:#FFFFFF; --chk-b:#E8E7F2;
+  --stars-a:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Ccircle cx='23' cy='41' r='.9' fill='%2312111A' opacity='.30'/%3E%3Ccircle cx='187' cy='66' r='.7' fill='%233A3654' opacity='.26'/%3E%3Ccircle cx='98' cy='150' r='1.1' fill='%2312111A' opacity='.28'/%3E%3Ccircle cx='271' cy='119' r='.8' fill='%2312111A' opacity='.24'/%3E%3Ccircle cx='54' cy='238' r='.7' fill='%233A3654' opacity='.22'/%3E%3Ccircle cx='219' cy='271' r='.9' fill='%2312111A' opacity='.26'/%3E%3Ccircle cx='146' cy='304' r='.6' fill='%2312111A' opacity='.18'/%3E%3C/svg%3E");
+  --stars-b:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='470' height='470'%3E%3Ccircle cx='41' cy='88' r='.6' fill='%2312111A' opacity='.16'/%3E%3Ccircle cx='317' cy='166' r='.6' fill='%2312111A' opacity='.17'/%3E%3Ccircle cx='398' cy='299' r='.6' fill='%233A3654' opacity='.15'/%3E%3Ccircle cx='259' cy='431' r='.6' fill='%2312111A' opacity='.16'/%3E%3C/svg%3E");
   --ok:#12734A; --ok-bg:#E1F2E9; --ruby-bg:#FBE6E2; --ruby-ink:#A82D18;
   --amber:#7A5500; --amber-bg:#F7EEDA; --cyan-bg:#DEF3F7; --cyan-ink:#0E6B80;
   --float:0 1px 3px rgba(20,28,27,.10), 0 16px 40px rgba(20,28,27,.14);
@@ -59,8 +88,17 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 /* ⚠️ A detector flags repeating gradients as decorative stripes. This one is the
    alpha checkerboard — the standard indicator for transparency and this app's
    ground. Justified exception; do not "fix" it. */
-.chk{background:repeating-conic-gradient(var(--chk-a) 0 25%,var(--chk-b) 0 50%) 0 0/14px 14px}
-.chk-s{background:repeating-conic-gradient(var(--chk-a) 0 25%,var(--chk-b) 0 50%) 0 0/9px 9px}
+.chk,.chk-s{background-color:var(--void);
+  background-image:var(--stars-a),var(--stars-b),
+    repeating-conic-gradient(var(--chk-a) 0 25%,var(--chk-b) 0 50%)}
+.chk{background-size:320px 320px,470px 470px,14px 14px}
+.chk-s{background-size:320px 320px,470px 470px,9px 9px}
+/* a nebula sits behind the whole table -- one soft violet bloom and one cold
+   blue, positioned off-centre so the field has a direction to it. */
+.table{background-image:
+  radial-gradient(58% 44% at 18% 86%,var(--neb-violet),transparent 72%),
+  radial-gradient(46% 38% at 82% 8%,var(--neb-blue),transparent 70%);
+  background-attachment:fixed}
 
 .app{height:100%;display:flex;flex-direction:column;background:var(--mat)}
 .chrome{display:flex;align-items:center;gap:var(--s3);padding:var(--s2) var(--s4);
@@ -82,7 +120,7 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .lamp:hover{background:var(--raise)}
 .lamp b{width:13px;height:13px;border-radius:50%;background:var(--graphite-3);display:block;
   transition:background .32s var(--ease),box-shadow .32s var(--ease)}
-.lamp-light .lamp b{background:#F0B429;box-shadow:0 0 0 4px rgba(240,180,41,.22)}
+.emitting .lamp b{background:#F0B429;box-shadow:0 0 0 4px rgba(240,180,41,.22)}
 
 .table{flex:1;display:flex;min-height:0;position:relative}
 .work{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
@@ -91,7 +129,9 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .sheet{flex:1;overflow:auto;padding:var(--s4);display:grid;align-content:start;
   grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:var(--s3)}
 .frame{background:var(--sprocket);border-radius:var(--r2);padding:var(--s2);display:block;
-  text-align:left;transition:background .18s var(--ease),transform .18s var(--ease)}
+  text-align:left;box-shadow:inset 0 0 0 1px var(--score);
+  transition:background .18s var(--ease),transform .18s var(--ease),box-shadow .18s var(--ease)}
+.frame:hover{box-shadow:inset 0 0 0 1px var(--score-2)}
 .frame:hover{background:var(--raise);transform:translateY(-2px)}
 .frame .win{position:relative;border-radius:var(--r);overflow:hidden;aspect-ratio:1;
   display:grid;place-items:center}
@@ -190,7 +230,33 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
   border-radius:var(--r);padding:3px 9px}
 
 /* ── the empty table: emptiness IS the subject, so it needs no illustration ─ */
+/* ══ THE EMPTY TABLE ═══════════════════════════════════════════════════════
+   Emptiness is the subject, so it gets no illustration and no apology -- but
+   it is not nothing, it is the VOID, and the void has one thing in it. The
+   wordmark's knocked-out counter at full size: an event horizon with the
+   light that fell past it wrapped around the outside. Lensing lives here and
+   in the toggle, never on the stage -- warping artwork you are judging would
+   be showing you something you are not going to get. */
 .empty{flex:1;display:grid;place-items:center;text-align:center}
+/* ⚠️ no checker here. A checkerboard says "something transparent is on this
+   spot"; an empty table has no image on it at all, so the notation would be
+   claiming something untrue. Stars only. */
+.empty.chk{background-image:var(--stars-a),var(--stars-b);
+  background-size:320px 320px,470px 470px}
+.horizon{position:relative;width:clamp(132px,17vw,196px);aspect-ratio:1;margin:0 auto var(--s5)}
+.horizon .ring{position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 202deg,
+    rgba(255,238,206,0) 0deg,rgba(255,212,148,.88) 38deg,rgba(255,248,230,1) 76deg,
+    rgba(168,196,255,.72) 128deg,rgba(122,92,222,.32) 188deg,rgba(255,238,206,0) 258deg,
+    rgba(255,238,206,0) 360deg);
+  -webkit-mask:radial-gradient(circle,transparent 60%,#000 62.5%,#000 79%,transparent 81%);
+  mask:radial-gradient(circle,transparent 60%,#000 62.5%,#000 79%,transparent 81%);
+  animation:devoid-orbit 28s linear infinite}
+.horizon .disc{position:absolute;inset:19%;border-radius:50%;background:#000;
+  box-shadow:inset 0 0 26px 8px #000}
+@keyframes devoid-orbit{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.horizon .ring{animation:none}}
+.emitting .horizon .disc{background:#0B0A12;box-shadow:inset 0 0 26px 8px #0B0A12}
 .empty p{margin:var(--s3) 0 0;font-size:15px;color:var(--graphite-2)}
 .empty .big{font-size:clamp(28px,5vw,44px);font-weight:700;font-stretch:112%;letter-spacing:-.03em;
   color:var(--graphite);margin:0}
@@ -339,15 +405,35 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 
 /* THE LAMP — a physical rocker/slider, not a colour-changing dot. The knob's
    POSITION carries the state; the warm glow is reinforcement, not the signal. */
-.lamp{width:44px;height:22px;border-radius:11px;padding:0;position:relative;
-  background:var(--well);border:1px solid var(--score-2)}
-.lamp:hover{border-color:var(--score-2);background:var(--well)}
-.lamp b{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;
-  background:var(--sprocket);border:1.5px solid var(--graphite-3);box-shadow:none;
-  transition:left .22s var(--ease),background .22s var(--ease),
-    border-color .22s var(--ease),box-shadow .22s var(--ease)}
-.lamp-light .lamp b{left:24px;background:#F0B429;border-color:#F0B429;
-  box-shadow:0 0 0 3px rgba(240,180,41,.22)}
+/* ══ THE LIGHTING TOGGLE — a seam, 52px wide ═══════════════════════════════
+   Three circles were tried and all three were the same default wearing a
+   different hat. The app's own signature gesture is dragging a cut line
+   between two versions of an image; choosing the room's lighting is the same
+   act at a different scale, so the control is a miniature of the wipe. It
+   teaches itself: it looks like the thing you already drag all day. The
+   dashed line is the same token as the real seam.
+
+   The horizon does the work. A warm rim travels with the cut -- light
+   spilling past the edge, which is what an accretion disk's inner edge
+   actually looks like -- because the boundary is the only interesting place
+   in a black hole. No knob: a handle promises dragging, and this clicks. */
+.lamp{width:52px;height:24px;border-radius:5px;padding:0;position:relative;
+  overflow:hidden;border:none;--s:72%;
+  box-shadow:inset 0 0 0 1px var(--score-2)}
+.lamp:hover{box-shadow:inset 0 0 0 1px var(--mark)}
+.lamp .sg-void{position:absolute;inset:0;background-color:var(--void);
+  background-image:radial-gradient(70% 90% at 24% 76%,var(--neb-violet),transparent 72%),
+    var(--stars-a);background-size:auto,320px 320px}
+.lamp .sg-lit{position:absolute;inset:0;clip-path:inset(0 0 0 var(--s));
+  background:linear-gradient(100deg,#FFF9EC 0%,#F6F2E7 38%,#E7E3D8 100%);
+  transition:clip-path .42s var(--ease)}
+.lamp .sg-rim{position:absolute;top:0;bottom:0;left:var(--s);width:11px;margin-left:-5.5px;
+  background:linear-gradient(to right,rgba(255,190,110,0) 0%,rgba(255,214,150,.42) 34%,
+    rgba(255,246,222,1) 50%,rgba(255,214,150,.42) 66%,rgba(255,190,110,0) 100%);
+  transition:left .42s var(--ease)}
+.lamp .sg-cut{position:absolute;top:0;bottom:0;left:var(--s);width:0;
+  border-left:1px dashed var(--cyan);transition:left .42s var(--ease)}
+.emitting .lamp{--s:10%}
 
 /* THE MATTE TOGGLE — four real swatches (they must show the actual ground,
    that's the point), framed as a sprocket-perforated strip rather than a
@@ -371,14 +457,6 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 :root[data-matte="white"] .chk,:root[data-matte="white"] .chk-s{background:#fff}
 :root[data-matte="black"] .chk,:root[data-matte="black"] .chk-s{background:#000}
 :root[data-matte="chroma"] .chk,:root[data-matte="chroma"] .chk-s{background:#00FF7F}
-
-/* THE PRIMARY BUTTON — one sprocket-hole notch, reserved for the single most
-   important action on screen. Everything else stays a plain pill: spending
-   this on every button would be exactly the scattered-ornament tell of
-   generated design this file elsewhere warns against. */
-.btn.go{
-  -webkit-mask-image:radial-gradient(circle 5px at calc(100% - 9px) 9px,transparent 5px,#000 5.5px);
-  mask-image:radial-gradient(circle 5px at calc(100% - 9px) 9px,transparent 5px,#000 5.5px)}
 
 /* THE "AUTO" MARK — a grease-pencil annotation (a dashed underline on mono
    text), not a SaaS status chip. Reuses the mark vocabulary the frames
@@ -408,16 +486,33 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
    wash that recedes as it reveals the artwork underneath — cutting away the
    background is the whole thesis, played once as a gesture instead of stated
    as a sentence. */
-.frame.arrive{animation:devoid-develop .7s var(--ease) backwards;
+.frame.arrive{animation:devoid-condense .72s var(--ease) backwards;
   animation-delay:calc(var(--i,0) * 90ms)}
-@keyframes devoid-develop{0%{opacity:0;transform:scale(.93)}100%{opacity:1;transform:scale(1)}}
+/* diffuse matter pulling itself together -- it arrives OUT of the field
+   rather than fading in on top of it. Scale settles inward, never outward:
+   nothing in this world expands. */
+@keyframes devoid-condense{
+  0%{opacity:0;transform:scale(1.05);filter:blur(7px)}
+  55%{opacity:1;filter:blur(1.5px)}
+  100%{opacity:1;transform:scale(1);filter:blur(0)}}
 .frame.arrive .win::after{content:"";position:absolute;inset:0;background:var(--ruby);
   mix-blend-mode:multiply;pointer-events:none;
   animation:devoid-wash .7s var(--ease) backwards;animation-delay:calc(var(--i,0) * 90ms)}
 @keyframes devoid-wash{0%{opacity:.85}70%{opacity:.5}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){
-  .frame.arrive{animation:none}
+  .frame.arrive{animation:devoid-arrive-still .4s ease-out backwards;
+    animation-delay:calc(var(--i,0) * 60ms)}
   .frame.arrive .win::after{animation:devoid-wash-only .5s ease-out backwards;
     animation-delay:calc(var(--i,0) * 60ms)}
 }
 @keyframes devoid-wash-only{0%{opacity:.85}100%{opacity:0}}
+
+@keyframes devoid-arrive-still{from{opacity:0}to{opacity:1}}
+
+/* EMITTING is a white hole, not a white background: the field is lit FROM
+   somewhere. One soft luminance behind the work area, the inverse of the
+   nebula the collapsed state carries. */
+.emitting .table{background-image:
+  radial-gradient(64% 50% at 50% 34%,rgba(255,252,244,.95),transparent 70%),
+  radial-gradient(52% 42% at 16% 88%,var(--neb-violet),transparent 74%),
+  radial-gradient(44% 36% at 86% 10%,var(--neb-blue),transparent 72%)}

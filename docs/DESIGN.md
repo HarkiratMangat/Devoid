@@ -8,9 +8,17 @@
 
 ## The world
 
-Not "a GIF tool" — the **matte** world: rotoscoping, chroma key, the alpha checkerboard, rubylith (the film compositors hand-cut masks from), vinyl weeding, the counter (a sign shop's word for the enclosed hole in a letterform, which is exactly the coin-flip case), onion skinning, the light table, registration marks.
+**The ground is the void; the tools on it are the matte world.** *(Revised 2026-09-04 22:40 EDT. The earlier version made the whole world a cutting table under a lamp. The tools were right and are kept; the ground was not — the app is called Devoid, and its one job is making pixels into nothing. Deep space IS nothing, rendered.)*
 
-Three rooms turned out to be one room, each owning a different job: **the cutting table** owns the ground and the material, **the light table** owns the lighting states and the frame axis, **the plotter** owns the drawing tools.
+The tools stay exactly as they were: rotoscoping, rubylith (the film compositors hand-cut masks from), vinyl weeding, the counter (a sign shop's word for the enclosed hole in a letterform, which is exactly the coin-flip case), onion skinning, registration marks, the grease pencil, the film strip. **The plotter** still owns the drawing tools and **the film strip** still owns the frame axis.
+
+What changed is what they sit on. The table floats in **the void**: an event horizon, accretion, the singularity, redshift, the photon ring, occultation — one body passing in front of another and blocking its light, which is precisely what a background does.
+
+⚠️ **The two load-bearing colours did not change, and the void is why they were right all along.** Cyan and rubylith are the two colours of an accretion disk — hot blue on the inner edge, warm red-orange on the outer. The new world did not replace this app's semantics. It explained them.
+
+⚠️ **The void is not black.** Long-exposure deep-sky is violet-tinted, and `--void` is `#06050D` for that reason — which is also how this design avoids the near-black-plus-one-acid-accent look that every generated dark interface arrives at.
+
+⚠️ **The alpha checkerboard survives, quietly, beneath the stars.** It is notation — "something transparent is on this spot" — and the measured argument for keeping it still holds. It is absent in exactly one place: **the empty table**, where no image is present, so claiming transparency would be claiming something untrue.
 
 ## Structure: there is no mode
 
@@ -46,9 +54,13 @@ Green and amber exist only as status marks, never as surfaces.
 
 ## Lighting states, not themes
 
-The same room with the lamp on or off; both designed, neither an inversion of the other. `:root` is the work lamp, `.lamp-light` is the light table, and an inline script sets it before first paint so there is no flash. The mechanism is borrowed from `dioreo.app`'s three-state pattern; the knob is not — that site's sun-and-moon switch is its own signature. Devoid's is the lamp over the bench.
+**Collapsed** and **emitting** — a black hole and its exact physical inverse, the one that gives back what the other takes. `:root` is collapsed, `.emitting` is the white hole, and an inline script sets it before first paint so there is no flash. Functionally emitting is still the bright ground you need in order to check dark artwork, so the metaphor costs nothing; the stars invert into dark motes so both states carry the same grain.
 
-Tokens are named for this room — the table, the bench, the well, the score lines, graphite, the sprocket. Someone reading only the token list should be able to guess what the product is.
+⚠️ **THE CONTROL IS A SEAM, AND THIS TOOK FOUR ATTEMPTS TO GET RIGHT.** A colour-changing dot, then an iOS rocker, then a circle with an accretion ring — three defaults wearing different hats, and the first of them broke this document's own "no state is ever colour alone" rule, since a grey dot and a gold dot differ in nothing but hue. The answer was in the product the whole time: **the app's signature gesture is dragging a cut line between two versions of an image, and choosing the room's lighting is that same act at a different scale.** So the control is a miniature of the wipe, with the same dashed cyan cut line, and the horizon does the work — a hot rim travels with the cut, which is what an accretion disk's inner edge actually looks like. No knob: a handle promises dragging, and this clicks.
+
+⚠️ **LENSING NEVER TOUCHES THE STAGE.** Light bending around mass is the most spectacular thing this world offers, and it is banned from the one place the artwork is judged. A preview that warps is showing you something you are not going to get, which is the same sin as reporting a verification that did not run. It lives in the empty table, in the toggle, and in the arrival — none of which are artwork under evaluation. The void behind the work may move; the work never does.
+
+Tokens are named for both halves of the world — the void, the horizon, the singularity, the star and the nebula, alongside the bench, the well, the score lines, graphite and the sprocket. Someone reading only the token list should be able to guess what the product is: something that removes things, in space.
 
 **Contrast is a gate, not an aspiration**: every text pair meets WCAG AA. Rubylith buttons take black labels, which passes where the more tasteful near-black-red did not.
 

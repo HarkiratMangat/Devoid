@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Devoid</title>
 <script>try{
-  if(localStorage.getItem('devoid-lamp')==='light')document.documentElement.classList.add('lamp-light');
+  if(localStorage.getItem('devoid-lamp')==='light')document.documentElement.classList.add('emitting');
   var m=localStorage.getItem('devoid-matte'); if(m&&m!=='checker')document.documentElement.dataset.matte=m;
 }catch(e){}</script>
 <link rel="stylesheet" href="fonts.css">
@@ -29,7 +29,10 @@
       <button class="swatch sw-black" data-matte="black" aria-pressed="false" aria-label="Black ground"></button>
       <button class="swatch sw-chroma" data-matte="chroma" aria-pressed="false" aria-label="Chroma-key ground"></button>
     </div>
-    <button class="lamp" id="lamp" aria-label="Lighting"><b></b></button>
+    <button class="lamp" id="lamp" aria-label="Lighting" aria-pressed="false">
+      <span class="sg-void"></span><span class="sg-lit"></span>
+      <span class="sg-rim"></span><span class="sg-cut"></span>
+    </button>
     <button class="btn go" id="primary">Save 6</button>
   </header>
 
@@ -98,6 +101,7 @@
       <!-- the empty table. emptiness is the subject, so no illustration. -->
       <div class="empty chk" id="empty" hidden>
         <div>
+          <div class="horizon" aria-hidden="true"><span class="ring"></span><span class="disc"></span></div>
           <p class="big">Nothing on the table.</p>
           <p>Drop something in.</p>
         </div>

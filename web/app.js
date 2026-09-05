@@ -1002,9 +1002,13 @@ $('#selectall').addEventListener('click', () => {
   render();
 });
 $('#lamp').addEventListener('click', () => {
-  const light = document.documentElement.classList.toggle('lamp-light');
-  try { localStorage.setItem('devoid-lamp', light ? 'light' : 'dark'); } catch (e) {}
+  const emitting = document.documentElement.classList.toggle('emitting');
+  $('#lamp').setAttribute('aria-pressed', String(emitting));
+  try { localStorage.setItem('devoid-lamp', emitting ? 'light' : 'dark'); } catch (e) {}
 });
+try {
+  if (localStorage.getItem('devoid-lamp') === 'light') $('#lamp').setAttribute('aria-pressed', 'true');
+} catch (e) {}
 $('#matte').addEventListener('click', e => {
   const btn = e.target.closest('button[data-matte]');
   if (!btn) return;

@@ -74,3 +74,14 @@
   font-size: 11.5px;
   color: var(--graphite-2);
 }
+
+
+/* The verdict a tool carries, as a 2px edge in the app's own two colours:
+   rubylith takes it away, cyan keeps it. Move and Take a colour make no
+   claim about the artwork, so they stay unmarked. Armed, the edge floods. */
+.rt-tool[data-keeps="false"]{border-left:2px solid var(--ruby)}
+.rt-tool[data-keeps="true"]{border-left:2px solid var(--cyan)}
+.rt-tool[data-keeps="false"][aria-pressed="true"]{background:var(--ruby-bg);border-color:var(--ruby);
+  color:var(--ruby-ink)}
+.rt-tool[data-keeps="true"][aria-pressed="true"]{background:var(--cyan-bg);border-color:var(--cyan);
+  color:var(--cyan-ink)}

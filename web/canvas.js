@@ -152,6 +152,14 @@ function start() {
   const art = document.getElementById('before');
   if (!canvas || !tools || !wipe || !stage || !art) return;
 
+  /* ⚠️ Both ship `hidden` in the markup so a failed load of THIS file leaves no
+     empty toolbar box behind -- `start()` returns above if anything is missing.
+     Reaching here means the plotter is real, so show it. It lives inside #open,
+     so it is still only visible when an asset is open, and the canvas is inert
+     until a tool is picked up (see arm()), so the seam still drags normally. */
+  canvas.hidden = false;
+  tools.hidden = false;
+
   const ctx = canvas.getContext('2d');
   const HANDLE = 4;      // half-size of a handle square, in CSS px
   const GRAB = 8;        // how near a handle counts as grabbing it
@@ -554,9 +562,14 @@ function start() {
     return n;
   }
 
-  function toolButton(id, label, hint) {
+  function toolButton(id, label, hint, keeps) {
     const b = el('button', 'btn rt-tool', label);
     b.type = 'button';
+    // the verdict, as a 2px edge -- eight fully-coloured buttons would be a
+    // carnival, but eight UNMARKED ones make you read every label to find the
+    // one that cuts. Move and Take a colour carry no verdict, so no mark.
+    if (keeps === true) b.dataset.keeps = 'true';
+    if (keeps === false) b.dataset.keeps = 'false';
     b.title = hint || label;
     b.setAttribute('aria-pressed', String(S.tool === id));
     b.addEventListener('click', () => {
@@ -583,7 +596,7 @@ function start() {
 
     const row = el('div', 'rt-row');
     row.append(toolButton('move', 'Move', 'pick a region up and move or resize it'));
-    for (const k of REGION_KINDS) row.append(toolButton(k.type, k.label, k.hint));
+    for (const k of REGION_KINDS) row.append(toolButton(k.type, k.label, k.hint, k.keeps));
     row.append(toolButton('colour', 'Take a colour', 'read the colour under the crosshair'));
     tools.append(row);
 
