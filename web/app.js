@@ -396,6 +396,64 @@ function renderBanner() {
    One question PER OUTLINE COLOUR. Real controls, a real submit, and the
    server's own validation surfaced where it happened rather than as a crash.
    The wipe that illustrates the answer is Stage 3's (`web/wipe.js`). */
+/* PRODUCT.md's whole thesis: the coin-flip question is a VISUAL one, and
+   delivering it as a hex string plus a bbox array is the failure the app
+   exists to abolish. Light the disputed region on the artwork itself, using
+   the same letterbox maths the plotter uses, so the mark lands on the pixels
+   it is talking about at any window size. */
+function renderQuestionRegions(a) {
+  const wipe = $('#wipe');
+  if (!wipe) return;
+  for (const n of wipe.querySelectorAll('.qregion')) n.remove();
+  if (!a) return;
+  const groups = colourGroups(a);
+  if (!groups.length) return;
+  const art = $('#before');
+  const sw = art.naturalWidth, sh = art.naturalHeight;
+  const P = window.Devoid && window.Devoid.plotter;
+  if (!sw || !sh || !P) return;                 // nothing to register against yet
+  const cs = getComputedStyle(art);
+  const pad = k => parseFloat(cs[k]) || 0;
+  const box = wipe.getBoundingClientRect();
+  const disp = { x: pad('paddingLeft'), y: pad('paddingTop'),
+                 width: box.width - pad('paddingLeft') - pad('paddingRight'),
+                 height: box.height - pad('paddingTop') - pad('paddingBottom') };
+  if (disp.width <= 0 || disp.height <= 0) return;
+  const ans = S.answers[a.id] || { byColour: {} };
+  for (const g of groups) {
+    for (const r of g.regions) {
+      const bb = r.bbox_xyxy; if (!bb || bb.length !== 4) continue;
+      const tl = P.sourceToDisplay({ x: bb[0], y: bb[1] }, disp, sw, sh);
+      const br = P.sourceToDisplay({ x: bb[2], y: bb[3] }, disp, sw, sh);
+      const m = el('div', 'qregion');
+      const verdict = ans.byColour[g.hex];
+      if (verdict) m.dataset.verdict = verdict;
+      m.style.left = tl.x + 'px'; m.style.top = tl.y + 'px';
+      m.style.width = Math.max(2, br.x - tl.x) + 'px';
+      m.style.height = Math.max(2, br.y - tl.y) + 'px';
+      m.append(el('b', null, verdict === 'protect' ? 'keeping this'
+                          : verdict === 'remove' ? 'cutting this' : 'is this yours?'));
+      wipe.append(m);
+    }
+  }
+}
+/* ⚠️ The mark has to stay registered to the artwork, and positioning it once
+   leaves it stale: opening a drawer or gaining a toolbar row changes #wipe's
+   box and the mark drifts off the pixels it is pointing at (measured: 3.7px
+   after the plotter's toolbar laid out). A ResizeObserver catches every one
+   of those, and unlike a requestAnimationFrame poll it still fires when the
+   page is not being painted -- which is exactly the trap that made the
+   plotter look broken. */
+const requeryRegions = () => {
+  const a = S.assets.find(x => x.id === S.open);
+  if (a) renderQuestionRegions(a);
+};
+window.addEventListener('resize', requeryRegions);
+if (typeof ResizeObserver !== 'undefined') {
+  const wipeEl = $('#wipe');          // ⚠️ not the `wipe` const -- it is declared
+  if (wipeEl) new ResizeObserver(requeryRegions).observe(wipeEl);   // far below
+}
+
 function renderQuestions(a) {
   const box = $('#questions');
   const groups = colourGroups(a), fade = hasFade(a);
@@ -448,7 +506,8 @@ function renderQuestions(a) {
   submit.addEventListener('click', () => submitAnswers(a));
   const foot = el('div', 'qfoot');
   foot.append(submit, el('span', 'qhint', outstanding(a).length
-    ? `${outstanding(a).length} still to answer` : 'both answers are in'));
+    ? `${outstanding(a).length} still to answer`
+    : (colourGroups(a).length + (hasFade(a) ? 1 : 0)) > 1 ? 'every answer is in' : 'answered'));
   box.append(foot);
 }
 
@@ -789,9 +848,21 @@ function goalPayload() {
   return g;
 }
 
-async function cut() {
+async function cut(confirmed) {
   const list = targets().filter(a => stateOf(a) !== 'running');
   if (!list.length) return;
+
+  /* ⚠️ One click used to start every job on the table against an IMPLICIT
+     selection -- `targets()` falls back to everything when nothing is
+     selected, so "Cut 6" with zero selected wrote six files with no warning.
+     An explicit selection is taken at its word; an implicit one is confirmed,
+     naming the count and where the files land. */
+  if (!confirmed && !S.sel.size && list.length > 1) {
+    setBanner('conflict',
+      `Cut all ${list.length}? Each one is written beside its own file`,
+      { label: `Cut ${list.length}`, run: () => { S.banner = null; cut(true); } });
+    return;
+  }
 
   /* blocked: a save with questions outstanding. A first-class state, not a
      disabled button — a disabled button never says why.
@@ -959,16 +1030,33 @@ function render() {
 
   if (a) {
     if (!wipeOwned) {
-      $('#before').src = artUrl(a); $('#before').alt = `${base(a.path)} as it came in`;
+      /* ⚠️ This used to put the SAME file on both sides and label the right
+         half "cut" -- an uncut source presented as a cut result, in the app's
+         central widget, which is exactly the unearned claim PRODUCT.md
+         forbids. A seam compares two things; until a second thing exists
+         there is nothing to compare, so the wipe collapses to one honest
+         image and says so. */
       const j = S.jobs[a.id];
-      $('#after').src = artUrl(a);  $('#after').alt  = `${base(a.path)} with the background cut out`;
-      if (j && j.output_path) $('#after').alt = `${base(j.output_path)}`;
+      const cutUrl = j && j.output_path && stateOf(a) !== 'running'
+        ? artUrl({ path: j.output_path }) : null;
+      $('#before').src = artUrl(a); $('#before').alt = `${base(a.path)} as it came in`;
+      wipe.toggleAttribute('data-single', !cutUrl);
+      if (cutUrl) {
+        $('#after').src = cutUrl;
+        $('#after').alt = `${base(j.output_path)} — the background cut out`;
+        $('.wipetag.l').textContent = 'as it came';
+      } else {
+        $('#after').removeAttribute('src');
+        $('.wipetag.l').textContent = 'not cut yet';
+      }
     }
     $('#openname').textContent = stem(a.path);
     $('#openstate').replaceChildren(
       el('span', null, `${a.ext || ''} · ${a.frames ? a.frames + ' frames · ' : ''}`),
       el('b', `s-${stateOf(a)}`, wordOf(a)));
     renderEdge(); renderQuestions(a); renderLedger(a); renderFilm(a);
+    renderQuestionRegions(a);
+    $('#before').addEventListener('load', () => renderQuestionRegions(a), { once: true });
   } else {
     renderSheet();
   }
@@ -1064,11 +1152,15 @@ $('#selectall').addEventListener('click', () => {
 $('#lamp').addEventListener('click', () => {
   const emitting = document.documentElement.classList.toggle('emitting');
   paintField();   // the field's own colour temperature inverts with the room
-  $('#lamp').setAttribute('aria-pressed', String(emitting));
+  /* naming the STATE while also carrying aria-pressed produced "Emitting
+     light, not pressed", which contradicts itself. The label names the
+     ACTION and moves with it; there is no pressed state left to disagree. */
+  $('#lamp').setAttribute('aria-label',
+    emitting ? 'Switch to collapsed dark' : 'Switch to emitting light');
   try { localStorage.setItem('devoid-lamp', emitting ? 'light' : 'dark'); } catch (e) {}
 });
 try {
-  if (localStorage.getItem('devoid-lamp') === 'light') $('#lamp').setAttribute('aria-pressed', 'true');
+  if (localStorage.getItem('devoid-lamp') === 'light') $('#lamp').setAttribute('aria-label', 'Switch to collapsed dark');
 } catch (e) {}
 $('#matte').addEventListener('click', e => {
   const btn = e.target.closest('button[data-matte]');
@@ -1076,14 +1168,20 @@ $('#matte').addEventListener('click', e => {
   const val = btn.dataset.matte;
   if (val === 'checker') delete document.documentElement.dataset.matte;
   else document.documentElement.dataset.matte = val;
-  for (const b of $('#matte').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b === btn));
+  for (const b of $('#matte').querySelectorAll('button')) {
+    const on = b === btn;
+    b.setAttribute('aria-checked', String(on));
+    b.tabIndex = on ? 0 : -1;      // one tab stop for the group, per the radio pattern
+  }
   try { localStorage.setItem('devoid-matte', val); } catch (e) {}
 });
 (function initMatte() {
   let saved = 'checker';
   try { saved = localStorage.getItem('devoid-matte') || 'checker'; } catch (e) {}
   for (const b of $('#matte').querySelectorAll('button')) {
-    b.setAttribute('aria-pressed', String(b.dataset.matte === saved));
+    const on = b.dataset.matte === saved;
+    b.setAttribute('aria-checked', String(on));
+    b.tabIndex = on ? 0 : -1;
   }
 })();
 $('#primary').addEventListener('click', () => {

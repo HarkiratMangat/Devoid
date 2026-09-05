@@ -30,7 +30,7 @@
      are already the two colours of an accretion disk -- hot blue on the inner
      edge, warm red-orange on the outer. The void did not replace this app's
      semantics, it explained them. */
-  --void:#06050D; --singularity:#030209; --horizon:#FFE9B8;
+  --void:#06050D; --singularity:#030209; --horizon:#FFE9B8; --focus:#22D3EE;
   --star:#FFFFFF; --star-cold:#CFDCFF;
   --neb-violet:rgba(104,66,186,.42); --neb-blue:rgba(42,96,178,.26);
 
@@ -56,7 +56,7 @@
    check dark artwork against, so nothing is lost by the metaphor; the stars
    invert into dark motes so both states have the same grain. */
 .emitting{
-  --void:#EFEEF6; --singularity:#D6D5E4; --horizon:#B08029;
+  --void:#EFEEF6; --singularity:#D6D5E4; --horizon:#B08029; --focus:#1B1A24;
   --star:#12111A; --star-cold:#3A3654;
   --neb-violet:rgba(120,96,190,.13); --neb-blue:rgba(60,110,180,.10);
 
@@ -77,7 +77,11 @@ html,body{height:100%}
 body{margin:0;font-family:Archivo,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;
   background:var(--mat);color:var(--graphite);font-variant-numeric:tabular-nums;font-size:13px;line-height:1.5}
 button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer;font-variant-numeric:inherit}
-:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;border-radius:4px}
+/* ⚠️ The ring needs 3:1 against the surface it sits on (SC 1.4.11), and cyan
+   scored 1.40-1.81 on the emitting field -- worst on the primary button, where
+   the ring was the same cyan as the fill it surrounded. Dark keeps cyan; light
+   takes an ink ring. One token, so a new surface cannot silently reintroduce it. */
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
 /* ⚠️ NARROWED from a blanket rule. DESIGN.md "Motion" names the blanket
    version as wrong: `animation-duration:.01ms` on `*` kills OPACITY
    transitions too, and opacity is the channel that carries meaning here.
@@ -131,7 +135,7 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 
 /* ── the contact sheet: the strip with nothing selected ─────────────────── */
 .sheet{flex:1;overflow:auto;padding:var(--s4);display:grid;align-content:start;
-  grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:var(--s3)}
+  grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:var(--s3)}
 .frame{background:var(--sprocket);border-radius:var(--r2);padding:var(--s2);display:block;
   text-align:left;box-shadow:inset 0 0 0 1px var(--score);
   transition:background .18s var(--ease),transform .18s var(--ease),box-shadow .18s var(--ease)}
@@ -444,8 +448,8 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
    never by a colour fill alone. */
 .matte{display:flex;align-items:center;gap:0;padding:var(--s1);border-radius:var(--r);
   background:var(--well);border:1px solid var(--score)}
-.swatch{width:24px;height:24px;border-radius:5px;padding:0;position:relative;
-  background-clip:content-box;border:4px solid transparent;
+.swatch{width:28px;height:28px;border-radius:6px;padding:0;position:relative;
+  background-clip:content-box;border:5px solid transparent;
   box-shadow:inset 0 0 0 1px var(--score-2)}
 .swatch.chk-s{background-size:8px 8px}
 .sw-white{background:#fff}
@@ -567,3 +571,31 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
     0 6px 14px rgba(18,17,26,.07)}
 .emitting .edge button[aria-current="true"]{box-shadow:inset 0 0 0 1.5px var(--cyan),
   0 1px 3px rgba(18,17,26,.10)}
+
+/* ══ THE QUESTION, DRAWN ON THE ARTWORK ════════════════════════════════════
+   PRODUCT.md: "Nobody can answer 'is the region at bbox [230,135,406,359]
+   outlined in 002864 design or background?' by reading it. They have to see
+   it. That is the product." The question shipped as that exact string. The
+   disputed region is now lit on the picture: rubylith to say it is up for
+   removal, plus the diagonal hatch, because hue is not a reliable channel
+   over this content and hatching is how removed material is marked in a
+   technical drawing.
+   ⚠️ This is the SECOND accepted `repeating-stripes-gradient` -- DESIGN.md
+   predicted it: "expect one finding, and a second when the hatch lands." */
+.qregion{position:absolute;pointer-events:none;border:1.5px solid var(--ruby);
+  border-radius:var(--r);background:
+    repeating-linear-gradient(45deg,rgba(226,64,42,.30) 0 3px,transparent 3px 8px),
+    rgba(226,64,42,.14);
+  box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.qregion b{position:absolute;left:0;bottom:calc(100% + var(--s1));
+  font:500 10px/1 "Spline Sans Mono",monospace;
+  font-stretch:80%;color:#fff;background:var(--ruby);
+  padding:var(--s1) var(--s2);border-radius:var(--r);white-space:nowrap}
+.qregion[data-verdict="protect"]{border-color:var(--cyan);background:rgba(34,211,238,.12)}
+.qregion[data-verdict="protect"] b{background:var(--cyan);color:#04212A}
+.qregion[data-verdict="remove"]{opacity:.55}
+
+/* the wipe with nothing to compare against yet */
+.wipe[data-single] .seam,.wipe[data-single] .wipetag.r,.wipe[data-single] .after,
+.wipe[data-single] .aftbg{display:none}
+.wipe[data-single] .wipetag.l{left:50%;transform:translateX(-50%);color:var(--amber)}

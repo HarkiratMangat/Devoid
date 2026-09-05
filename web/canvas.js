@@ -570,6 +570,9 @@ function start() {
     // one that cuts. Move and Take a colour carry no verdict, so no mark.
     if (keeps === true) b.dataset.keeps = 'true';
     if (keeps === false) b.dataset.keeps = 'false';
+    /* role="toolbar" promises ONE tab stop with arrow keys inside it; ten
+       default tabindexes made it ten stops, which is the opposite. */
+    b.tabIndex = (S.tool ? S.tool === id : id === 'move') ? 0 : -1;
     b.title = hint || label;
     b.setAttribute('aria-pressed', String(S.tool === id));
     b.addEventListener('click', () => {
@@ -579,6 +582,18 @@ function start() {
     });
     return b;
   }
+
+  tools.addEventListener('keydown', (e) => {
+    if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) return;
+    const items = [...tools.querySelectorAll('button')];
+    const i = items.indexOf(document.activeElement);
+    if (i < 0) return;
+    e.preventDefault();
+    const n = e.key === 'Home' ? 0 : e.key === 'End' ? items.length - 1
+            : e.key === 'ArrowRight' ? (i + 1) % items.length : (i - 1 + items.length) % items.length;
+    for (const b of items) b.tabIndex = -1;
+    items[n].tabIndex = 0; items[n].focus();
+  });
 
   function arm() {
     // The canvas sits above the wipe inside the same #stage. It must be inert

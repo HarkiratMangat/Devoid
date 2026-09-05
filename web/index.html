@@ -21,7 +21,7 @@
     <span class="grow"></span>
     <button class="btn" id="selectall">Select all</button>
     <button class="btn" id="add">Add files</button>
-    <button class="lamp" id="lamp" aria-label="Emitting light" aria-pressed="false">
+    <button class="lamp" id="lamp" aria-label="Switch to emitting light">
       <span class="sg-void"></span><span class="sg-lit"></span>
       <span class="sg-rim"></span><span class="sg-cut"></span>
     </button>
@@ -42,13 +42,13 @@
     <!-- the field. Drawn once to fit, never tiled: a repeating star pattern
          is the one thing a sky never does, and the eye catches a repeated
          constellation instantly. -->
-    <canvas id="starfield" aria-hidden="true"></canvas>
+    <canvas id="starfield" aria-hidden="true" role="presentation"></canvas>
     <!-- the queue, only while something is open -->
     <nav class="edge" id="edge" aria-label="Everything else" hidden></nav>
 
-    <div class="work">
+    <main class="work" id="work">
       <!-- nothing selected: the strip fills the space -->
-      <div class="sheet chk" id="sheet"></div>
+      <div class="sheet" id="sheet"></div>
 
       <!-- one open -->
       <div class="open" id="open" hidden>
@@ -57,12 +57,12 @@
                verification requirement, not a preference, so it lives beside
                the artwork rather than in the app bar. -->
           <div class="matte" id="matte" role="radiogroup" aria-label="Preview ground">
-            <button class="swatch chk-s" data-matte="checker" aria-pressed="true" aria-label="Checkerboard ground"></button>
-            <button class="swatch sw-white" data-matte="white" aria-pressed="false" aria-label="White ground"></button>
-            <button class="swatch sw-black" data-matte="black" aria-pressed="false" aria-label="Black ground"></button>
-            <button class="swatch sw-chroma" data-matte="chroma" aria-pressed="false" aria-label="Chroma-key ground"></button>
+            <button class="swatch chk-s" role="radio" data-matte="checker" aria-checked="true" tabindex="0" aria-label="Checkerboard ground"></button>
+            <button class="swatch sw-white" role="radio" data-matte="white" aria-checked="false" tabindex="-1" aria-label="White ground"></button>
+            <button class="swatch sw-black" role="radio" data-matte="black" aria-checked="false" tabindex="-1" aria-label="Black ground"></button>
+            <button class="swatch sw-chroma" role="radio" data-matte="chroma" aria-checked="false" tabindex="-1" aria-label="Chroma-key ground"></button>
           </div></div>
-        <div class="stage chk" id="stage">
+        <div class="stage" id="stage">
           <!-- Stage 3: wipe.js replaces #before/#after (looping <img>) with two
                synced <canvas> elements decoding shared frame timing (PLAN.md 3.3),
                and swaps the pair for answer-A vs answer-B (PLAN.md 3.1). -->
@@ -107,11 +107,11 @@
       <div class="empty chk" id="empty" hidden>
         <div>
           <div class="horizon" aria-hidden="true"><span class="ring"></span><span class="disc"></span></div>
-          <p class="big">Nothing on the table.</p>
-          <p>Drop something in.</p>
+          <p class="big">Nothing on the table</p>
+          <p>Drop something in</p>
         </div>
       </div>
-    </div>
+    </main>
 
     <aside class="drawer" id="drawer" hidden></aside>
     <nav class="tabs" id="tabs" aria-label="Panels"></nav>
