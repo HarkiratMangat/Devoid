@@ -83,3 +83,35 @@ Five `@media (prefers-reduced-motion:reduce)` blocks exist in `web/app.css`, cov
 This is the single largest hole in the project's evidence, and it is what made a related failure possible: **"93 pytest passed" was reported on commits that changed only CSS** — true, and evidence for a claim nobody made.
 
 **Concrete first slice, and it is small:** `scripts/capture-window.mjs` already drives the real Electron window and captures six states through `webContents.capturePage`. Turning it from a screenshot tool into a **gate** — assert the diagnostics it already prints (region canvas non-zero, starfield sized, no console errors), then compare each PNG against a committed baseline — is most of a real UI test for the cost of an exit code. ⚠️ Pixel baselines are brittle; start with the assertions, which cannot be flaky, and add image comparison only where a stable region justifies it.
+
+## ✅ The `.app` is not standalone — it carries no Python — CLOSED 2026-09-05 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: closed, and verified by running it from `/tmp`.** The bundle carries `pyvenv` (the venv), `server/` and `web/` as extraResources, resolves its interpreter in a stated order, and writes its logs to `~/Library/Application Support/Devoid`. Copied to `/tmp/DevoidTest` and launched there it served `index.html`, `app.css`, `app.js` and an 807 KB corpus asset, introspected **64 engine flags**, and reported `engine available: true`.
+
+**Three defects were found doing it**, all of which mean the previous build almost certainly never ran at all: `server/` and `web/` were inside `app.asar`, where Python cannot read them; there was no interpreter; and `waitForServer` retried **forever**, so any of it failing showed the person nothing — no window, no error. Both failure paths are dialogs now.
+
+⚠️ **Two dependencies remain and are filed as a successor** — the venv's base interpreter, and the engine's resolved path.
+
+**The original filing, unedited:**
+
+### `[P1 · M · Opus5-High]` The `.app` is not standalone — it carries no Python *(filed 2026-09-05, `PLAN.md` 6.3)*
+
+`npm run dist:dir` produces `dist/mac-arm64/Devoid.app`, it launches, and **it only runs from this repo**: `main.js` spawns `.venv/bin/python` relative to its own directory. On any other machine it opens a window and fails at the spawn.
+
+**The work:** bundle an interpreter (`pyinstaller` over `server/app.py`, or a vendored embeddable Python dropped in via `extraResources`), and give it the environment check from `docs/PLAN.md` 0.3 as its failure path — a missing engine must say so in the window, not die in a spawn. ⚠️ **This now also owns where the logs live.** `server/jobs.py:25` and the labels writer both resolve their paths from `REPO_ROOT`, which stops meaning anything the moment the app leaves this repo. A standalone build has to write to `~/Library/Application Support/Devoid/` — decided when `jobs.jsonl` was untracked on 2026-09-05, where ignoring it was the right small fix and relocating it was correctly judged too big for a docs session.
+
+⚠️ **Do not describe the current build as standalone anywhere**; `README.md`'s Packaging section is written to prevent exactly that and should stay that way until this closes.
+
+## ✅ `docs/API-CONTRACT.md` is the one hard-wrapped markdown file in the repo — CLOSED 2026-09-05 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: reflowed, on the user's call — "its frozen state has no merit on correcting its wrapping."** 92 → 76 lines. Every markdown file in the repo now passes `reflow-prose.mjs --check`.
+
+⚠️ **The filing's reasoning was wrong in a way worth keeping.** It weighed a formatting win against a worse `git blame` on a frozen document and chose to defer. But *frozen* describes the contract's **content** — the routes and schemas six parallel agents built against — and says nothing about how its bytes are wrapped. Deferring on that basis protected the file from a convention the whole repo follows, for no benefit.
+
+⚠️ **A second, mechanical error is worth more than the first.** `reflow-prose.mjs` with no flag is a **dry run** that prints `ok <file> 92 → 76 lines` — which reads exactly like success. It was run that way, reported as done, and had changed nothing; `--write` is the flag. An instrument whose dry-run output is indistinguishable from its success output will be misread, and was.
+
+**The original filing, unedited:**
+
+### `[P3 · XS · Sonnet5-Low]` `docs/API-CONTRACT.md` is the one hard-wrapped markdown file in the repo *(filed 2026-09-05)*
+
+`reflow-prose.mjs --check` reports 92 → 76 lines on it, and has since before this session. Left alone deliberately: reflowing rewrites every line of a **frozen** document, which makes its `git blame` worse for a formatting win. Worth doing the next time the contract changes substantively anyway, not as its own commit.

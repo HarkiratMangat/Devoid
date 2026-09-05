@@ -11,9 +11,20 @@
 #   APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID  — notarisation
 # See README.md "Packaging". Set notarize: true below once those five exist.
 #
-# ⚠️ The packaged app is NOT standalone. It carries no Python runtime and still
-# spawns .venv/bin/python beside itself. Bundling an interpreter is the rest of
-# 6.3 and is out of scope here — README.md says so plainly.
+# ⚠️ WHAT MAKES THIS RUN OUTSIDE THE REPO (6.3), and why it is arranged this way:
+#
+#   • server/ and web/ ship as extraResources, NOT inside app.asar. Python
+#     cannot read an asar, and Python is what imports the server AND serves
+#     web/ as static files. In the asar they are simply invisible to it.
+#   • .venv ships as extraResources too, as `pyvenv`. It is a venv, so it still
+#     needs its base interpreter — /Library/Frameworks/Python.framework/
+#     Versions/3.11 — which is a system-wide framework install, not part of
+#     this checkout. That is what the app depends on now, instead of the repo.
+#   • The engine itself is still resolved at runtime (server/engine.py): via
+#     $DEVOID_SKILL, devoid.config.json, or the documented path in
+#     /Applications/Claude Code/Gif-Background-Remover. It is deliberately NOT
+#     bundled — the skill is the source of truth and must not be forked into
+#     a copy that silently drifts.
 
 appId: com.harkirat.devoid
 productName: Devoid
@@ -25,8 +36,6 @@ directories:
 
 files:
   - main.js
-  - web/**/*
-  - server/**/*.py
   - package.json
   - '!**/__pycache__'
   - '!**/*.pyc'
@@ -37,7 +46,26 @@ files:
   - '!prototype/**'
   - '!dist/**'
 
+extraResources:
+  - from: server
+    to: server
+    filter: ['**/*.py', '!**/__pycache__/**']
+  - from: web
+    to: web
+    filter: ['**/*', '!**/__pycache__/**']
+  - from: .venv
+    to: pyvenv
+    filter:
+      - '**/*'
+      - '!**/__pycache__/**'
+      - '!**/*.pyc'
+      - '!lib/**/pip/**'
+      - '!lib/**/setuptools/**'
+      - '!**/tests/**'
+      - '!**/test/**'
+
 mac:
+  icon: build/icon.icns
   category: public.app-category.graphics-design
   target:
     - dmg

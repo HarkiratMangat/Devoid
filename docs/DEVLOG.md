@@ -100,6 +100,16 @@ The history drawer fetched `/api/history` and `/api/engine/status` together. The
 
 ---
 
+### "Not standalone" was three bugs wearing one label
+
+The packaged app was documented as *"carries no Python runtime and still spawns `.venv/bin/python` beside itself, so it runs from this repo"*. Believable, specific, and it hid two more failures nobody had looked for — because **nobody had ever launched the packaged app**, only built it.
+
+`server/**/*.py` and `web/**/*` were listed in electron-builder's `files:`, which puts them **inside `app.asar`**. Node can read an asar; Python cannot. So the server could not have been imported, and `StaticFiles(directory=WEB_DIR)` could not have served a single byte of the interface. And `waitForServer` retried forever with no deadline, so all of that would have presented as **a bouncing icon and nothing else**.
+
+The lesson is the same one this project keeps relearning in new costumes: *building* an artifact is not *running* it. A `dist:dir` that exits 0 says the files were copied, and says nothing about whether the thing works.
+
+---
+
 ## Decisions, and what was tried first
 
 ### The world: the ground is the void, the tools stay the matte world

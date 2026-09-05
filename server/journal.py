@@ -29,11 +29,11 @@ import os
 from pathlib import Path
 from typing import Callable, Optional
 
-from server.appendlog import REPO_ROOT, PathLike, utc_now
+from server.appendlog import DATA_DIR, PathLike, utc_now
 
 log = logging.getLogger("devoid.journal")
 
-JOURNAL_PATH: Path = REPO_ROOT / ".devoid-journal.json"
+JOURNAL_PATH: Path = DATA_DIR / ".devoid-journal.json"
 
 
 def _read(target: Path) -> list:

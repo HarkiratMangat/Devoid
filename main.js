@@ -7,7 +7,29 @@ const fs = require('fs');
 
 const BASE_PORT = 8732;
 const LAST_PORT = 8740;
-const PYTHON = path.join(__dirname, '.venv', 'bin', 'python');
+/* ── Where Python is, where the server lives, and where the logs go ────────
+ * ⚠️ A packaged .app is not a checkout. `__dirname` is inside app.asar, which
+ * Python cannot read, and there is no `.venv` beside it -- which is exactly
+ * why the first build "ran" only from this repo. Each of the three is resolved
+ * once, here, and a failure is a DIALOG rather than a window that never opens.
+ */
+const PACKAGED = app.isPackaged;
+/* server/ ships as extraResources, NOT inside the asar, so uvicorn can import
+ * it and Python can read it as ordinary files on disk. */
+const SERVER_CWD = PACKAGED ? process.resourcesPath : __dirname;
+
+/** The interpreter, in order of preference, with the reason it was chosen. */
+function resolvePython() {
+  const candidates = [
+    [process.env.DEVOID_PYTHON, 'DEVOID_PYTHON'],
+    [PACKAGED ? path.join(process.resourcesPath, 'pyvenv', 'bin', 'python3') : null, 'bundled'],
+    [path.join(__dirname, '.venv', 'bin', 'python'), 'repo .venv'],
+  ];
+  for (const [candidate, why] of candidates) {
+    if (candidate && fs.existsSync(candidate)) return { python: candidate, why };
+  }
+  return null;
+}
 
 let serverProcess = null;
 let mainWindow = null;
@@ -43,19 +65,45 @@ function fileArgs(argv) {
   });
 }
 
-function startServer(port) {
+let serverStderr = '';
+
+function startServer(port, python) {
+  /* ⚠️ The app must never write inside its own bundle: that breaks under
+   * signing and is wiped by the next install. Packaged, the two logs and the
+   * crash journal go to ~/Library/Application Support/Devoid; from a checkout
+   * they stay in the repo, where labels/protection.jsonl is tracked evidence. */
+  const env = { ...process.env };
+  if (PACKAGED) env.DEVOID_DATA_DIR = app.getPath('userData');
+
   serverProcess = spawn(
-    PYTHON,
+    python,
     ['-m', 'uvicorn', 'server.app:app', '--port', String(port)],
-    { cwd: __dirname, stdio: 'inherit' }
+    { cwd: SERVER_CWD, env, stdio: ['ignore', 'inherit', 'pipe'] }
   );
+  /* keep stderr: when the server dies at import time, this text IS the reason,
+   * and without it a failed launch is a window that simply never appears */
+  serverProcess.stderr.on('data', (chunk) => {
+    const text = String(chunk);
+    serverStderr = (serverStderr + text).slice(-4000);
+    process.stderr.write(text);
+  });
+  serverProcess.on('exit', (code) => {
+    if (code !== 0 && code !== null) console.error(`[devoid] server exited with ${code}`);
+  });
 }
 
-function waitForServer(port, callback) {
+/* ⚠️ This used to retry FOREVER. A server that never comes up then showed the
+ * person nothing at all -- no window, no error, just a bouncing icon. A launch
+ * that cannot work has to say so. 40s covers a 3.82s cold engine import
+ * (PLAN.md 1.2) many times over. */
+function waitForServer(port, callback, onTimeout, deadline = Date.now() + 40000) {
   const attempt = () => {
     http
       .get(`http://127.0.0.1:${port}`, () => callback())
-      .on('error', () => setTimeout(attempt, 100));
+      .on('error', () => {
+        if (Date.now() > deadline) return onTimeout();
+        setTimeout(attempt, 100);
+      });
   };
   attempt();
 }
@@ -67,7 +115,9 @@ function createWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      preload: path.join(__dirname, 'web', 'preload.js'),
+      // ⚠️ web/ ships as extraResources beside server/, because Python serves
+      // it and Python cannot read inside app.asar. One copy, one path.
+      preload: path.join(SERVER_CWD, 'web', 'preload.js'),
     },
   });
   mainWindow.loadURL(`http://127.0.0.1:${activePort}`);
@@ -318,11 +368,39 @@ app.whenReady().then(async () => {
 
   setAboutPanel();
   buildMenu();
-  startServer(activePort);
-  waitForServer(activePort, () => {
-    createWindow();
-    logEngineStatus(activePort);
-  });
+
+  const found = resolvePython();
+  if (!found) {
+    dialog.showErrorBox(
+      'Devoid cannot find its Python',
+      'Devoid runs a small local server and could not find an interpreter to run it with.\n\n' +
+        'Looked for, in order:\n' +
+        '  • $DEVOID_PYTHON\n' +
+        (PACKAGED ? '  • the copy bundled inside Devoid.app\n' : '') +
+        `  • ${path.join(__dirname, '.venv', 'bin', 'python')}\n\n` +
+        'Set DEVOID_PYTHON to a Python 3.11 that has starlette, uvicorn, numpy, scipy and Pillow.'
+    );
+    app.quit();
+    return;
+  }
+  console.log(`[devoid] python: ${found.python} (via ${found.why})`);
+
+  startServer(activePort, found.python);
+  waitForServer(
+    activePort,
+    () => { createWindow(); logEngineStatus(activePort); },
+    () => {
+      dialog.showErrorBox(
+        'Devoid could not start its server',
+        `The local server did not answer on port ${activePort} within 40 seconds.\n\n` +
+          `Python: ${found.python} (via ${found.why})\n` +
+          `Working directory: ${SERVER_CWD}\n\n` +
+          (serverStderr ? `Last output from the server:\n\n${serverStderr.slice(-1200)}`
+                        : 'The server printed nothing, which usually means the interpreter itself could not start.')
+      );
+      app.quit();
+    }
+  );
 });
 
 app.on('window-all-closed', () => {

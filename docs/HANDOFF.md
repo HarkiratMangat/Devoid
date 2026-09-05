@@ -11,11 +11,12 @@
 ## How to run it
 
 ```sh
-npm start                                   # the dev loop
-npm run dist:dir && open dist/mac-arm64/Devoid.app   # the real .app
+npm start          # the dev loop
+npm run dist       # Devoid-1.0.0-arm64.dmg — drag it into Applications
+npm run gate:ui    # the eight assertions against the real window
 ```
 
-⚠️ **The `.app` is not standalone.** It carries no Python runtime and spawns `.venv/bin/python` beside itself, so it runs from this repo and nowhere else. Bundling an interpreter is the remaining 6.3 work, documented in README's Packaging section.
+The `.app` carries its own Python and runs from anywhere on this Mac — verified from `/tmp`. ⚠️ **It is not portable to another Mac yet:** the bundled venv needs Python 3.11 from the python.org framework, and the engine is resolved at runtime rather than bundled (deliberately — the skill is the source of truth). Both failures are dialogs naming the fix. README's Packaging section has the detail.
 
 ## ⚠️ Read this before you verify anything visual
 
@@ -64,12 +65,11 @@ All four are filed in `devoid-deferred-list.md`; the traps that made them expens
 2. The UI gate asserts eight things; the surface has far more than eight
 3. `content_type` is permanently `"unknown"` in every label row
 4. Every render pays for a second full analysis the app already ran
-5. The `.app` is not standalone — no bundled Python (6.3)
-6. Emitting mode is the weaker of the two states
+5. Emitting mode is the weaker of the two states
 
-Seven more at P2/P3 there, plus a **Considered and NOT fixed** section for the four decisions that look like bugs and are not.
+Nine more at P2/P3 there, plus a **Considered and NOT fixed** section for the four decisions that look like bugs and are not.
 
-⚠️ **Four items have already closed** and live in `devoid-resolved-list.md` with their outcomes: the single-instance lock, `prefers-reduced-motion`, "no automated test covers the UI — at all", and `jobs.jsonl` being tracked in git.
+⚠️ **Five items have already closed** and live in `devoid-resolved-list.md` with their outcomes and their original wording: the single-instance lock, `prefers-reduced-motion`, "no automated test covers the UI — at all", `jobs.jsonl` being tracked in git, and the `.app` not being standalone.
 
 ## What this session got wrong
 

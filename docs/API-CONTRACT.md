@@ -1,14 +1,8 @@
 # Devoid — server API contract (frozen for the Stage 1–6 build)
 
-*Written 2026-09-04 17:05 EDT so six parallel build agents integrate without drift. Whoever
-implements a route MUST match this exactly; whoever consumes a route MUST NOT invent a
-different shape. If a route needs to change, edit this file first, in its own commit, and say
-so in your final report.*
+*Written 2026-09-04 17:05 EDT so six parallel build agents integrate without drift. Whoever implements a route MUST match this exactly; whoever consumes a route MUST NOT invent a different shape. If a route needs to change, edit this file first, in its own commit, and say so in your final report.*
 
-Server: `server/app.py` mounts these under `/api/*` alongside the existing static mount of
-`web/` at `/`. Port stays **8732**. Every route that calls into the skill's `analyze()`/
-`recommend()` runs as a plain `def` (Starlette threadpools it) or via `run_in_threadpool` —
-never `async def` doing the call directly (measured 1,290x event-loop stall in PLAN.md 0.1).
+Server: `server/app.py` mounts these under `/api/*` alongside the existing static mount of `web/` at `/`. Port stays **8732**. Every route that calls into the skill's `analyze()`/ `recommend()` runs as a plain `def` (Starlette threadpools it) or via `run_in_threadpool` — never `async def` doing the call directly (measured 1,290x event-loop stall in PLAN.md 0.1).
 
 ## Engine
 
@@ -17,8 +11,7 @@ never `async def` doing the call directly (measured 1,290x event-loop stall in P
 
 ## Assets
 
-- `POST /api/assets` body `{paths: [absolute-path, ...]}` → `[{id, path, ext, state: "loading"}]`. Paths come from Electron's main process (native dialog or drag-drop) — the renderer never touches the filesystem directly (PLAN.md 2.5, `FileSource` boundary).
-  ⚠️ **Main hands those paths to the renderer as a `devoid:open-files` CustomEvent on `window`**, `detail: {paths: [absolute-path, ...]}` — shipped in Stage 6's `main.js` (File ▸ Open…, `Cmd+O`). That event **is** the `FileSource` seam: `web/app.js` listens for it and POSTs the paths here. No bytes cross it, only paths, and a future web build swaps the event's producer without the renderer noticing.
+- `POST /api/assets` body `{paths: [absolute-path, ...]}` → `[{id, path, ext, state: "loading"}]`. Paths come from Electron's main process (native dialog or drag-drop) — the renderer never touches the filesystem directly (PLAN.md 2.5, `FileSource` boundary). ⚠️ **Main hands those paths to the renderer as a `devoid:open-files` CustomEvent on `window`**, `detail: {paths: [absolute-path, ...]}` — shipped in Stage 6's `main.js` (File ▸ Open…, `Cmd+O`). That event **is** the `FileSource` seam: `web/app.js` listens for it and POSTs the paths here. No bytes cross it, only paths, and a future web build swaps the event's producer without the renderer noticing.
 - `GET /api/assets` → `[{id, path, ext, state, frames?, questions?, ledger?}]`.
 - `POST /api/assets/{id}/analyze` → runs `recommend()` then, only if needed, `analyze()`, **in-process**, through the validation boundary (PLAN.md 1.1). Response:
   ```json
@@ -39,20 +32,15 @@ never `async def` doing the call directly (measured 1,290x event-loop stall in P
 
 ## Preview (the wipe's answer-A vs answer-B pair — PLAN.md 3.0b/3.1)
 
-- `POST /api/assets/{id}/preview` body `{flag: "assume_protect|assume_remove|erosion|feather|fade|dither|...", value_a, value_b, regions?: [...]}` →
-  `{a_url, b_url, ledger_a: {bg, art, total}, ledger_b: {bg, art, total}, format_is_gif: bool}`.
-  **Implementation, reusing the technique `scripts/measure_preview_fidelity.py` already proved**: extract ONE sampled frame from the source (reuse the same frame index `analyze()`'s own sample-nomination picked, so the preview inherits the calibration — PLAN.md 3.2, never re-derive erosion from one frame), save it as a single-frame temp GIF, then invoke the skill CLI as a **subprocess** twice — once with the flags for answer A, once for answer B — against that 1-frame file. This is fast (single frame) and reuses the exact CLI path that is already measured visually-identical to the full render. Cache the pair by `(asset_id, flag, value_a, value_b, regions-hash)`.
-  `format_is_gif` tells the frontend to show the "dithering will differ" notice (PRODUCT.md measured-facts table).
+- `POST /api/assets/{id}/preview` body `{flag: "assume_protect|assume_remove|erosion|feather|fade|dither|...", value_a, value_b, regions?: [...]}` → `{a_url, b_url, ledger_a: {bg, art, total}, ledger_b: {bg, art, total}, format_is_gif: bool}`. **Implementation, reusing the technique `scripts/measure_preview_fidelity.py` already proved**: extract ONE sampled frame from the source (reuse the same frame index `analyze()`'s own sample-nomination picked, so the preview inherits the calibration — PLAN.md 3.2, never re-derive erosion from one frame), save it as a single-frame temp GIF, then invoke the skill CLI as a **subprocess** twice — once with the flags for answer A, once for answer B — against that 1-frame file. This is fast (single frame) and reuses the exact CLI path that is already measured visually-identical to the full render. Cache the pair by `(asset_id, flag, value_a, value_b, regions-hash)`. `format_is_gif` tells the frontend to show the "dithering will differ" notice (PRODUCT.md measured-facts table).
 
 ## Answers
 
-- `POST /api/assets/{id}/answers` body `{ambiguous_protection: {"<region_id>": "protect"|"remove"}, fade: "artwork"|"not-artwork"|null}` →
-  stores the answer on the asset (moves `needs-you` → `ready`), and appends one line per region decision to `labels/protection.jsonl` (schema below). **Two regions sharing one `outline_color` cannot be answered differently** — reject a submit that would emit conflicting `--assume-protect`/`--assume-remove` for the same hex with `400 {"error": "conflicting_colour", "outline_color": "..."}`; the frontend must group same-colour regions into one question (PLAN.md 3.0a).
+- `POST /api/assets/{id}/answers` body `{ambiguous_protection: {"<region_id>": "protect"|"remove"}, fade: "artwork"|"not-artwork"|null}` → stores the answer on the asset (moves `needs-you` → `ready`), and appends one line per region decision to `labels/protection.jsonl` (schema below). **Two regions sharing one `outline_color` cannot be answered differently** — reject a submit that would emit conflicting `--assume-protect`/`--assume-remove` for the same hex with `400 {"error": "conflicting_colour", "outline_color": "..."}`; the frontend must group same-colour regions into one question (PLAN.md 3.0a).
 
 ## Render
 
-- `POST /api/assets/{id}/render` body `{overrides: {<flag>: <value>}, regions: [{type: "protect|remove|remove-track|unprotect|translucent|fade-protect", bbox_xyxy | points, tracked: bool}], goal: {format?, target_kb?, min_dim?}}` →
-  `{job_id}`. **Tri-state, enforced server-side**: only flags present in `overrides` are passed explicitly on the CLI; everything else goes through `--auto` (PLAN.md 2.6 / PRODUCT.md "every control is tri-state"). Runs as a **subprocess**, cancellable. Writes to a temp path, atomically moves to the final `<stem>_transparent.<ext>` (escalating `_v2`, `_v3` — PRODUCT.md "never overwrite") on success only. Appends one line to `jobs.jsonl` when it settles (schema below).
+- `POST /api/assets/{id}/render` body `{overrides: {<flag>: <value>}, regions: [{type: "protect|remove|remove-track|unprotect|translucent|fade-protect", bbox_xyxy | points, tracked: bool}], goal: {format?, target_kb?, min_dim?}}` → `{job_id}`. **Tri-state, enforced server-side**: only flags present in `overrides` are passed explicitly on the CLI; everything else goes through `--auto` (PLAN.md 2.6 / PRODUCT.md "every control is tri-state"). Runs as a **subprocess**, cancellable. Writes to a temp path, atomically moves to the final `<stem>_transparent.<ext>` (escalating `_v2`, `_v3` — PRODUCT.md "never overwrite") on success only. Appends one line to `jobs.jsonl` when it settles (schema below).
 - `GET /api/jobs/{id}` → `{state: "loading|running|done|failed|cancelled|conflict|blocked", progress: 0.0-1.0|null, output_path?, verify?: {...}|"not-checked", ledger?: {bg,art,total}, error?}`.
 - `DELETE /api/jobs/{id}` → cancels: kill the subprocess, mark `cancelled`, remove the temp file. Must not orphan the skill's own inner `--target-kb` worker pool (PLAN.md edge-case table, "nested concurrency").
 
@@ -84,8 +72,4 @@ The engine's `--assume-protect`/`--assume-remove` flags take **hex colours**. `a
 
 ## Frontend module split (to let Stage 2/3/4 build in parallel without colliding on one file)
 
-`web/index.html` — skeleton authored once (this commit), stable IDs; **stage 2/3/4 agents add classes/attributes to existing containers, they do not restructure the document.**
-`web/app.js` — **Stage 2 owns.** The shell: 11-state machine, selection, contact sheet, drag-and-drop wiring (via an Electron IPC bridge, `window.devoid.pickFiles()` / `ondrop`), tri-state controls, drawers generated from `GET /api/flags`, presets, save/export flow. Exposes `window.Devoid = { openAsset(id), getAsset(id), refresh() }` for the other two modules to call.
-`web/wipe.js` — **Stage 3 owns.** Real answer-pair wipe (calls `/api/assets/{id}/preview`), canvas frame decode + sync (replaces the two looping `<img>`s), the ledger, the question-card fallback below the seam's threshold. Reads `window.Devoid.getAsset(id)`.
-`web/canvas.js` — **Stage 4 owns.** The region-drawing canvas: draw/move/resize rect+circle, the six region flags, eyedropper, per-frame tracking. Emits `regions` arrays consumed by `web/app.js`'s render/preview calls (attach to `window.Devoid.regions` or dispatch a `devoid:regions-changed` CustomEvent — pick one and document it in your final report).
-`web/app.css` — shared; each agent appends its own section, does not rewrite another's.
+`web/index.html` — skeleton authored once (this commit), stable IDs; **stage 2/3/4 agents add classes/attributes to existing containers, they do not restructure the document.** `web/app.js` — **Stage 2 owns.** The shell: 11-state machine, selection, contact sheet, drag-and-drop wiring (via an Electron IPC bridge, `window.devoid.pickFiles()` / `ondrop`), tri-state controls, drawers generated from `GET /api/flags`, presets, save/export flow. Exposes `window.Devoid = { openAsset(id), getAsset(id), refresh() }` for the other two modules to call. `web/wipe.js` — **Stage 3 owns.** Real answer-pair wipe (calls `/api/assets/{id}/preview`), canvas frame decode + sync (replaces the two looping `<img>`s), the ledger, the question-card fallback below the seam's threshold. Reads `window.Devoid.getAsset(id)`. `web/canvas.js` — **Stage 4 owns.** The region-drawing canvas: draw/move/resize rect+circle, the six region flags, eyedropper, per-frame tracking. Emits `regions` arrays consumed by `web/app.js`'s render/preview calls (attach to `window.Devoid.regions` or dispatch a `devoid:regions-changed` CustomEvent — pick one and document it in your final report). `web/app.css` — shared; each agent appends its own section, does not rewrite another's.

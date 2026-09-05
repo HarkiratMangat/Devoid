@@ -25,6 +25,23 @@ from typing import Any, Union
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
+#: Where the two logs and the crash journal live. The repo when running from a
+#: checkout; ``$DEVOID_DATA_DIR`` when something else decides -- which is what a
+#: packaged .app does, pointing it at ~/Library/Application Support/Devoid so
+#: the app never writes inside its own bundle.
+#:
+#: ⚠️ **This splits the label log in two, and that is a real cost, not a
+#: detail.** ``labels/protection.jsonl`` is tracked evidence, pointed at from
+#: the engine repo; rows written by a packaged app land outside the checkout and
+#: have to be brought back by hand. Writing inside an .app bundle is worse --
+#: it breaks under signing and is wiped by the next install -- but neither is
+#: good, and the tracker carries the item.
+DATA_DIR: Path = (
+    Path(os.environ["DEVOID_DATA_DIR"]).expanduser()
+    if os.environ.get("DEVOID_DATA_DIR")
+    else REPO_ROOT
+)
+
 PathLike = Union[str, "os.PathLike[str]", Path]
 
 

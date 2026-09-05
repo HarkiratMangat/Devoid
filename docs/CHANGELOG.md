@@ -45,6 +45,22 @@ The "lamp over the bench" metaphor became **the void**: the ground is deep space
 | Hit targets, SC 2.5.8 | matte swatches ~~23.6px~~ → **28px**; every other element already passing |
 | Design detector | exactly one accepted finding, `repeating-stripes-gradient` |
 
+### A `.app` you can actually drag into Applications
+
+`npm run dist` produces `Devoid-1.0.0-arm64.dmg` (171 MB) and a 411 MB bundle that **runs from anywhere on this Mac**. Verified by copying it to `/tmp` and launching it there.
+
+The previous build was described as "not standalone — it spawns `.venv/bin/python` beside itself". That undersold it: **three separate things meant it almost certainly never ran at all.**
+
+- `server/` and `web/` were inside `app.asar`. Python cannot read an asar, and Python is what imports the server *and* serves `web/` as static files. They now ship as extraResources.
+- There was no interpreter. `.venv` now ships as `pyvenv` in Resources, and the interpreter is resolved in a stated order — `$DEVOID_PYTHON`, the bundled copy, then this repo's `.venv`.
+- `waitForServer` retried **forever**, so any of that failing showed the person nothing at all: no window, no error, a bouncing icon. Both failure paths are dialogs now, and the server-start one carries Python's own stderr.
+
+The app also stopped writing inside its own bundle: `$DEVOID_DATA_DIR` sends the two logs and the crash journal to `~/Library/Application Support/Devoid` when packaged. Writing into a bundle breaks under signing and is wiped by the next install.
+
+**The icon is the one you supplied**, 1024×1024, at `build/icon.icns`.
+
+⚠️ **Still not portable to a different Mac**, and both reasons are now dialogs rather than mysteries: `pyvenv` is a virtualenv and needs Python 3.11 from the python.org framework, and the engine is resolved at runtime rather than bundled — deliberately, because the skill is the source of truth and a bundled fork would drift.
+
 ### The tracker's first pass — what got fixed once it was written down
 
 Writing the open work down made it fixable, and four of the items closed the same day.

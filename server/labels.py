@@ -21,9 +21,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional
 
-from server.appendlog import REPO_ROOT, PathLike, append_line, read_lines, utc_now
+from server.appendlog import DATA_DIR, PathLike, append_line, read_lines, utc_now
 
-LABELS_PATH: Path = REPO_ROOT / "labels" / "protection.jsonl"
+LABELS_PATH: Path = DATA_DIR / "labels" / "protection.jsonl"
 
 # The schema, in order, exactly as docs/API-CONTRACT.md freezes it. Anything not
 # in this tuple is rejected rather than silently written: a log whose columns

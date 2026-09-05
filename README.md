@@ -37,7 +37,7 @@ npm start
 
 Electron's main process spawns the Python server and opens the window. Clicking a frame opens it, the seam drags, the drawers summon, and the lighting toggle in the header — a miniature of the wipe — sweeps between the two states of the room.
 
-For a real `.app`: `npm run dist:dir && open dist/mac-arm64/Devoid.app`. ⚠️ It is not standalone; it spawns `.venv/bin/python` beside itself, so it runs from this repo. See Packaging.
+For a real `.app`: `npm run dist` builds a `.dmg` you can drag into Applications. It carries its own Python and runs from anywhere — see Packaging for the two things it still expects to find on the machine.
 
 ⚠️ **To check anything visual, use the real window** — `npx electron scripts/capture-window.mjs` captures every state through Electron itself. A browser pane reports `visibilityState: hidden` and fires no `requestAnimationFrame`, which makes rAF-driven UI look broken when it is not. ⚠️ **The film strip does not scrub yet** — it highlights and counts, but the artwork is a looping `<img>` that never seeks. Frame-accurate seeking needs a canvas decoder; it is `PLAN.md` 3.3.
 
@@ -54,7 +54,17 @@ npm run dist       # dmg + zip
 npm run dist:dir   # just assemble the .app, skip the installer step
 ```
 
-⚠️ **This does not yet produce a standalone app, and it should not be described as one.** The packaged bundle carries `main.js`, `web/` and `server/` but **no Python runtime** — `main.js` still spawns `.venv/bin/python` relative to its own directory, so the build only runs on a machine that already has the venv beside it. Shipping something a stranger can double-click needs a bundled interpreter (`pyinstaller` over `server/app.py`, or a vendored embeddable Python, dropped in via `extraResources`) plus the environment check from `docs/PLAN.md` 0.3 as its failure path. That is out of scope for this session and is the remaining work in 6.3.
+**The bundle runs outside this repo.** Verified 2026-09-05 by copying `Devoid.app` to `/tmp` and launching it there: it served `index.html`, `app.css`, `app.js` and the corpus assets, resolved the engine, and wrote its journal to `~/Library/Application Support/Devoid/` rather than inside itself.
+
+Three things make that work, and each was a real failure before it:
+
+| piece | why |
+|---|---|
+| `server/` and `web/` ship as **extraResources**, not inside `app.asar` | Python cannot read an asar, and Python is what imports the server *and* serves `web/` as static files. Inside the asar they are invisible to it |
+| `.venv` ships as **`pyvenv`** in Resources | The old build spawned `.venv/bin/python` relative to its own directory, which exists only in this checkout |
+| The two logs and the crash journal follow `$DEVOID_DATA_DIR` | `main.js` points it at `~/Library/Application Support/Devoid` when packaged. Writing inside the bundle breaks under signing and is wiped by the next install |
+
+⚠️ **It is not yet portable to another Mac, and the two reasons are worth knowing.** `pyvenv` is a *virtualenv*, so it still needs its base interpreter — **Python 3.11 from the python.org framework at `/Library/Frameworks/Python.framework/Versions/3.11`**. And the engine is resolved at runtime, not bundled: `$DEVOID_SKILL`, then `devoid.config.json`, then `/Applications/Claude Code/Gif-Background-Remover/scripts/remove_gif_background.py`. **The skill is deliberately not copied in** — it is the source of truth for every algorithm, and a bundled fork would drift silently. Both failures are now dialogs naming the fix, not a window that never opens.
 
 ### Signing and notarisation (6.2)
 
