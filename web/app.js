@@ -1037,8 +1037,17 @@ function render() {
          there is nothing to compare, so the wipe collapses to one honest
          image and says so. */
       const j = S.jobs[a.id];
-      const cutUrl = j && j.output_path && stateOf(a) !== 'running'
-        ? artUrl({ path: j.output_path }) : null;
+      /* ⚠️ The server serves ONLY web/, and the engine writes beside the
+         source. So an output is showable exactly when its source was already
+         inside web/assets/ -- true for the corpus, false for a real drop from
+         anywhere else on disk. Showing an unreachable URL would put a broken
+         image under a "cut" label, which is a worse claim than the one this
+         branch exists to prevent. There is no thumbnail route to fix this
+         properly (API-CONTRACT has none); until there is, say so. */
+      const servable = j && j.output_path
+        && j.output_path.includes('/web/assets/') && stateOf(a) !== 'running';
+      const cutUrl = servable ? artUrl({ path: j.output_path }) : null;
+      const cutElsewhere = j && j.output_path && !servable && stateOf(a) !== 'running';
       $('#before').src = artUrl(a); $('#before').alt = `${base(a.path)} as it came in`;
       wipe.toggleAttribute('data-single', !cutUrl);
       if (cutUrl) {
@@ -1047,7 +1056,9 @@ function render() {
         $('.wipetag.l').textContent = 'as it came';
       } else {
         $('#after').removeAttribute('src');
-        $('.wipetag.l').textContent = 'not cut yet';
+        $('.wipetag.l').textContent = cutElsewhere
+          ? `cut — saved as ${base(j.output_path)}`
+          : 'not cut yet';
       }
     }
     $('#openname').textContent = stem(a.path);

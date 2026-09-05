@@ -583,9 +583,14 @@ function start() {
     return b;
   }
 
+  /* Arrow keys move within ONE row, not across the whole toolbar: the verdict
+     tools, the shape picker and the per-region actions are separate groups
+     and arrowing from "Take a colour" into "Box" would be nonsense. */
   tools.addEventListener('keydown', (e) => {
     if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) return;
-    const items = [...tools.querySelectorAll('button')];
+    const row = document.activeElement && document.activeElement.closest('.rt-row');
+    if (!row || !tools.contains(row)) return;
+    const items = [...row.querySelectorAll('button')];
     const i = items.indexOf(document.activeElement);
     if (i < 0) return;
     e.preventDefault();
@@ -605,6 +610,11 @@ function start() {
   }
 
   function renderTools() {
+    /* replaceChildren() destroys the focused node, and focus silently falls to
+       <body> -- so a keyboard user loses their place every time a tool is
+       armed or a region is selected. Remember where they were. */
+    const wasFocused = document.activeElement && tools.contains(document.activeElement)
+      ? document.activeElement.textContent.trim() : null;
     tools.replaceChildren();
     tools.setAttribute('role', 'toolbar');
     tools.setAttribute('aria-label', 'Drawing on the artwork');
@@ -658,6 +668,12 @@ function start() {
       chip.style.background = S.sampled.hex;
       c.append(el('span', 'rt-lab', 'colour'), chip, el('code', 'rt-hex', S.sampled.hex));
       tools.append(c);
+    }
+
+    if (wasFocused) {
+      const again = [...tools.querySelectorAll('button')]
+        .find((b) => b.textContent.trim() === wasFocused);
+      if (again) { again.tabIndex = 0; again.focus(); }
     }
 
     // The toolbar gains and loses rows as regions are selected, which changes its
