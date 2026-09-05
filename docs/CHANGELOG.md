@@ -45,6 +45,27 @@ The "lamp over the bench" metaphor became **the void**: the ground is deep space
 | Hit targets, SC 2.5.8 | matte swatches ~~23.6px~~ → **28px**; every other element already passing |
 | Design detector | exactly one accepted finding, `repeating-stripes-gradient` |
 
+### The tracker's first pass — what got fixed once it was written down
+
+Writing the open work down made it fixable, and four of the items closed the same day.
+
+| was | is |
+|---|---|
+| Two copies of the app could run, with **two writers** to the label log | `app.requestSingleInstanceLock()`. Verified red-green: ~~2 uvicorn processes~~ → **1**, and the second copy hands its files to the first and exits |
+| Stage 5's history had a server, pytest coverage, and **no caller** — `GET /api/history` and the rerun route were reachable from nothing | A **"what you did"** drawer: every past run with its verdict, its age, and a *load these settings* button. It says what it could not restore rather than restoring silently |
+| `prefers-reduced-motion` was five `@media` blocks nothing could reach | Emulated through the DevTools protocol and **asserted** on every gate run |
+| **No automated test touched `web/` at all** | `npm run gate:ui` — eight assertions against the real Electron window, red-green verified |
+
+### Three defects the new gate found while it was being built
+
+None of these were visible to anything that existed before it.
+
+- **`capturePage()` was returning stale frames.** `app.disableHardwareAcceleration()`, set for "deterministic pixels", stopped the compositor: eight captures produced **three distinct images** while the DOM changed correctly at every step. Every visual claim made through that script after the first state or two was read off an earlier state. Fixed, and the gate now hashes each capture and **fails if two states match**.
+- **Electron served a cached `app.js`** across three consecutive runs of a freshly spawned process, so the gate certified code that was no longer on disk. It now reloads ignoring the cache before asserting anything.
+- **A dispatch branch that had never executed.** Report rows are one-element specs, so `[label, ref]` left `ref` undefined and the `kind === 'report'` branch below was unreachable from the day it was written.
+
+⚠️ **The gate does not steal focus.** It runs with a hidden window — an app that pops to the front on every run is one nobody runs.
+
 ### First real use, and what it found
 
 The app was run on a 2.87 MB file from outside the corpus and completed — `verdict: done`, output written. It is one asset and nobody has judged the output's edges, but the whole path ran end to end for the first time.

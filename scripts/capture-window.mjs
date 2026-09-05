@@ -10,11 +10,22 @@
  *
  *   npx electron scripts/capture-window.mjs [outdir]
  *
- * Writes one PNG per state and exits non-zero if any state failed to render.
+ * Writes one PNG per state AND ASSERTS what the real window can prove, exiting
+ * non-zero on any failure. It is the only automated check that touches `web/`
+ * at all: the 93 pytest are Python and the two frontend suites are pure maths
+ * with no DOM, so before this every visual and behavioural claim about the
+ * surface rested on someone looking at it.
+ *
+ * ⚠️ The assertions are deliberately the ones that CANNOT be flaky -- geometry
+ * that must be non-zero, a console that must be clean, a drawer that must have
+ * rendered rows. No pixel baselines: a screenshot diff on an animated starfield
+ * fails for reasons that are not defects, and a gate that cries wolf gets
+ * ignored, which is worse than no gate.
  */
 import { app, BrowserWindow } from 'electron';
 import { spawn } from 'node:child_process';
 import { writeFileSync, mkdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import net from 'node:net';
@@ -55,30 +66,81 @@ async function seed() {
   return { assets, megaId: mega.id };
 }
 
-app.disableHardwareAcceleration();      // deterministic pixels in CI and here
+// ⚠️ DO NOT disableHardwareAcceleration() HERE. It was set for "deterministic
+// pixels", and it made the compositor stop producing frames: capturePage() then
+// returned the LAST COMMITTED frame, so state 02 onwards all wrote the SAME
+// image. Measured 2026-09-05: 8 captures, 3 distinct images, while the DOM was
+// changing correctly at every step. Deterministic and wrong is worse than
+// variable and true -- and the states are asserted from the DOM anyway.
 
 app.whenReady().then(async () => {
   for (let i = 0; i < 60 && !(await portOpen(PORT)); i++) await wait(250);
   const { megaId } = await seed();
 
+  // ⚠️ NEVER STEAL FOCUS. This runs while someone is using their Mac, and a
+  // window that pops to the front on every run makes the gate something people
+  // avoid running. `show: false` keeps it off-screen entirely; the captures
+  // stay correct because backgroundThrottling is off and every shot calls
+  // invalidate() to force a fresh frame -- which is what actually fixed the
+  // stale-frame bug, not being frontmost.
   const win = new BrowserWindow({
-    width: 1280, height: 860, show: true,
+    width: 1280, height: 860, show: false,
     webPreferences: { contextIsolation: true, nodeIntegration: false,
+                      backgroundThrottling: false,   // see the note above capturePage
                       preload: join(ROOT, 'web', 'preload.js') },
   });
+  // ⚠️ Attach BEFORE the load, or the errors thrown during module init -- the
+  // temporal-dead-zone class that killed app.js once already -- are missed.
+  const consoleErrors = [];
+  win.webContents.on('console-message', (_e, level, message, line, source) => {
+    // 3 === error. Warnings are excluded on purpose: Electron emits its own
+    // dev-mode CSP warning on every unpackaged run, and a gate that fails on a
+    // message the app cannot emit or fix is a gate nobody will keep.
+    if (level < 3) return;
+    consoleErrors.push(`${source}:${line} ${message}`);
+  });
+  win.webContents.on('render-process-gone', (_e, d) => consoleErrors.push(`renderer gone: ${d.reason}`));
+
   await win.loadURL(`http://127.0.0.1:${PORT}`);
+  // ⚠️ ELECTRON CACHES web/ HARD, and a cached bundle makes this whole script
+  // certify code that is no longer on disk. Measured 2026-09-05: an app.js edit
+  // was invisible across three consecutive runs of a fresh Electron process,
+  // and the gate passed on the OLD file. Same shape as verifying against a
+  // stale dev server. Always reload ignoring the cache before asserting.
+  win.webContents.reloadIgnoringCache();
+  await wait(1200);
   await wait(2500);                     // fonts, first paint, the starfield
 
   mkdirSync(OUT, { recursive: true });
   const failures = [];
+  const shots = [];        // {name, digest} -- two states must never match
+
+  /** Read the live DOM. ⚠️ Call this IN the state being asserted about.
+   *  The first version of this gate took every diagnostic at the END, after
+   *  the last state had emptied the table -- so it read the region canvas as
+   *  0x0 and the history drawer as zero rows and called both defects. They
+   *  were correct readings of the wrong moment, which is precisely the mistake
+   *  DEVLOG.md records a browser pane making. A measurement needs its state. */
+  const probe = async (expr) => JSON.parse(await win.webContents.executeJavaScript(
+    `Promise.resolve((() => { ${expr} })()).then((v) => JSON.stringify(v))`));
 
   const shot = async (name, js, settle = 1400) => {
     if (js) { try { await win.webContents.executeJavaScript(js); } catch (e) { failures.push(`${name}: ${e.message}`); } }
     await wait(settle);                 // ⚠️ transitions are 300-420ms; never shoot mid-flight
+    win.webContents.invalidate();       // force a fresh frame, never the last committed one
+    await wait(250);
     const img = await win.webContents.capturePage();
     if (img.isEmpty()) { failures.push(`${name}: empty capture`); return; }
-    writeFileSync(join(OUT, `${name}.png`), img.toPNG());
-    console.log(`  wrote ${name}.png`);
+    const png = img.toPNG();
+    writeFileSync(join(OUT, `${name}.png`), png);
+    const digest = createHash('md5').update(png).digest('hex');
+    // ⚠️ THE CHECK THAT WOULD HAVE CAUGHT THE STALE FRAME ON DAY ONE. Two
+    // different states cannot produce byte-identical pixels; if they do, the
+    // camera is lying and every visual claim built on these files is void.
+    const twin = shots.find((s) => s.digest === digest);
+    if (twin) failures.push(`${name} is byte-identical to ${twin.name} — the capture is STALE`);
+    shots.push({ name, digest });
+    console.log(`  wrote ${name}.png  ${digest.slice(0, 8)}`);
   };
 
   await shot('01-contact-sheet');
@@ -86,22 +148,121 @@ app.whenReady().then(async () => {
   await shot('03-emitting', `document.getElementById('lamp').click()`);
   await shot('04-empty-emitting', 'S.assets=[];S.sel=new Set();render()');
   await shot('05-empty-void', `document.getElementById('lamp').click()`);
-  await shot('06-arrival', `S.arrivalUsed=false;S.arriving.clear();
+  // The history drawer -- PLAN.md 5.2's "load a line". It reads the REAL
+  // jobs.jsonl, so on a machine that has never cut anything it renders its
+  // honest empty state, which is a row count of zero and still a pass.
+  // ⚠️ BEFORE the arrival shot on purpose: that one fires six ~18s analyses,
+  // and the first capture taken after it caught this drawer still reading
+  // "Reading the log…" 2s in. Ordering is not cosmetic in this file.
+  await shot('06-history', `S.drawer='what you did';S.history=null;render()`, 1800);
+
+  await shot('07-arrival', `S.arrivalUsed=false;S.arriving.clear();
     addPaths(${JSON.stringify(['galaxy.gif','rocket.gif','hurricane.gif','megaphone.gif','secure.gif','satellite.gif']
       .map((n) => join(ROOT, 'web', 'assets', n)))})`, 420);
 
-  const diag = await win.webContents.executeJavaScript(`(() => {
-    const c = document.getElementById('regioncanvas');
-    return JSON.stringify({
-      visibility: document.visibilityState,
-      regionCanvas: c.width + 'x' + c.height,
-      starfield: (() => { const s = document.getElementById('starfield'); return s.width + 'x' + s.height; })(),
-      consoleClean: true,
+  // ⚠️ prefers-reduced-motion. Five @media blocks in app.css were written for
+  // it and NOTHING had ever exercised them -- neither a browser pane nor a
+  // plain window can express the preference. The DevTools protocol can.
+  try {
+    win.webContents.debugger.attach('1.3');
+    await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia', {
+      features: [{ name: 'prefers-reduced-motion', value: 'reduce' }],
     });
-  })()`);
-  console.log('  real-window diagnostics: ' + diag);
+    await shot('08-reduced-motion', `S.drawer=null;S.assets=[];S.sel=new Set();render()`);
+  } catch (e) {
+    failures.push(`reduced-motion: ${e.message}`);
+  }
+
+  const failed = (name, saw) => failures.push(`${name} (saw ${saw})`);
+  const check = (name, ok, saw) => { if (!ok) failed(name, saw); };
+
+  // ⚠️ rAF, not visibilityState. The property that actually matters is whether
+  // the surface COMPOSITES -- a pane that reports hidden fires zero callbacks
+  // and every rAF-driven thing in this app silently stops. Asserting the flag
+  // instead would fail on a merely occluded real window, which composites fine.
+  const raf = await probe(`
+    return new Promise((resolve) => {
+      let n = 0; const stop = performance.now() + 500;
+      (function tick() { n++; if (performance.now() < stop) requestAnimationFrame(tick); else resolve({ frames: n }); })();
+    });
+  `);
+  // ⚠️ ZERO is the failure, not "few". The discriminator this exists for is a
+  // surface that fires NO callbacks at all -- the browser pane, permanently
+  // `visibilityState: hidden`. A real window that is merely occluded is
+  // throttled by Chromium to roughly 4fps: still compositing, still truthful
+  // about geometry and colour, but NOT trustworthy for anything timed. Failing
+  // on the throttle would make this gate fail on every unattended run, so it
+  // fails on zero and says so loudly otherwise.
+  check('the window composites (rAF fires at all)', raf.frames > 0, `${raf.frames} frames in 500ms`);
+  if (raf.frames > 0 && raf.frames < 20) {
+    console.warn(`  ⚠️  rAF is THROTTLED (${raf.frames} frames/500ms) — this window is not frontmost.`);
+    console.warn('     Geometry and colour in these captures are real; anything TIMED is not.');
+  }
+
+  // The plotter, IN a state that MOUNTS it. Two things this has to get right,
+  // and the first draft got both wrong: the table was emptied by state 04/08,
+  // so it must be re-read from the server first; and the megaphone is the one
+  // corpus asset in `needs-you`, where the toolbar is hidden BY DESIGN -- so
+  // asserting on it would have reported the intended behaviour as a defect.
+  await win.webContents.executeJavaScript('refresh()');
+  await wait(600);
+  const opened = await probe(`
+    const hides = ['loading', 'needs-you', 'blocked', 'refused'];
+    const a = S.assets.find((x) => !hides.includes(stateOf(x)));
+    if (a) openAsset(a.id);
+    return { id: a ? a.id : null, state: a ? stateOf(a) : null, total: S.assets.length };
+  `);
+  check('an asset in a plotter-bearing state exists', !!opened.id,
+        `${opened.total} asset(s), none outside loading/needs-you/blocked/refused`);
+  await wait(1200);
+  const plot = await probe(`
+    const c = document.getElementById('regioncanvas');
+    const s = document.getElementById('starfield');
+    return { w: c.width, h: c.height, hidden: c.hidden, sw: s.width, sh: s.height };
+  `);
+  if (opened.id) {
+    check('the region canvas has real geometry', plot.w > 0 && plot.h > 0, `${plot.w}x${plot.h}`);
+    check('the plotter is reachable', plot.hidden === false, `hidden=${plot.hidden}`);
+  }
+  check('the starfield was drawn to fit', plot.sw > 0 && plot.sh > 0, `${plot.sw}x${plot.sh}`);
+
+  // The history drawer, IN its own state. Zero rows is a PASS: an empty log is
+  // a real state and the drawer says so in words. Rendering NOTHING is not.
+  await win.webContents.executeJavaScript(`S.drawer='what you did';S.history=null;render()`);
+  await wait(1800);
+  const hist = await probe(`
+    const d = document.getElementById('drawer');
+    return { rows: d.querySelectorAll('.hist').length,
+             said: !!d.querySelector('.hist, .refusal'),
+             loaders: d.querySelectorAll('.hist .undo').length };
+  `);
+  // ⚠️ "it rendered something" is a check that cannot fail, which is worse than
+  // no check -- it passed for three runs while the drawer was printing "Nothing
+  // refused" over a log holding a real row. Compare the DRAWER against the LOG.
+  const logged = await probe(`
+    return fetch('/api/history?limit=50').then((r) => r.json()).then((j) => ({ n: j.length }));
+  `);
+  check('the history drawer reported something', hist.said, `${hist.rows} rows`);
+  check('the drawer shows every line the log holds', hist.rows === logged.n,
+        `${hist.rows} rows for ${logged.n} logged`);
+  check('every history row can be loaded back', hist.loaders === hist.rows,
+        `${hist.loaders} buttons for ${hist.rows} rows`);
+
+  const rm = await probe(`return { reduce: matchMedia('(prefers-reduced-motion: reduce)').matches }`);
+  check('prefers-reduced-motion was actually emulated', rm.reduce === true, rm.reduce);
+
+  check('the console is clean', consoleErrors.length === 0,
+        consoleErrors.slice(0, 3).join(' | ') || 'none');
+
+  console.log(`  rAF ${raf.frames}f/500ms · plotter ${plot.w}x${plot.h} on ${opened.state || 'nothing'}`
+    + ` · history ${hist.rows} row(s) · reduced-motion ${rm.reduce}`);
 
   server.kill();
-  if (failures.length) { console.error('FAILED:\\n  ' + failures.join('\\n  ')); app.exit(1); }
-  else { console.log('all states captured'); app.exit(0); }
+  if (failures.length) {
+    console.error(`FAILED (${failures.length}):\n  ` + failures.join('\n  '));
+    app.exit(1);
+    return;                             // app.exit() is not a `return` -- without
+  }                                     // this the PASS line printed anyway
+  console.log('PASS — all states captured, every assertion held');
+  app.exit(0);
 });

@@ -78,6 +78,28 @@ That claim was attached to commits that changed only `web/app.css`. The tests ar
 
 ---
 
+### The camera was lying: `capturePage()` returned stale frames for four states
+
+`scripts/capture-window.mjs` called `app.disableHardwareAcceleration()` for *"deterministic pixels in CI and here"*. It made the compositor stop producing frames, so `webContents.capturePage()` handed back **the last committed one**. Measured 2026-09-05: eight captures, **three distinct images** — states 01 through 04 were byte-identical while the DOM was changing correctly at every step (`emitting` flipping, `open` and `empty` toggling, the sheet going 6 cards to 0).
+
+**So every visual claim made through that script after the first state or two was read off an earlier state's picture** — including, possibly, the previous session's "artwork ~290px → ~490px, verified by re-capture".
+
+The fix is three things together: leave hardware acceleration **on**, set `backgroundThrottling: false`, and call `webContents.invalidate()` before each `capturePage()`. And the gate now **hashes every capture and fails if two states produce identical bytes**, which is the check that would have caught it on day one. ⚠️ *Deterministic and wrong is worse than variable and true.*
+
+### Electron caches `web/` hard enough to certify code that is no longer on disk
+
+An edit to `app.js` was invisible across three consecutive runs of a **freshly spawned** Electron process, and the gate passed on the old file. `win.webContents.reloadIgnoringCache()` before asserting is now mandatory in `capture-window.mjs`. Same shape as verifying against a stale dev server: the process being new is not the same as the bytes being new.
+
+### A dispatch branch that had never once executed
+
+`renderTabs()` destructured every drawer spec as `[label, ref]`. A report row is a **one-element** spec (`['report:refusal']`), so `ref` was `undefined`, the `if (!ref)` branch above caught it, and the `kind === 'report'` dispatch below was **unreachable from the day it was written**. It surfaced only when a second report — the history drawer — needed the dispatch to work, and printed "Nothing refused" over a log holding a real row.
+
+### `Promise.all` made a fast panel wait on a slow one
+
+The history drawer fetched `/api/history` and `/api/engine/status` together. The second imports the whole engine module on its first call, so the drawer sat on "Reading the log…" for seconds while the log itself had answered in milliseconds. **Nothing asserted could see it** — every check passed, because by the time the probe ran the fetch had landed. It was found by looking at the screenshot.
+
+---
+
 ## Decisions, and what was tried first
 
 ### The world: the ground is the void, the tools stay the matte world
@@ -127,7 +149,7 @@ The app was launched on the user's own Mac and run against a file that is **not 
 
 **This is the first end-to-end evidence the app works on real input**, as opposed to on the eight corpus assets every test and screenshot has used. It is one asset and it is not a measurement of quality — nobody has looked at the output's edges — but the whole path ran: register, analyse, render through the subprocess, write both logs, report done.
 
-It also surfaced a defect nobody had a way to see before: **the run dirtied the git tree**, because `jobs.jsonl` is tracked. Filed as a P1 in `devoid-deferred-list.md`. Using the thing found it in one run; no amount of reading would have.
+It also surfaced a defect nobody had a way to see before: **the run dirtied the git tree**, because `jobs.jsonl` was tracked. Fixed the same day — it is git-ignored now, while `labels/protection.jsonl` stays tracked, because one is your work and the other is shared evidence. Using the thing found it in one run; no amount of reading would have.
 
 ---
 

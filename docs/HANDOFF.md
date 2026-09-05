@@ -61,14 +61,15 @@ All four are filed in `devoid-deferred-list.md`; the traps that made them expens
 ⚠️ **These moved.** They are filed, tagged and given concrete next actions in **`devoid-deferred-list.md`** — this file gets superseded, that one does not. The index, in that file's own order:
 
 1. The wipe has nothing to compare on the common path — the blocker is a thumbnail/output route absent from `API-CONTRACT.md`
-2. No automated test covers the UI, at all
+2. The UI gate asserts eight things; the surface has far more than eight
 3. `content_type` is permanently `"unknown"` in every label row
 4. Every render pays for a second full analysis the app already ran
 5. The `.app` is not standalone — no bundled Python (6.3)
-6. Two windows, one log — no single-instance lock
-7. Emitting mode is the weaker of the two states
+6. Emitting mode is the weaker of the two states
 
-Five more at P2/P3 there, plus a **Considered and NOT fixed** section for the four decisions that look like bugs and are not.
+Seven more at P2/P3 there, plus a **Considered and NOT fixed** section for the four decisions that look like bugs and are not.
+
+⚠️ **Four items have already closed** and live in `devoid-resolved-list.md` with their outcomes: the single-instance lock, `prefers-reduced-motion`, "no automated test covers the UI — at all", and `jobs.jsonl` being tracked in git.
 
 ## What this session got wrong
 

@@ -3,6 +3,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const http = require('http');
 const net = require('net');
+const fs = require('fs');
 
 const BASE_PORT = 8732;
 const LAST_PORT = 8740;
@@ -11,6 +12,36 @@ const PYTHON = path.join(__dirname, '.venv', 'bin', 'python');
 let serverProcess = null;
 let mainWindow = null;
 let activePort = BASE_PORT;
+
+// ⚠️ SINGLE INSTANCE, and it is a correctness guard rather than a nicety.
+// Two copies means two servers on two ports (the probe handles that) and TWO
+// WRITERS to labels/protection.jsonl -- and "two append-only logs, one writer
+// each" (CLAUDE.md) is a schema rule, not something the filesystem enforces. A
+// POSIX append is atomic only below PIPE_BUF, and a label row carrying a bbox
+// and a long absolute path can exceed it, so interleaved writes can tear a line.
+// The second copy hands its file arguments to the first and exits.
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (_event, argv) => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+    const paths = fileArgs(argv);
+    if (paths.length) deliverPaths(paths);
+  });
+}
+
+/** File paths in a second launch's argv -- Finder's "Open With" arrives this way.
+ *  Anything that is not an existing file (flags, the executable, a cwd) is dropped. */
+function fileArgs(argv) {
+  return (argv || []).slice(1).filter((a) => {
+    if (typeof a !== 'string' || a.startsWith('-')) return false;
+    try { return fs.statSync(a).isFile(); } catch { return false; }
+  });
+}
 
 function startServer(port) {
   serverProcess = spawn(
@@ -270,6 +301,7 @@ function buildMenu() {
 // ── End Stage 6 block ────────────────────────────────────────────────────────
 
 app.whenReady().then(async () => {
+  if (!gotTheLock) return;          // a second copy: the first one owns the logs
   const port = await findFreePort();
   if (port === null) {
     dialog.showErrorBox(

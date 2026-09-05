@@ -63,7 +63,7 @@ never `async def` doing the call directly (measured 1,290x event-loop stall in P
 
 ## Schemas (append-only, one writer each — PLAN.md 5.1/5.2, `server/jobs.py` and `server/labels.py`)
 
-`jobs.jsonl` (repo root, tracked): one line per settled job —
+`jobs.jsonl` (repo root, **git-ignored** since 2026-09-05 — it is a per-machine work history carrying local absolute paths, unlike the label log beside it): one line per settled job —
 ```json
 {"ts": "2026-09-04T21:05:00Z", "input_path": "...", "settings": {"overrides": {...}, "regions": [...], "goal": {...}, "answers": {...}}, "output_path": "...", "verdict": "done|failed|cancelled", "engine_version": "...", "state": "done"}
 ```

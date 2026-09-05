@@ -373,6 +373,33 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
   background:var(--well);border-radius:var(--r);padding:var(--s2);margin-bottom:var(--s2);
   color:var(--graphite-2);word-break:break-all}
 
+/* the history drawer -- a stack of past runs. Each one is a TOOL on the bench,
+   so it takes the matte world's border-on-dark depth, not a shadow. The verdict
+   is a WORD first; colour only reinforces it (DESIGN.md's greyscale rule). */
+.hist{padding:var(--s2) 0 var(--s3);border-bottom:1px dashed var(--score)}
+.hist:last-child{border-bottom:none;padding-bottom:var(--s2)}
+.hist-head{display:flex;align-items:baseline;gap:var(--s2)}
+.hist-name{flex:1;font-size:12.5px;color:var(--graphite);font-stretch:80%;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-verdict{font-family:"Spline Sans Mono",monospace;font-size:11px;font-weight:500}
+.v-done{color:var(--ok)}
+.v-failed{color:var(--ruby)}
+.v-cancelled{color:var(--graphite-3)}
+/* the meta line belongs to the name above it, so it sits tight against it;
+   the run below gets --s3. Rhythm, not one gap repeated. */
+.hist-meta{display:flex;gap:var(--s2);margin-top:var(--s1);
+  font-family:"Spline Sans Mono",monospace;font-size:11px;color:var(--graphite-3)}
+/* a run cut by a different build of the engine would not necessarily repeat --
+   said plainly, because replaying it silently is the failure worth avoiding */
+.hist-stale{color:var(--amber)}
+/* ⚠️ `.undo` is scoped to `.ctl` -- outside a control row it inherits NOTHING
+   and renders as plain body text. Caught by looking at the capture: the row's
+   only action read as a sentence. It is a button; it has to look like one. */
+.hist .undo{margin-top:var(--s2);font-family:"Spline Sans Mono",monospace;font-size:11px;
+  color:var(--cyan-ink);background:var(--well);border:1px solid var(--score-2);
+  border-radius:var(--r);padding:var(--s1) var(--s2);cursor:pointer}
+.hist .undo:hover{background:var(--raise);border-color:var(--cyan)}
+
 /* stopping a cut is not a second destructive act, so it wears no rubylith */
 .btn.stop{background:var(--raise);border-color:var(--score-2);color:var(--graphite);font-weight:600}
 

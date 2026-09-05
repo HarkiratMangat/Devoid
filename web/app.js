@@ -80,6 +80,9 @@ const S = {
   qerror: null,          // the server's validation message, shown where it happened
   frame: 0,
   drawer: null,
+  history: null,       // GET /api/history — null means NOT FETCHED, [] means empty
+  historyErr: null,
+  engineVersion: null, // GET /api/engine/status — to spot a line cut by a DIFFERENT engine
   seam: 50,
   banner: null,          // {state, text, action:{label, run}|null}
   /* the empty table's one orchestrated moment (DESIGN.md) -- id -> stagger
@@ -673,6 +676,12 @@ const DRAWERS = {
   'it refused': [
     ['report:refusal'],
   ],
+  /* PLAN.md 5.2, "re-run with a tweak by loading a line". The route existed
+     from Stage 5 and nothing on the surface ever called it -- the same
+     reachability gap that left the plotter hidden. This is the caller. */
+  'what you did': [
+    ['report:history'],
+  ],
 };
 
 /* ── the tri-state control (PLAN.md 2.6) ──────────────────────────────────
@@ -769,6 +778,119 @@ function refusalRows() {
   return rows;
 }
 
+/* ── the history drawer (PLAN.md 5.2) ─────────────────────────────────────
+   A REPORT of the job log, and the one place a past run can be loaded back.
+
+   ⚠️ This is what a "reachability" bug looks like once it is fixed. Both routes
+   -- `GET /api/history` and `POST /api/history/{line_id}/rerun` -- shipped with
+   Stage 5, are covered by pytest, and were called by NOTHING on the surface. A
+   passing test proves a route answers; it says nothing about whether anyone
+   can get to it. Check the call site, not the test.
+
+   ⚠️ It says what it did NOT restore. A run carries overrides, a goal, regions
+   and answers; loading a line restores the first three and cannot restore the
+   answers, because those belong to an analysis this asset has not run yet. A
+   silent partial restore is the "verification the run did not earn" failure
+   (PRODUCT.md) wearing different clothes. */
+
+function relTime(iso) {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return iso || '';
+  const secs = Math.max(0, (Date.now() - t) / 1000);
+  if (secs < 90) return 'just now';
+  const mins = secs / 60;
+  if (mins < 90) return `${Math.round(mins)} min ago`;
+  const hours = mins / 60;
+  if (hours < 36) return `${Math.round(hours)} h ago`;
+  return `${Math.round(hours / 24)} d ago`;
+}
+
+async function fetchHistory() {
+  /* ⚠️ Two fetches, NOT awaited together. `/api/engine/status` imports the
+     whole engine module on its first call and can take seconds; a Promise.all
+     made the drawer sit on "Reading the log…" for all of it while the log
+     itself had answered in milliseconds. The log paints as soon as it lands.
+     Caught by looking at the screenshot, which is the only thing that could
+     have caught it -- every assertion about this drawer still passed. */
+  const h = await api('/api/history?limit=50');
+  S.history = h.ok && Array.isArray(h.body) ? h.body : [];
+  S.historyErr = h.ok ? null : (errText(h) || 'the log could not be read');
+  render();
+
+  /* the live engine identity arrives second and only ADDS a note -- a line cut
+     by a different build would not necessarily repeat, and replaying it as
+     though nothing had changed underneath is the claim worth not making */
+  if (S.engineVersion === null) {
+    const e = await api('/api/engine/status');
+    const v = (e.ok && e.body && e.body.engine_version) || null;
+    if (v && v !== S.engineVersion) { S.engineVersion = v; render(); }
+  }
+}
+
+function historyRows() {
+  if (S.history === null) { fetchHistory(); return [el('p', 'refusal', 'Reading the log…')]; }
+  if (S.historyErr) return [el('p', 'refusal', `The log could not be read — ${S.historyErr}`)];
+  if (!S.history.length) {
+    return [el('p', 'refusal', 'Nothing cut yet. Every finished job lands here, oldest at the bottom')];
+  }
+
+  const rows = [];
+  for (const line of S.history) {
+    const row = el('div', 'hist');
+    const head = el('div', 'hist-head');
+    head.append(el('span', 'hist-name', base(line.input_path || '')));
+    head.append(el('span', `hist-verdict v-${line.verdict || 'done'}`, line.verdict || 'done'));
+    row.append(head);
+
+    const meta = el('div', 'hist-meta');
+    meta.append(el('span', null, relTime(line.ts)));
+    const stale = S.engineVersion && line.engine_version && line.engine_version !== S.engineVersion;
+    if (stale) meta.append(el('span', 'hist-stale', 'different engine'));
+    row.append(meta);
+
+    const load = el('button', 'undo', 'load these settings');
+    load.addEventListener('click', () => loadHistoryLine(line));
+    row.append(load);
+    rows.push(row);
+  }
+  return rows;
+}
+
+async function loadHistoryLine(line) {
+  const r = await POST(`/api/history/${line.line_id}/rerun`, {});
+  if (!r.ok) {
+    /* the contract's own 404: absent settings and an absent FILE are not the
+       same failure, and the person needs to be told which one happened */
+    const missing = r.body && r.body.error === 'input_missing';
+    setBanner('failed', missing
+      ? `That file is not where it was — ${line.input_path}`
+      : `Could not load that line — ${errText(r)}`, null);
+    return;
+  }
+  const asset = r.body.asset || null;
+  const settings = r.body.settings || {};
+
+  await refresh();
+  S.overrides = { ...(settings.overrides || {}) };
+  S.goal = { format: null, target_kb: null, min_dim: null, ...(settings.goal || {}) };
+  if (asset) openAsset(asset.id);
+  /* AFTER openAsset: `devoid:asset-opened` clears the plotter, so setting the
+     regions first would hand them straight back to an empty canvas. */
+  const regions = settings.regions || [];
+  if (regions.length && window.Devoid && window.Devoid.plotter && window.Devoid.plotter.setRegions) {
+    window.Devoid.plotter.setRegions(regions);
+  }
+
+  const restored = ['settings'];
+  if (regions.length) restored.push(`${regions.length} region${regions.length > 1 ? 's' : ''}`);
+  const answers = Object.keys((settings.answers || {})).length;
+  setBanner('not-checked',
+    `Loaded ${restored.join(' and ')} from that run` +
+    (answers ? '. Its answers were not restored — this copy has not been analysed yet' : '') +
+    '. Nothing is cut until you press save',
+    null);
+}
+
 const show = v => v === null || v === undefined ? 'off' : (v === true ? 'on' : (v === false ? 'off' : String(v)));
 const defaultFor = f => f.type === 'bool' ? true : (f.choices && f.choices.length ? f.choices[0] : '');
 
@@ -815,17 +937,29 @@ function renderTabs() {
   if (!S.drawer) return;
   d.replaceChildren(el('h2', null, S.drawer));
 
-  /* the drawers act on the SELECTION, and they say so */
-  const n = targets().length;
-  d.append(el('p', 'scope', n === 1
-    ? `on ${base(targets()[0].path)}`
-    : `on ${n} selected`));
+  /* the drawers act on the SELECTION, and they say so -- except the history,
+     which is the whole log and would be lying if it claimed a scope. */
+  if (S.drawer !== 'what you did') {
+    const n = targets().length;
+    d.append(el('p', 'scope', n === 1
+      ? `on ${base(targets()[0].path)}`
+      : `on ${n} selected`));
+  }
 
   for (const spec of DRAWERS[S.drawer]) {
-    const [label, ref] = spec;
-    if (!ref) { d.append(...refusalRows()); continue; }
-    const [kind, key] = ref.split(':');
-    if (kind === 'report') { d.append(...refusalRows()); continue; }
+    /* ⚠️ Two shapes, and reading them as one is a bug this file already had.
+       A control row is ['Label', 'kind:key']; a report row is ['kind:key']
+       alone. Destructuring both as [label, ref] left `ref` undefined for a
+       report, so EVERY report fell into one branch and the `kind === 'report'`
+       dispatch below it was unreachable -- which is why the history drawer
+       first rendered "Nothing refused". Normalise the shape, then dispatch. */
+    const ref = spec.length === 1 ? spec[0] : spec[1];
+    const label = spec.length === 1 ? null : spec[0];
+    const [kind, key] = String(ref).split(':');
+    if (kind === 'report') {
+      d.append(...(key === 'history' ? historyRows() : refusalRows()));
+      continue;
+    }
     d.append(kind === 'goal' ? goalRow(label, key) : flagRow(label, key));
   }
 

@@ -37,3 +37,49 @@ Heading shape, matching the engine repo's archive:
 
 **Three options, and they are not equivalent:** gitignore `jobs.jsonl` outright (loses nothing — nothing reads it across machines); keep the path tracked via a `.gitkeep` and ignore the file; or move it out of the repo entirely, to `~/Library/Application Support/Devoid/`, which is where a shipped `.app` will have to write anyway and therefore folds into the standalone-packaging item. ⚠️ **`server/jobs.py:25` hardcodes `REPO_ROOT / "jobs.jsonl"`**, so the third option is the only one that survives the app leaving this repo.
 
+
+## ✅ Two windows, one log — there is no single-instance lock — CLOSED 2026-09-05 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: closed with `app.requestSingleInstanceLock()`, and verified red-green.** Without it: a second `npm start` gave **2 uvicorn processes** and a second live window. With it: **1**, and the second copy exits after handing its file arguments to the first. The second launch also focuses and restores the existing window, so "Devoid is probably already running" is now something the app acts on rather than only says in a dialog.
+
+The `O_APPEND` single-`os.write()` primitive in `server/appendlog.py` stays as the second layer — the lock stops two writers existing, the primitive stops a torn line if one ever does.
+
+**The original filing, unedited:**
+
+### `[P1 · S · Sonnet5-Med]` Two windows, one log — there is no single-instance lock *(filed 2026-09-05, `PLAN.md`'s own edge-case table, still unowned)*
+
+`main.js` never calls `app.requestSingleInstanceLock()`. Two Devoid windows means two servers, two ports (the probe handles that fine) and **two writers to `jobs.jsonl` and `labels/protection.jsonl`** — "two append-only logs, one writer each" is a schema rule in `CLAUDE.md`, not an enforced one. `server/journal.py` takes an `flock` for the crash journal's whole-file rewrite; the two append-only logs have no such guard.
+
+**Two acceptable answers:** a single-instance lock in `main.js` (second launch focuses the existing window), or line-atomic `O_APPEND` writes so concurrent appends interleave safely. ⚠️ **The second is not automatic** — a POSIX append is atomic only below `PIPE_BUF`, and a label row with a bbox and a long path can exceed it. Prefer the lock, which is four lines.
+
+## ✅ `prefers-reduced-motion` is written and has never been exercised — CLOSED 2026-09-05 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: the preference is now emulated and asserted.** `scripts/capture-window.mjs` attaches the DevTools debugger and sends `Emulation.setEmulatedMedia` with `prefers-reduced-motion: reduce`, captures the state, and **fails the gate if the media query does not report `true`** — so the five `@media` blocks in `app.css` are exercised on every run instead of being code nobody could reach.
+
+⚠️ **What is exercised is that the rules APPLY, not that they are the right rules.** Whether the reduced states are good is a judgement nobody has made against a real preference; that half was never in this item's wording and is not claimed closed.
+
+**The original filing, unedited:**
+
+### `[P2 · S · Sonnet5-High]` `prefers-reduced-motion` is written and has never been exercised *(filed 2026-09-05)*
+
+Five `@media (prefers-reduced-motion:reduce)` blocks exist in `web/app.css`, covering the global transition kill, the horizon ring, and three more. **Neither surface available during the build could emulate the preference**, so every one of them is unverified code. ⚠️ A reduced-motion rule that is wrong is worse than one that is absent — it is the one path a motion-sensitive user cannot work around.
+
+**Concrete next action:** Electron's `webContents.debugger` can set `Emulation.setEmulatedMedia` with `prefers-reduced-motion: reduce`; add it as a seventh state to `scripts/capture-window.mjs`.
+
+## ✅ No automated test covers the UI — at all — CLOSED 2026-09-05 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: closed as WORDED, and immediately re-filed narrower.** `npm run gate:ui` is a real gate with eight assertions against the real Electron window, red-green verified (breaking the drawer's dispatch drops it to 0 rows and exits 1; restoring it exits 0). The title is no longer true, so it cannot stay open.
+
+⚠️ **It earned its keep before it was even committed.** Building it found three defects nothing else had: `capturePage()` returning stale frames for four of eight states, Electron serving a cached `app.js` so the gate certified code that was not on disk, and a drawer-dispatch branch that had never executed. See `docs/DEVLOG.md`.
+
+**Successor:** `[P1 · M · Opus5-High]` "The UI gate asserts eight things; the surface has far more than eight", which lists what is still uncovered.
+
+**The original filing, unedited:**
+
+### `[P1 · M · Opus5-High]` No automated test covers the UI — at all *(filed 2026-09-05)*
+
+**93 pytest pass and not one of them touches a line of `web/`.** They are Python: server routes, the validation boundary, the two logs, a real render through the subprocess. The only frontend tests are two pure-maths suites with no DOM — the coordinate round-trip (267 assertions) and the wipe frame clock (14). Every visual and behavioural claim about the surface rests on inspection.
+
+This is the single largest hole in the project's evidence, and it is what made a related failure possible: **"93 pytest passed" was reported on commits that changed only CSS** — true, and evidence for a claim nobody made.
+
+**Concrete first slice, and it is small:** `scripts/capture-window.mjs` already drives the real Electron window and captures six states through `webContents.capturePage`. Turning it from a screenshot tool into a **gate** — assert the diagnostics it already prints (region canvas non-zero, starfield sized, no console errors), then compare each PNG against a committed baseline — is most of a real UI test for the cost of an exit code. ⚠️ Pixel baselines are brittle; start with the assertions, which cannot be flaky, and add image comparison only where a stable region justifies it.
