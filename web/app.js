@@ -86,6 +86,7 @@ const S = {
      index, cleared once the arrival plays. Never replayed once used. */
   arriving: new Map(),
   arrivalUsed: false,
+  shape: null,            // 'empty' | 'sheet' | 'open' -- drives the transition
 };
 
 /* ── the eleven states ────────────────────────────────────────────────────
@@ -211,6 +212,10 @@ function tile(a, big) {
     b.style.setProperty('--i', String(S.arriving.get(a.id)));
   }
   const win = el('div', 'win chk-s');
+  /* a different patch of sky per tile, keyed off the id so it is stable across
+     re-renders rather than jumping every time the state changes */
+  let seed = 0; for (let i = 0; i < a.id.length; i++) seed = (seed * 31 + a.id.charCodeAt(i)) >>> 0;
+  win.style.backgroundPosition = `${-(seed % 470)}px ${-((seed >> 9) % 470)}px, 0 0`;
   const img = el('img');
   img.src = artUrl(a); img.alt = '';                // animates by itself; that is the point
   img.addEventListener('error', () => { img.hidden = true; win.classList.add('noart'); });
@@ -912,6 +917,15 @@ function closeAsset()  { S.open = null; render(); }
 function render() {
   const a = S.assets.find(x => x.id === S.open);
   const empty = S.assets.length === 0;
+  /* the structural transition fires on a CHANGE of shape, not on every
+     render -- a state patch arriving mid-analysis must not replay it. */
+  const shape = empty ? 'empty' : (a ? 'open' : 'sheet');
+  if (shape !== S.shape) {
+    S.shape = shape;
+    for (const el of [$('#edge'), $('#open'), $('#sheet')]) {
+      el.removeAttribute('data-anim'); void el.offsetWidth; el.setAttribute('data-anim', '1');
+    }
+  }
   $('#empty').hidden = !empty;
   $('#sheet').hidden = !!a || empty;
   $('#open').hidden  = !a || empty;
@@ -960,6 +974,7 @@ function render() {
   }
   renderTabs();
   renderBanner();
+  repaintField();
 }
 
 /* ── refresh: the table, and the flags behind every control ───────────────── */
@@ -994,6 +1009,51 @@ async function refresh() {
   render();
 }
 
+/* ── the field ─────────────────────────────────────────────────────────────
+   Drawn once to fit, never tiled. A tiled sky repeats its constellations on a
+   fixed pitch and the eye finds them immediately -- it is the one thing a real
+   field never does.
+
+   The distribution matters as much as the randomness: a uniform scatter of
+   identical dots reads as noise, not as sky. Real fields are dominated by
+   faint stars with a few bright ones, so radius and alpha come off a steep
+   power curve, and colour runs cold-white to faintly blue with the occasional
+   warm one. Density is per unit AREA, so a tall window is not sparser than a
+   wide one. */
+function paintField() {
+  const cv = $('#starfield');
+  if (!cv) return;
+  const host = cv.parentElement;
+  const w = host.clientWidth, h = host.clientHeight;
+  if (!w || !h) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const emitting = document.documentElement.classList.contains('emitting');
+  const n = Math.round((w * h) / 3300);
+  for (let i = 0; i < n; i++) {
+    const x = Math.random() * w, y = Math.random() * h;
+    /* steep curve: mostly faint, a few that carry the field */
+    const m = Math.pow(Math.random(), 2.4);
+    const r = 0.42 + m * 1.18;
+    const alpha = (emitting ? 0.34 : 0.92) * (0.30 + m * 0.7);
+    const warm = Math.random();
+    const col = emitting
+      ? (warm > 0.86 ? '58,54,84' : '18,17,26')
+      : (warm > 0.93 ? '255,228,196' : warm > 0.62 ? '207,220,255' : '255,255,255');
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, 6.2832);
+    ctx.fillStyle = `rgba(${col},${alpha.toFixed(3)})`;
+    ctx.fill();
+  }
+}
+let fieldTimer = null;
+const repaintField = () => { clearTimeout(fieldTimer); fieldTimer = setTimeout(paintField, 120); };
+window.addEventListener('resize', repaintField);
+
 /* ── the chrome ───────────────────────────────────────────────────────────── */
 $('#add').addEventListener('click', async () => addPaths(await FileSource.pick()));
 $('#selectall').addEventListener('click', () => {
@@ -1003,6 +1063,7 @@ $('#selectall').addEventListener('click', () => {
 });
 $('#lamp').addEventListener('click', () => {
   const emitting = document.documentElement.classList.toggle('emitting');
+  paintField();   // the field's own colour temperature inverts with the room
   $('#lamp').setAttribute('aria-pressed', String(emitting));
   try { localStorage.setItem('devoid-lamp', emitting ? 'light' : 'dark'); } catch (e) {}
 });

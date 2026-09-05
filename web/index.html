@@ -21,15 +21,7 @@
     <span class="grow"></span>
     <button class="btn" id="selectall">Select all</button>
     <button class="btn" id="add">Add files</button>
-    <!-- the matte toggle -- DESIGN.md: "checker, white, black, chroma, on
-         every preview... a verification requirement, not a preference." -->
-    <div class="matte" id="matte" role="radiogroup" aria-label="Preview ground">
-      <button class="swatch chk-s" data-matte="checker" aria-pressed="true" aria-label="Checkerboard ground"></button>
-      <button class="swatch sw-white" data-matte="white" aria-pressed="false" aria-label="White ground"></button>
-      <button class="swatch sw-black" data-matte="black" aria-pressed="false" aria-label="Black ground"></button>
-      <button class="swatch sw-chroma" data-matte="chroma" aria-pressed="false" aria-label="Chroma-key ground"></button>
-    </div>
-    <button class="lamp" id="lamp" aria-label="Lighting" aria-pressed="false">
+    <button class="lamp" id="lamp" aria-label="Emitting light" aria-pressed="false">
       <span class="sg-void"></span><span class="sg-lit"></span>
       <span class="sg-rim"></span><span class="sg-cut"></span>
     </button>
@@ -47,6 +39,10 @@
   </div>
 
   <div class="table">
+    <!-- the field. Drawn once to fit, never tiled: a repeating star pattern
+         is the one thing a sky never does, and the eye catches a repeated
+         constellation instantly. -->
+    <canvas id="starfield" aria-hidden="true"></canvas>
     <!-- the queue, only while something is open -->
     <nav class="edge" id="edge" aria-label="Everything else" hidden></nav>
 
@@ -56,7 +52,16 @@
 
       <!-- one open -->
       <div class="open" id="open" hidden>
-        <div class="openhead"><h1 id="openname"></h1><p id="openstate"></p></div>
+        <div class="openhead"><h1 id="openname"></h1><p id="openstate"></p>
+          <!-- the ground you judge the edge against. DESIGN.md calls this a
+               verification requirement, not a preference, so it lives beside
+               the artwork rather than in the app bar. -->
+          <div class="matte" id="matte" role="radiogroup" aria-label="Preview ground">
+            <button class="swatch chk-s" data-matte="checker" aria-pressed="true" aria-label="Checkerboard ground"></button>
+            <button class="swatch sw-white" data-matte="white" aria-pressed="false" aria-label="White ground"></button>
+            <button class="swatch sw-black" data-matte="black" aria-pressed="false" aria-label="Black ground"></button>
+            <button class="swatch sw-chroma" data-matte="chroma" aria-pressed="false" aria-label="Chroma-key ground"></button>
+          </div></div>
         <div class="stage chk" id="stage">
           <!-- Stage 3: wipe.js replaces #before/#after (looping <img>) with two
                synced <canvas> elements decoding shared frame timing (PLAN.md 3.3),

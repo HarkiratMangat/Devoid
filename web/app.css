@@ -88,14 +88,24 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 /* ⚠️ A detector flags repeating gradients as decorative stripes. This one is the
    alpha checkerboard — the standard indicator for transparency and this app's
    ground. Justified exception; do not "fix" it. */
-.chk,.chk-s{background-color:var(--void);
-  background-image:var(--stars-a),var(--stars-b),
-    repeating-conic-gradient(var(--chk-a) 0 25%,var(--chk-b) 0 50%)}
-.chk{background-size:320px 320px,470px 470px,14px 14px}
-.chk-s{background-size:320px 320px,470px 470px,9px 9px}
+/* The big void surfaces are TRANSPARENT: the one starfield behind them shows
+   through, so the sky is continuous across the whole table instead of
+   restarting at every element's edge. Only the checker rides on top, and only
+   where something transparent is actually being shown. */
+.chk{background-color:transparent;
+  background-image:repeating-conic-gradient(var(--chk-a) 0 25%,var(--chk-b) 0 50%);
+  background-size:14px 14px}
+/* A tile is a small window with its own ground, so it keeps a star layer --
+   but its background-position is randomised per tile in app.js, or every
+   frame on the sheet would show the same three stars in the same corner. */
+.chk-s{background-color:var(--void);
+  background-image:var(--stars-a),repeating-conic-gradient(var(--chk-a) 0 25%,var(--chk-b) 0 50%);
+  background-size:470px 470px,9px 9px}
 /* a nebula sits behind the whole table -- one soft violet bloom and one cold
    blue, positioned off-centre so the field has a direction to it. */
-.table{background-image:
+#starfield{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.table>*:not(#starfield){position:relative;z-index:1}
+.table{background-color:var(--void);background-image:
   radial-gradient(58% 44% at 18% 86%,var(--neb-violet),transparent 72%),
   radial-gradient(46% 38% at 82% 8%,var(--neb-blue),transparent 70%);
   background-attachment:fixed}
@@ -116,12 +126,6 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .btn:hover{background:var(--raise)}
 .btn:active{transform:scale(.97)}
 .btn.go{background:var(--cyan);border-color:var(--cyan);color:#04212A;font-weight:700}
-.lamp{width:34px;height:34px;border-radius:50%;border:1px solid var(--score-2);display:grid;place-items:center}
-.lamp:hover{background:var(--raise)}
-.lamp b{width:13px;height:13px;border-radius:50%;background:var(--graphite-3);display:block;
-  transition:background .32s var(--ease),box-shadow .32s var(--ease)}
-.emitting .lamp b{background:#F0B429;box-shadow:0 0 0 4px rgba(240,180,41,.22)}
-
 .table{flex:1;display:flex;min-height:0;position:relative}
 .work{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
 
@@ -241,8 +245,7 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 /* ⚠️ no checker here. A checkerboard says "something transparent is on this
    spot"; an empty table has no image on it at all, so the notation would be
    claiming something untrue. Stars only. */
-.empty.chk{background-image:var(--stars-a),var(--stars-b);
-  background-size:320px 320px,470px 470px}
+.empty.chk{background-image:none}
 .horizon{position:relative;width:clamp(132px,17vw,196px);aspect-ratio:1;margin:0 auto var(--s5)}
 .horizon .ring{position:absolute;inset:0;border-radius:50%;
   background:conic-gradient(from 202deg,
@@ -417,13 +420,13 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
    spilling past the edge, which is what an accretion disk's inner edge
    actually looks like -- because the boundary is the only interesting place
    in a black hole. No knob: a handle promises dragging, and this clicks. */
-.lamp{width:52px;height:24px;border-radius:5px;padding:0;position:relative;
+.lamp{width:56px;height:28px;border-radius:6px;padding:0;position:relative;
   overflow:hidden;border:none;--s:72%;
   box-shadow:inset 0 0 0 1px var(--score-2)}
 .lamp:hover{box-shadow:inset 0 0 0 1px var(--mark)}
 .lamp .sg-void{position:absolute;inset:0;background-color:var(--void);
   background-image:radial-gradient(70% 90% at 24% 76%,var(--neb-violet),transparent 72%),
-    var(--stars-a);background-size:auto,320px 320px}
+    var(--stars-a);background-size:auto,470px 470px;background-position:0 0,-180px -60px}
 .lamp .sg-lit{position:absolute;inset:0;clip-path:inset(0 0 0 var(--s));
   background:linear-gradient(100deg,#FFF9EC 0%,#F6F2E7 38%,#E7E3D8 100%);
   transition:clip-path .42s var(--ease)}
@@ -439,9 +442,10 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
    that's the point), framed as a sprocket-perforated strip rather than a
    generic segmented control. The active one is marked by a bracket SHAPE,
    never by a colour fill alone. */
-.matte{display:flex;align-items:center;gap:var(--s1);padding:var(--s1);border-radius:var(--r);
+.matte{display:flex;align-items:center;gap:0;padding:var(--s1);border-radius:var(--r);
   background:var(--well);border:1px solid var(--score)}
-.swatch{width:15px;height:15px;border-radius:3px;padding:0;position:relative;
+.swatch{width:24px;height:24px;border-radius:5px;padding:0;position:relative;
+  background-clip:content-box;border:4px solid transparent;
   box-shadow:inset 0 0 0 1px var(--score-2)}
 .swatch.chk-s{background-size:8px 8px}
 .sw-white{background:#fff}
@@ -449,10 +453,10 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .sw-chroma{background:#00FF7F}
 .swatch[aria-pressed="true"]{box-shadow:inset 0 0 0 1.5px var(--cyan)}
 .swatch[aria-pressed="true"]::before,.swatch[aria-pressed="true"]::after{
-  content:"";position:absolute;top:-5px;bottom:-5px;width:3px;border:1.5px solid var(--cyan);
+  content:"";position:absolute;top:1px;bottom:1px;width:3px;border:1.5px solid var(--cyan);
   opacity:.85}
-.swatch[aria-pressed="true"]::before{left:-5px;border-right:none}
-.swatch[aria-pressed="true"]::after{right:-5px;border-left:none}
+.swatch[aria-pressed="true"]::before{left:1px;border-right:none}
+.swatch[aria-pressed="true"]::after{right:1px;border-left:none}
 /* the ground the matte toggle actually controls */
 :root[data-matte="white"] .chk,:root[data-matte="white"] .chk-s{background:#fff}
 :root[data-matte="black"] .chk,:root[data-matte="black"] .chk-s{background:#000}
@@ -516,3 +520,30 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
   radial-gradient(64% 50% at 50% 34%,rgba(255,252,244,.95),transparent 70%),
   radial-gradient(52% 42% at 16% 88%,var(--neb-violet),transparent 74%),
   radial-gradient(44% 36% at 86% 10%,var(--neb-blue),transparent 72%)}
+
+
+/* ══ OPENING AN ASSET ══════════════════════════════════════════════════════
+   The biggest state change in the app, and it used to be a cut: the sheet
+   vanished and a stage appeared in the same frame. "Select one and it opens
+   while the rest move to the edge" is a movement, in this design's own words.
+   The rail carries the movement (it slides in from where the sheet was), the
+   stage settles in behind it. Transform and opacity only. */
+.edge[data-anim]{animation:devoid-rail .34s cubic-bezier(.77,0,.175,1) backwards}
+@keyframes devoid-rail{from{transform:translateX(-100%);opacity:0}to{transform:none;opacity:1}}
+.open[data-anim]{animation:devoid-stage .3s var(--ease) 60ms backwards}
+@keyframes devoid-stage{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:none}}
+.sheet[data-anim]{animation:devoid-sheet .26s var(--ease) backwards}
+@keyframes devoid-sheet{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){
+  .edge[data-anim],.open[data-anim],.sheet[data-anim]{animation:devoid-sheet .2s ease-out backwards}
+}
+
+/* ══ THE WIDTH AXIS ════════════════════════════════════════════════════════
+   Archivo's variable width was self-hosted for this and then used on three
+   elements. "Nothing at a default width" (DESIGN.md) is a claim about every
+   element, so the axis carries a real tier: display expands, body sits
+   normal, and the instrument labels -- the words that annotate rather than
+   speak -- condense, which is how a gauge is lettered. */
+.st,.crumb,.bword,.rt-lab,.qhint,.sf-cap,.ledger{font-stretch:92%}
+.drawer h2,.questions h3{font-stretch:108%}
+.btn{font-stretch:96%}
