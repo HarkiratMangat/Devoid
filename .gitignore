@@ -13,3 +13,10 @@ out/
 .devoid-journal.json.lock
 .devoid-journal.json.tmp
 .claude/worktrees/
+
+# Your work history (PLAN.md 5.1). Per-machine, not shared: every real render
+# appends a row carrying local absolute paths, so tracking it dirties the tree
+# on every use and makes two branches conflict on a merge that means nothing.
+# ⚠️ labels/protection.jsonl is the OPPOSITE case and STAYS TRACKED -- that log
+# is evidence, meant to accumulate, and is pointed at from the engine repo.
+jobs.jsonl

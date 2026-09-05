@@ -59,21 +59,15 @@ Not a bug — the value is legal, and the log's other columns are real. **It is 
 
 `npm run dist:dir` produces `dist/mac-arm64/Devoid.app`, it launches, and **it only runs from this repo**: `main.js` spawns `.venv/bin/python` relative to its own directory. On any other machine it opens a window and fails at the spawn.
 
-**The work:** bundle an interpreter (`pyinstaller` over `server/app.py`, or a vendored embeddable Python dropped in via `extraResources`), and give it the environment check from `docs/PLAN.md` 0.3 as its failure path — a missing engine must say so in the window, not die in a spawn. ⚠️ **Do not describe the current build as standalone anywhere**; `README.md`'s Packaging section is written to prevent exactly that and should stay that way until this closes.
+**The work:** bundle an interpreter (`pyinstaller` over `server/app.py`, or a vendored embeddable Python dropped in via `extraResources`), and give it the environment check from `docs/PLAN.md` 0.3 as its failure path — a missing engine must say so in the window, not die in a spawn. ⚠️ **This now also owns where the logs live.** `server/jobs.py:25` and the labels writer both resolve their paths from `REPO_ROOT`, which stops meaning anything the moment the app leaves this repo. A standalone build has to write to `~/Library/Application Support/Devoid/` — decided when `jobs.jsonl` was untracked on 2026-09-05, where ignoring it was the right small fix and relocating it was correctly judged too big for a docs session.
+
+⚠️ **Do not describe the current build as standalone anywhere**; `README.md`'s Packaging section is written to prevent exactly that and should stay that way until this closes.
 
 ### `[P1 · S · Sonnet5-Med]` Two windows, one log — there is no single-instance lock *(filed 2026-09-05, `PLAN.md`'s own edge-case table, still unowned)*
 
 `main.js` never calls `app.requestSingleInstanceLock()`. Two Devoid windows means two servers, two ports (the probe handles that fine) and **two writers to `jobs.jsonl` and `labels/protection.jsonl`** — "two append-only logs, one writer each" is a schema rule in `CLAUDE.md`, not an enforced one. `server/journal.py` takes an `flock` for the crash journal's whole-file rewrite; the two append-only logs have no such guard.
 
 **Two acceptable answers:** a single-instance lock in `main.js` (second launch focuses the existing window), or line-atomic `O_APPEND` writes so concurrent appends interleave safely. ⚠️ **The second is not automatic** — a POSIX append is atomic only below `PIPE_BUF`, and a label row with a bbox and a long path can exceed it. Prefer the lock, which is four lines.
-
-### `[P1 · XS · Sonnet5-Med]` `jobs.jsonl` is tracked in git, so every real use dirties the working tree *(filed 2026-09-05, found the first time the app was used for real)*
-
-`jobs.jsonl` is a **per-machine work history** — "`jobs.jsonl` records your work" (`CLAUDE.md`) — and it is committed to the repo as a tracked, empty file. The first genuine render on this machine appended a row and left the tree dirty on a branch about to be pushed, carrying a local `~/Downloads` path with it. Every real use will do that again, and two branches that both saw use will conflict on a file whose merge has no meaning.
-
-⚠️ **`labels/protection.jsonl` is the opposite case and must stay tracked.** That log is *evidence* — a dataset meant to accumulate across machines, pointed at from the engine repo. The two logs "look alike and must not be merged" (`CLAUDE.md`); this is the same distinction one level down, in git rather than in the schema.
-
-**Three options, and they are not equivalent:** gitignore `jobs.jsonl` outright (loses nothing — nothing reads it across machines); keep the path tracked via a `.gitkeep` and ignore the file; or move it out of the repo entirely, to `~/Library/Application Support/Devoid/`, which is where a shipped `.app` will have to write anyway and therefore folds into the standalone-packaging item. ⚠️ **`server/jobs.py:25` hardcodes `REPO_ROOT / "jobs.jsonl"`**, so the third option is the only one that survives the app leaving this repo.
 
 ### `[P2 · M · Opus5-High]` Emitting mode is the weaker of the two states *(filed 2026-09-05, from the interface-design squint test)*
 

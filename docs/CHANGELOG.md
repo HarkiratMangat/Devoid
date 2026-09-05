@@ -45,6 +45,12 @@ The "lamp over the bench" metaphor became **the void**: the ground is deep space
 | Hit targets, SC 2.5.8 | matte swatches ~~23.6px~~ → **28px**; every other element already passing |
 | Design detector | exactly one accepted finding, `repeating-stripes-gradient` |
 
+### First real use, and what it found
+
+The app was run on a 2.87 MB file from outside the corpus and completed — `verdict: done`, output written. It is one asset and nobody has judged the output's edges, but the whole path ran end to end for the first time.
+
+It also dirtied the git tree, because `jobs.jsonl` — a per-machine work history carrying local absolute paths — was tracked. It is now ignored. `labels/protection.jsonl` stays tracked: that log is shared evidence, pointed at from the engine repo, and the two must not be treated alike.
+
 ### Verified
 
 93 pytest (including a real render of a corpus asset through the subprocess) · 267 coordinate assertions · 14 wipe-clock tests · the port probe · every state captured through the real Electron window.
