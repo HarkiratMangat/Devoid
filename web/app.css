@@ -328,3 +328,96 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .qcard-canvas{width:100%;height:100%;object-fit:contain}
 .qcard p{margin:0;text-align:center;color:var(--graphite-2);text-wrap:balance}
 .qcard-actions{display:flex;gap:var(--s2)}
+
+/* ══ Redesign pass — closing the gap between the hero moments and the chrome
+   around them. Found by re-auditing against this file's own rules: the lamp
+   toggle's only state signal WAS colour (a grey dot vs a gold dot), which
+   "no state is ever colour alone" (above) already forbids. The fix pattern
+   throughout this block is the same one used everywhere else in this file:
+   reuse a motif already proven in THIS app (the sprocket/film-strip world,
+   the grease-pencil mark) rather than borrowing an unrelated trope. ══════ */
+
+/* THE LAMP — a physical rocker/slider, not a colour-changing dot. The knob's
+   POSITION carries the state; the warm glow is reinforcement, not the signal. */
+.lamp{width:44px;height:22px;border-radius:11px;padding:0;position:relative;
+  background:var(--well);border:1px solid var(--score-2)}
+.lamp:hover{border-color:var(--score-2);background:var(--well)}
+.lamp b{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;
+  background:var(--sprocket);border:1.5px solid var(--graphite-3);box-shadow:none;
+  transition:left .22s var(--ease),background .22s var(--ease),
+    border-color .22s var(--ease),box-shadow .22s var(--ease)}
+.lamp-light .lamp b{left:24px;background:#F0B429;border-color:#F0B429;
+  box-shadow:0 0 0 3px rgba(240,180,41,.22)}
+
+/* THE MATTE TOGGLE — four real swatches (they must show the actual ground,
+   that's the point), framed as a sprocket-perforated strip rather than a
+   generic segmented control. The active one is marked by a bracket SHAPE,
+   never by a colour fill alone. */
+.matte{display:flex;align-items:center;gap:var(--s1);padding:var(--s1);border-radius:var(--r);
+  background:var(--well);border:1px solid var(--score)}
+.swatch{width:15px;height:15px;border-radius:3px;padding:0;position:relative;
+  box-shadow:inset 0 0 0 1px var(--score-2)}
+.swatch.chk-s{background-size:8px 8px}
+.sw-white{background:#fff}
+.sw-black{background:#000}
+.sw-chroma{background:#00FF7F}
+.swatch[aria-pressed="true"]{box-shadow:inset 0 0 0 1.5px var(--cyan)}
+.swatch[aria-pressed="true"]::before,.swatch[aria-pressed="true"]::after{
+  content:"";position:absolute;top:-5px;bottom:-5px;width:3px;border:1.5px solid var(--cyan);
+  opacity:.85}
+.swatch[aria-pressed="true"]::before{left:-5px;border-right:none}
+.swatch[aria-pressed="true"]::after{right:-5px;border-left:none}
+/* the ground the matte toggle actually controls */
+:root[data-matte="white"] .chk,:root[data-matte="white"] .chk-s{background:#fff}
+:root[data-matte="black"] .chk,:root[data-matte="black"] .chk-s{background:#000}
+:root[data-matte="chroma"] .chk,:root[data-matte="chroma"] .chk-s{background:#00FF7F}
+
+/* THE PRIMARY BUTTON — one sprocket-hole notch, reserved for the single most
+   important action on screen. Everything else stays a plain pill: spending
+   this on every button would be exactly the scattered-ornament tell of
+   generated design this file elsewhere warns against. */
+.btn.go{
+  -webkit-mask-image:radial-gradient(circle 5px at calc(100% - 9px) 9px,transparent 5px,#000 5.5px);
+  mask-image:radial-gradient(circle 5px at calc(100% - 9px) 9px,transparent 5px,#000 5.5px)}
+
+/* THE "AUTO" MARK — a grease-pencil annotation (a dashed underline on mono
+   text), not a SaaS status chip. Reuses the mark vocabulary the frames
+   already carry instead of inventing a badge shape nothing else in the app
+   uses. */
+.auto{font-family:"Spline Sans Mono",monospace;font-size:11px;font-weight:500;
+  padding:2px 1px 3px;background:none;border:none;border-bottom:1.5px dashed var(--cyan-ink);
+  border-radius:0;color:var(--cyan-ink)}
+.ctl .auto{border-bottom-color:transparent}
+.ctl .auto:hover{border-bottom-color:var(--cyan-ink)}
+
+/* THE LEDGER BAR — background-removed vs artwork-survived is a REAL
+   proportion (every output pixel is one or the other), so it earns an actual
+   bar. "artwork lost" stays a caption below, never plotted on this bar: it's
+   measured on a different basis (source vs cut) and plotting it here would
+   claim a precision the number doesn't have. */
+.ledger{flex-wrap:wrap;row-gap:var(--s1)}
+.ledger-bar{flex:0 0 100%;display:flex;height:6px;border-radius:3px;overflow:hidden;
+  background:var(--well)}
+.lseg{display:block;min-width:2px}
+.lseg-bg{background:var(--ruby-bg);box-shadow:inset 0 0 0 1px rgba(226,64,42,.25)}
+.lseg-total{background:var(--cyan-bg);box-shadow:inset 0 0 0 1px rgba(34,211,238,.3)}
+
+/* THE ARRIVAL — the empty table's one orchestrated moment (DESIGN.md), and
+   only that: rare, staggered, never repeated once used this session. Each
+   frame "develops" (fades and settles from a slight scale) under a rubylith
+   wash that recedes as it reveals the artwork underneath — cutting away the
+   background is the whole thesis, played once as a gesture instead of stated
+   as a sentence. */
+.frame.arrive{animation:devoid-develop .7s var(--ease) backwards;
+  animation-delay:calc(var(--i,0) * 90ms)}
+@keyframes devoid-develop{0%{opacity:0;transform:scale(.93)}100%{opacity:1;transform:scale(1)}}
+.frame.arrive .win::after{content:"";position:absolute;inset:0;background:var(--ruby);
+  mix-blend-mode:multiply;pointer-events:none;
+  animation:devoid-wash .7s var(--ease) backwards;animation-delay:calc(var(--i,0) * 90ms)}
+@keyframes devoid-wash{0%{opacity:.85}70%{opacity:.5}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){
+  .frame.arrive{animation:none}
+  .frame.arrive .win::after{animation:devoid-wash-only .5s ease-out backwards;
+    animation-delay:calc(var(--i,0) * 60ms)}
+}
+@keyframes devoid-wash-only{0%{opacity:.85}100%{opacity:0}}

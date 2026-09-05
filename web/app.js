@@ -82,6 +82,10 @@ const S = {
   drawer: null,
   seam: 50,
   banner: null,          // {state, text, action:{label, run}|null}
+  /* the empty table's one orchestrated moment (DESIGN.md) -- id -> stagger
+     index, cleared once the arrival plays. Never replayed once used. */
+  arriving: new Map(),
+  arrivalUsed: false,
 };
 
 /* ── the eleven states ────────────────────────────────────────────────────
@@ -202,6 +206,10 @@ function tile(a, big) {
   if (!big) b.setAttribute('aria-current', String(a.id === S.open));
   if (big) b.setAttribute('aria-pressed', String(S.sel.has(a.id)));
 
+  if (big && S.arriving.has(a.id)) {
+    b.classList.add('arrive');
+    b.style.setProperty('--i', String(S.arriving.get(a.id)));
+  }
   const win = el('div', 'win chk-s');
   const img = el('img');
   img.src = artUrl(a); img.alt = '';                // animates by itself; that is the point
@@ -303,14 +311,27 @@ const FileSource = {
 
 async function addPaths(paths) {
   if (!paths || !paths.length) return;
+  /* DESIGN.md: "One orchestrated moment, and it belongs to the empty table
+     ... rare moments earn animation; repeated ones must not have it." Gate
+     it on a truly empty table, and never replay it once used this session. */
+  const wasEmpty = S.assets.length === 0 && !S.arrivalUsed;
   const r = await POST('/api/assets', { paths });
   if (!r.ok) {
     setBanner('failed', `Could not put ${paths.length === 1 ? 'that' : 'those'} on the table — ${errText(r)}`, null);
     return;
   }
+  const added = r.body || [];
+  if (wasEmpty && added.length) {
+    S.arrivalUsed = true;
+    added.forEach((a, i) => S.arriving.set(a.id, i));
+  }
   await refresh();
+  if (S.arriving.size) {
+    const total = 700 + (added.length - 1) * 90 + 150;
+    setTimeout(() => { S.arriving.clear(); render(); }, total);
+  }
   /* analysis is ~18s each, so the frame exists long before the artwork does */
-  for (const a of (r.body || [])) analyze(a.id);
+  for (const a of added) analyze(a.id);
 }
 
 async function analyze(id) {
@@ -511,7 +532,16 @@ function renderLedger(a) {
     L.append(el('span', 'blank', 'not checked — nothing was measured on this one'));
     return;
   }
-  L.append(el('span', null, `removes ${Number(px.bg).toLocaleString()} background px`));
+  const bg = Number(px.bg), total = Number(px.total), whole = bg + total || 1;
+  const bar = el('div', 'ledger-bar');
+  bar.setAttribute('role', 'img');
+  bar.setAttribute('aria-label',
+    `${bg.toLocaleString()} background px removed, ${total.toLocaleString()} artwork px survive`);
+  const segBg = el('span', 'lseg lseg-bg'); segBg.style.flexGrow = String(bg / whole);
+  const segArt = el('span', 'lseg lseg-total'); segArt.style.flexGrow = String(total / whole);
+  bar.append(segBg, segArt);
+  L.append(bar);
+  L.append(el('span', null, `removes ${bg.toLocaleString()} background px`));
   /* ⚠️ `art` is a CEILING — it counts every source pixel that differed from
      the corner colour and ended up transparent, including the antialiasing
      ramp the keyer is meant to remove. Comparable BETWEEN settings on one
@@ -975,6 +1005,22 @@ $('#lamp').addEventListener('click', () => {
   const light = document.documentElement.classList.toggle('lamp-light');
   try { localStorage.setItem('devoid-lamp', light ? 'light' : 'dark'); } catch (e) {}
 });
+$('#matte').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-matte]');
+  if (!btn) return;
+  const val = btn.dataset.matte;
+  if (val === 'checker') delete document.documentElement.dataset.matte;
+  else document.documentElement.dataset.matte = val;
+  for (const b of $('#matte').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b === btn));
+  try { localStorage.setItem('devoid-matte', val); } catch (e) {}
+});
+(function initMatte() {
+  let saved = 'checker';
+  try { saved = localStorage.getItem('devoid-matte') || 'checker'; } catch (e) {}
+  for (const b of $('#matte').querySelectorAll('button')) {
+    b.setAttribute('aria-pressed', String(b.dataset.matte === saved));
+  }
+})();
 $('#primary').addEventListener('click', () => {
   const busy = targets().filter(x => stateOf(x) === 'running');
   if (busy.length) { busy.forEach(stopCut); return; }

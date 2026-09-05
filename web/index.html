@@ -4,7 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Devoid</title>
-<script>try{if(localStorage.getItem('devoid-lamp')==='light')document.documentElement.className='lamp-light'}catch(e){}</script>
+<script>try{
+  if(localStorage.getItem('devoid-lamp')==='light')document.documentElement.classList.add('lamp-light');
+  var m=localStorage.getItem('devoid-matte'); if(m&&m!=='checker')document.documentElement.dataset.matte=m;
+}catch(e){}</script>
 <link rel="stylesheet" href="fonts.css">
 <link rel="stylesheet" href="app.css">
 <link rel="stylesheet" href="canvas.css">
@@ -18,6 +21,14 @@
     <span class="grow"></span>
     <button class="btn" id="selectall">Select all</button>
     <button class="btn" id="add">Add files</button>
+    <!-- the matte toggle -- DESIGN.md: "checker, white, black, chroma, on
+         every preview... a verification requirement, not a preference." -->
+    <div class="matte" id="matte" role="radiogroup" aria-label="Preview ground">
+      <button class="swatch chk-s" data-matte="checker" aria-pressed="true" aria-label="Checkerboard ground"></button>
+      <button class="swatch sw-white" data-matte="white" aria-pressed="false" aria-label="White ground"></button>
+      <button class="swatch sw-black" data-matte="black" aria-pressed="false" aria-label="Black ground"></button>
+      <button class="swatch sw-chroma" data-matte="chroma" aria-pressed="false" aria-label="Chroma-key ground"></button>
+    </div>
     <button class="lamp" id="lamp" aria-label="Lighting"><b></b></button>
     <button class="btn go" id="primary">Save 6</button>
   </header>
