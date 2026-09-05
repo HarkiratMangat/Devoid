@@ -54,13 +54,21 @@ All of Stages 0–6. `server/` is the engine layer (validation boundary, in-proc
 - **Screen readers.** Every ARIA finding came from markup and computed accessible names, never an actual AT run.
 - **Signing and notarisation.** Configured against five env vars, all deliberately unset. `build/entitlements.mac.plist` is untested and is the thing most likely to bite on a first signed build.
 
+All four are filed in `devoid-deferred-list.md`; the traps that made them expensive are in `docs/DEVLOG.md`.
+
 ## Open, and genuinely open
 
-1. **The wipe still has nothing to compare on the common path.** It correctly refuses to lie — one image, "not cut yet" — but a seam with one side is not the product's thesis. It needs either the answer-pair preview wired into the default view or a rendered output to compare against, and outputs written outside `web/` cannot be served at all (**no thumbnail route exists in `API-CONTRACT.md`** — that is the blocker).
-2. **`content_type` in every label row is permanently `"unknown"`.** Nothing classifies it. A dataset with one constant column is weaker than the schema implies.
-3. **`--auto`'s internal `--recommend` re-run** is still not eliminated from the render path (~18s).
-4. **Emitting mode is the weaker of the two states.** It passes every measurement and still loses tile separation under a squint in places the shadow fix did not reach (the edge rail, the film strip).
-5. **The contact sheet is still mostly void with a handful of assets.** Cards grew to 228px; whether that is atmosphere or waste is a judgement nobody has made with real batches of twenty.
+⚠️ **These moved.** They are filed, tagged and given concrete next actions in **`devoid-deferred-list.md`** — this file gets superseded, that one does not. The index, in that file's own order:
+
+1. The wipe has nothing to compare on the common path — the blocker is a thumbnail/output route absent from `API-CONTRACT.md`
+2. No automated test covers the UI, at all
+3. `content_type` is permanently `"unknown"` in every label row
+4. Every render pays for a second full analysis the app already ran
+5. The `.app` is not standalone — no bundled Python (6.3)
+6. Two windows, one log — no single-instance lock
+7. Emitting mode is the weaker of the two states
+
+Five more at P2/P3 there, plus a **Considered and NOT fixed** section for the four decisions that look like bugs and are not.
 
 ## What this session got wrong
 

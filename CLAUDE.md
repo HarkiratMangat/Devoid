@@ -4,6 +4,16 @@ A local desktop app for removing backgrounds from animated images. It is a front
 
 **Read `docs/HANDOFF.md` first** — it says where the work stands and what was already rejected. Then `docs/PLAN.md` for the build order, `docs/PRODUCT.md` for the brief, `docs/DESIGN.md` for the visual system. They carry the constraints, the measurements behind them, and the visual system. This file is only what a session needs to work here.
 
+**Where things are written down.** ⚠️ `docs/HANDOFF.md` is **ephemeral by design** — it gets renamed `<date>-handoff.superseded.md` and rewritten. Nothing durable may live only there. Four files are appended to rather than replaced, and they are where work belongs:
+
+| file | holds |
+|---|---|
+| `devoid-deferred-list.md` | open work, tagged `[Priority · Effort · Model-effort]`. Closed items move to `devoid-resolved-list.md` — **one out here equals one in there, never a deletion** |
+| `docs/DEVLOG.md` | the traps, the decisions and what was tried and walked back. **Read its Traps section before verifying anything visual** |
+| `docs/CHANGELOG.md` | what shipped, `vMAJOR.MODERATE.MINOR`, one version per merged PR |
+| `devoid-resolved-list.md` | the archive, with each item's original wording plus its outcome |
+
+
 ## Conventions — inherited from Dior's Builds, unchanged
 
 Do not invent separate conventions for this repo.

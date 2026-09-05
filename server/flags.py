@@ -7,7 +7,7 @@ is missing one. Generating a control per flag would produce exactly the 63-contr
 passthrough form ``CLAUDE.md`` forbids and ``PRODUCT.md`` calls a failure of the
 whole design. The drawers stay hand-authored, in the person's vocabulary.
 
-Depends on ``build_parser()`` in the skill repo (branch ``feat/build-parser-factory``).
+Depends on ``build_parser()`` in the skill repo, merged there as PR #20 (``cc02a40``).
 If the resolved engine predates it, :func:`flags` raises rather than falling back to
 a hand-transcribed list — a transcribed list is the drift this task exists to end.
 """
