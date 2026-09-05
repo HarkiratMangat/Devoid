@@ -544,6 +544,26 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
    element, so the axis carries a real tier: display expands, body sits
    normal, and the instrument labels -- the words that annotate rather than
    speak -- condense, which is how a gauge is lettered. */
-.st,.crumb,.bword,.rt-lab,.qhint,.sf-cap,.ledger{font-stretch:92%}
-.drawer h2,.questions h3{font-stretch:108%}
-.btn{font-stretch:96%}
+/* three real tiers on the width axis, not a rounding error:
+   INSTRUMENT 80% — the words that annotate rather than speak. Condensed the
+     way a gauge, a film rebate or a spec sheet is lettered.
+   BODY      100% — anything you actually read a sentence of.
+   DISPLAY   116% — headings and the open asset's name; the wordmark stays
+     125%, the widest thing in the app, because it is the one mark. */
+.st,.crumb,.bword,.rt-lab,.qhint,.nm,.ledger,.filmhead,.tabs button,.ctl .lab{font-stretch:80%}
+.drawer h2,.questions h3,.openhead h1{font-stretch:116%}
+.empty .big{font-stretch:118%}
+.btn{font-stretch:88%}
+
+
+/* Emitting separates surfaces the way light surfaces do -- a white card
+   lifted off the field on a three-layer shadow -- because the tonal step
+   that carries the collapsed state disappears under a squint here. */
+.emitting .frame{background:#FFFFFF;
+  box-shadow:0 0 0 1px rgba(18,17,26,.07),0 1px 2px -1px rgba(18,17,26,.10),
+    0 3px 8px rgba(18,17,26,.05)}
+.emitting .frame:hover{background:#FFFFFF;
+  box-shadow:0 0 0 1px rgba(18,17,26,.12),0 2px 4px -1px rgba(18,17,26,.12),
+    0 6px 14px rgba(18,17,26,.07)}
+.emitting .edge button[aria-current="true"]{box-shadow:inset 0 0 0 1.5px var(--cyan),
+  0 1px 3px rgba(18,17,26,.10)}
