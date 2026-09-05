@@ -35,7 +35,11 @@ The first two are visual questions delivered as prose naming a hex colour and a 
 npm start
 ```
 
-Electron's main process spawns the Python server and opens the window. The lamp switches lighting states, clicking a frame opens it, the seam drags, and the drawers summon. ⚠️ **The film strip does not scrub yet** — it highlights and counts, but the artwork is a looping `<img>` that never seeks. Frame-accurate seeking needs a canvas decoder; it is `PLAN.md` 3.3.
+Electron's main process spawns the Python server and opens the window. Clicking a frame opens it, the seam drags, the drawers summon, and the lighting toggle in the header — a miniature of the wipe — sweeps between the two states of the room.
+
+For a real `.app`: `npm run dist:dir && open dist/mac-arm64/Devoid.app`. ⚠️ It is not standalone; it spawns `.venv/bin/python` beside itself, so it runs from this repo. See Packaging.
+
+⚠️ **To check anything visual, use the real window** — `npx electron scripts/capture-window.mjs` captures every state through Electron itself. A browser pane reports `visibilityState: hidden` and fires no `requestAnimationFrame`, which makes rAF-driven UI look broken when it is not. ⚠️ **The film strip does not scrub yet** — it highlights and counts, but the artwork is a looping `<img>` that never seeks. Frame-accurate seeking needs a canvas decoder; it is `PLAN.md` 3.3.
 
 The assets in it are **real outputs from the skill's own corpus**, not icons drawn to flatter the layout — which is how the overlay bug in `docs/DESIGN.md` was found.
 
