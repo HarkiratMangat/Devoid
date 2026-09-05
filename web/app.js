@@ -1065,6 +1065,16 @@ function render() {
     $('#openstate').replaceChildren(
       el('span', null, `${a.ext || ''} · ${a.frames ? a.frames + ' frames · ' : ''}`),
       el('b', `s-${stateOf(a)}`, wordOf(a)));
+    /* ⚠️ The plotter is summoned, not permanent. Ten enabled tools sat over
+       every asset including ones still being read, with nothing selected to
+       apply them to -- and they cost the artwork ~110px of height, on the one
+       screen whose whole job is showing you the artwork. It appears once the
+       engine has finished reading the asset and the questions are answered,
+       which is when drawing on it is a coherent act. */
+    const st = stateOf(a);
+    const plotterWelcome = st !== 'loading' && st !== 'needs-you' && st !== 'blocked' && st !== 'refused';
+    $('#regiontools').hidden = !plotterWelcome;
+    $('#regioncanvas').hidden = !plotterWelcome;
     renderEdge(); renderQuestions(a); renderLedger(a); renderFilm(a);
     renderQuestionRegions(a);
     $('#before').addEventListener('load', () => renderQuestionRegions(a), { once: true });

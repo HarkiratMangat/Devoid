@@ -162,14 +162,14 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .openhead{flex:none;padding:var(--s3) var(--s4) 0;display:flex;align-items:baseline;gap:var(--s3)}
 .openhead h1{margin:0;font-size:26px;font-weight:700;font-stretch:104%;letter-spacing:-.03em}
 .openhead p{margin:0;font-family:"Spline Sans Mono",monospace;font-size:12px;color:var(--graphite-3)}
-.stage{flex:1;display:grid;place-items:center;padding:var(--s4);min-height:0;
+.stage{flex:1;display:grid;place-items:center;padding:var(--s3) var(--s4);min-height:0;
   overflow:hidden;position:relative}
 
 /* THE WIPE — the seam is the cut line. Drag it across a playing loop and the
    background dissolves into transparency. One control, and it is the product's
    thesis as a gesture. */
-.wipe{position:relative;width:min(560px,100%);max-width:100%;max-height:100%;
-  aspect-ratio:1;
+.wipe{position:relative;height:100%;width:auto;max-width:100%;max-height:100%;
+  aspect-ratio:1;margin-inline:auto;
   border-radius:var(--r2);overflow:hidden;cursor:ew-resize;touch-action:none}
 .wipe>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:var(--s3)}
 .wipe .after{clip-path:inset(0 0 0 var(--seam,50%))}
@@ -334,7 +334,7 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .banner[data-state="cancelled"] .bword,.banner[data-state="loading"] .bword{color:var(--graphite-2)}
 
 /* ── the questions the engine refused to answer ───────────────────────── */
-.questions{flex:none;max-height:38%;overflow:auto;padding:var(--s3) var(--s4);
+.questions{flex:none;max-height:30%;overflow:auto;padding:var(--s3) var(--s4);
   background:var(--bench);border-top:1px solid var(--score)}
 .questions .q{padding-bottom:var(--s3);margin-bottom:var(--s3);border-bottom:1px dashed var(--score)}
 .questions .q:last-of-type{border-bottom:none;margin-bottom:var(--s2)}
