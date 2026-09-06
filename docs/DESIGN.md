@@ -66,7 +66,7 @@ Tokens are named for both halves of the world — the void, the horizon, the sin
 
 ## Type
 
-**Archivo** across a real width range — the wordmark expanded, headings normal, nothing at a default width — and **Spline Sans Mono** for every number, hex value, filename, coordinate and flag name, which is most of the data here.
+**Archivo** across a real width range — headings expanded, labels and data narrowed, nothing at a default width — and **Spline Sans Mono** for every number, hex value, filename, coordinate and flag name, which is most of the data here.
 
 Build hierarchy from **size, weight and colour together**, never size alone, and hold an 11px floor for anything functional. The first version crammed every tier into a four-pixel range separated only by colour; a detector found thirty-four undersized-text instances, which was one systemic defect wearing thirty-four costumes.
 
@@ -114,7 +114,7 @@ The best copy fix is usually deleting the sentence. Under the wipe, *"is the hat
 
 ## The empty table
 
-An app for making things transparent, opened with nothing in it. **Emptiness is the subject**, so it needs no illustration, no dashed drop-zone, and no apology — it is the table, empty, lit by the lamp, with the wordmark's knocked-out counter the only mark on it. One line of copy, an instruction rather than an apology.
+An app for making things transparent, opened with nothing in it. **Emptiness is the subject**, so it needs no illustration, no dashed drop-zone, and no apology — it is the void, empty, with the horizon — the wordmark's own O at full size — the only thing on it. One line of copy, an instruction rather than an apology.
 
 ## The state set — none of these are optional
 

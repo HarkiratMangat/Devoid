@@ -117,11 +117,15 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .app{height:100%;display:flex;flex-direction:column;background:var(--mat)}
 .chrome{display:flex;align-items:center;gap:var(--s3);padding:var(--s2) var(--s4);
   background:var(--bench);border-bottom:1px solid var(--score);flex:none}
-.wordmark{font-weight:700;font-stretch:125%;font-size:17px;letter-spacing:.02em;
-  display:inline-flex;align-items:center;gap:1.5px;line-height:1}
-/* the O's counter knocked out in rubylith — the identity answers the question the product asks */
-.wordmark i{width:11px;height:11px;border-radius:50%;border:3px solid currentColor;
-  box-sizing:content-box;background:var(--ruby);display:inline-block}
+/* The wordmark: DEVOID with the O drawn as the accretion disk itself, which is
+   the same object the empty table's horizon and the lighting toggle are. Two
+   files rather than one, because the letterforms are white: `wordmark.png` on
+   the void, `wordmark-emitting.png` re-inked for --bench #FFFFFF. Built by
+   scripts/make_wordmark.py, which splits the recolour by MEASUREMENT — the
+   event horizon and the spiral are left exactly as drawn. Aspect 3.1136:1. */
+.wordmark{display:block;height:22px;width:calc(22px * 3.1136);flex:none;
+  background:url("assets/wordmark.png") center/contain no-repeat}
+.emitting .wordmark{background-image:url("assets/wordmark-emitting.png")}
 .crumb{font-family:"Spline Sans Mono",monospace;font-size:12px;color:var(--graphite-3)}
 .crumb b{color:var(--graphite);font-weight:500}
 .grow{flex:1}
@@ -241,7 +245,7 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 /* ══ THE EMPTY TABLE ═══════════════════════════════════════════════════════
    Emptiness is the subject, so it gets no illustration and no apology -- but
    it is not nothing, it is the VOID, and the void has one thing in it. The
-   wordmark's knocked-out counter at full size: an event horizon with the
+   wordmark's own O at full size: an event horizon with the
    light that fell past it wrapped around the outside. Lensing lives here and
    in the toggle, never on the stage -- warping artwork you are judging would
    be showing you something you are not going to get. */
@@ -579,8 +583,9 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
    INSTRUMENT 80% — the words that annotate rather than speak. Condensed the
      way a gauge, a film rebate or a spec sheet is lettered.
    BODY      100% — anything you actually read a sentence of.
-   DISPLAY   116% — headings and the open asset's name; the wordmark stays
-     125%, the widest thing in the app, because it is the one mark. */
+   DISPLAY   116% — headings and the open asset's name. The wordmark used to
+     sit at 125% here and no longer does: it is drawn artwork now, not type,
+     so the widest thing in the app is a heading. */
 .st,.crumb,.bword,.rt-lab,.qhint,.nm,.ledger,.filmhead,.tabs button,.ctl .lab{font-stretch:80%}
 .drawer h2,.questions h3,.openhead h1{font-stretch:116%}
 .empty .big{font-stretch:118%}

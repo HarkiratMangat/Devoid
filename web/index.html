@@ -16,7 +16,10 @@
 
 <div class="app">
   <header class="chrome">
-    <span class="wordmark" aria-label="Devoid">DEV<i aria-hidden="true"></i>ID</span>
+    <!-- The mark is artwork, not type: one element with a background-image so
+         the lighting swap is pure CSS and never flashes. role+aria-label keep
+         the accessible name the old <span> had. -->
+    <span class="wordmark" role="img" aria-label="Devoid"></span>
     <span class="crumb" id="crumb"></span>
     <span class="grow"></span>
     <button class="btn" id="selectall">Select all</button>

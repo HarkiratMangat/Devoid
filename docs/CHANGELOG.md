@@ -45,6 +45,23 @@ The "lamp over the bench" metaphor became **the void**: the ground is deep space
 | Hit targets, SC 2.5.8 | matte swatches ~~23.6px~~ → **28px**; every other element already passing |
 | Design detector | exactly one accepted finding, `repeating-stripes-gradient` |
 
+### The wordmark is the artwork now
+
+DEVOID with the **O drawn as the accretion disk itself** — supplied by the user, and it is the same object the empty table's horizon and the lighting toggle already are, in the same cyan and ruby the palette was built from. It replaces the CSS letterform whose O was a knocked-out counter with a rubylith fill.
+
+**Two files, not one, because the letterforms are white.** `wordmark.png` on the void; `wordmark-emitting.png` re-inked for `--bench #FFFFFF`. `scripts/make_wordmark.py` builds both from the master and splits the recolour **by measurement**, because three different things in that image are near-grey and only two may move:
+
+| pixels | measured | treatment |
+|---|---|---|
+| letterforms | 976,508 px, **100% opaque** | re-inked dark |
+| drop shadow | dark, **semi-transparent** | lifted, so the relief survives on white |
+| event horizon | dark, **opaque** | untouched |
+| accretion spiral | saturated | untouched |
+
+⚠️ **The first version inverted luminance for every neutral pixel and turned the event horizon white** — the one thing in this mark that must never be light. The alpha split is what separates the shadow from the core; nothing about the colour does.
+
+Letterform contrast: **18.25:1** on the void, **17.85:1** emitting.
+
 ### A `.app` you can actually drag into Applications
 
 `npm run dist` produces `Devoid-1.0.0-arm64.dmg` (171 MB) and a 411 MB bundle that **runs from anywhere on this Mac**. Verified by copying it to `/tmp` and launching it there.

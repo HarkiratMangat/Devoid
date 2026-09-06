@@ -163,6 +163,14 @@ It also surfaced a defect nobody had a way to see before: **the run dirtied the 
 
 ---
 
+### "That doesn't look transparent" — and the file was fine
+
+The supplied `devoid_wordmark_transparent.png` renders on a dark navy ground in every preview, which reads as a baked-in background. It is not: **65.9% of its pixels are alpha 0 and all four corners are 0.** Preview surfaces composite an alpha PNG onto their own dark ground, and the file's own dark palette makes that composite look deliberate.
+
+**The check that settles it in one step is a checkerboard, not a preview** — composite the image onto alternating light squares and see whether they show through. Measuring the alpha channel directly is the same answer with numbers.
+
+---
+
 ## Process notes worth keeping
 
 - **The frozen contract is what made six parallel agents possible.** `docs/API-CONTRACT.md` was written and frozen *before* any of them started; the only integration failures were a settings-schema field (`answers`, which `render.py` needed and `jobs.py` did not know about) and the reachability class above. Both were cheap. An unfrozen contract would have made the merge the whole job.

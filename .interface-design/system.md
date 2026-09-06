@@ -27,7 +27,7 @@ The variable font was self-hosted for the axis; using it at three values 8% apar
 | Button | 88% | control labels |
 | Body | 100% | anything you read a sentence of |
 | Display | **116%** | headings, the open asset's name |
-| Wordmark | **125%** | the one mark, the widest thing in the app |
+| Wordmark | — | **drawn artwork, not type** (`web/assets/wordmark*.png`), so it carries no width axis. Two files, swapped on the lighting state; `scripts/make_wordmark.py` rebuilds both from the master |
 
 Mono is Spline Sans Mono for every number, hex, filename and flag name. It has no width axis; do not fake one.
 
