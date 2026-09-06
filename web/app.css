@@ -307,6 +307,8 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 
 /* THE LEDGER — what this setting is about to destroy. Numbers the engine already
    computes and currently discards. */
+/* each side of the pair is its own row, so two figures never share a line */
+.ledger .lrow{flex:0 0 100%;display:flex;align-items:baseline;gap:var(--s1);flex-wrap:wrap}
 .ledger{flex:none;display:flex;align-items:baseline;gap:var(--s2);padding:var(--s3);
   background:transparent;border-top:1px solid var(--score);font-family:"Spline Sans Mono",monospace;
   font-size:var(--t-meta);color:var(--graphite-2);flex-wrap:wrap;margin-top:auto}

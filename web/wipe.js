@@ -531,9 +531,16 @@
         L.append(el('span', 'blank', label + ' · not checked'));
         return;
       }
-      var g = el('span', null, '');
+      /* ⚠️ The type scale gives the removed-pixel count `--t-figure`, because it
+         is the app's first number worth looking at — and this side of the
+         ledger is the one you actually read while a question is open. Rendering
+         it at body size here while app.js rendered it at the figure step meant
+         the scale applied on the path nobody sees and not on the path everyone
+         does. Same class, same step, both writers. */
+      var g = el('span', 'lrow');
       g.append(el('b', null, label + ' '));
-      g.append(document.createTextNode('removes ' + fmt(l.bg) + ' background px · '));
+      g.append(el('b', 'fig', fmt(l.bg)));
+      g.append(document.createTextNode(' background px removed · '));
       /* ⚠️ `art` is a CEILING. It counts every source pixel that differed from
          the corner colour and ended up transparent, so it includes the
          antialiasing ramp the keyer is meant to remove. Comparable BETWEEN the
