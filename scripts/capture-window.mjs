@@ -344,6 +344,21 @@ app.whenReady().then(async () => {
 
   await shot('09-seam', null, 600);
 
+  // ⚠️ F12. Answering used to replace two-sided figures with "not checked --
+  // nothing was measured on this one" while the state word flipped to `ready`,
+  // so the app said `ready` and `not checked` about one asset at one moment.
+  // Answer for real -- click the button a person clicks -- and read the ledger.
+  const ledgerBefore = await probe(`return { text: document.getElementById('ledger').textContent }`);
+  await win.webContents.executeJavaScript(`
+    const b = document.querySelector('#questions button'); if (b) b.click();
+  `);
+  await wait(900);
+  const ledgerAfter = await probe(`return { text: document.getElementById('ledger').textContent,
+                                            word: document.getElementById('openstate').textContent }`);
+  check('answering does not erase the ledger',
+        !/nothing was measured/.test(ledgerAfter.text),
+        `before "${ledgerBefore.text.slice(0, 40)}" -> after "${ledgerAfter.text.slice(0, 60)}"`);
+
   // ⚠️ F6. The strip counted frames it could not reach: seekToFrame had zero
   // callers, so a click moved #fcount and left the artwork where it was. Assert
   // the PIXELS move, not that a handler exists -- a handler that calls nothing
@@ -455,6 +470,52 @@ app.whenReady().then(async () => {
     await win.webContents.executeJavaScript(
       `delete S.overrides[${JSON.stringify(advSetup.dest)}]; render()`);
   }
+
+  // ⚠️ F9 and F11 together: every drawer row, and every banner word. `null` is
+  // not `off`, and an internal enum is not a person's vocabulary. Both used to
+  // be true of the shipped surface and neither was visible to any test.
+  const drawers = await probe(`
+    const seen = { rows: 0, off: [], words: [] };
+    for (const name of Object.keys(DRAWERS)) {
+      S.drawer = name; render();
+      for (const r of document.querySelectorAll('.ctl .auto')) {
+        seen.rows++;
+        if (/auto · off$/.test(r.textContent)) seen.off.push(name + ': ' + r.textContent);
+      }
+    }
+    S.drawer = null; render();
+    return seen;
+  `);
+  check('no control reports an undecided flag as off',
+        drawers.rows > 0 && drawers.off.length === 0,
+        `${drawers.rows} auto rows, ${drawers.off.length} reading "auto · off"${drawers.off.length ? ' — ' + drawers.off[0] : ''}`);
+
+  const takeover = await probe(`
+    S.drawer = Object.keys(DRAWERS)[0]; render();
+    const btn = document.querySelector('.ctl .auto');
+    if (!btn) { S.drawer = null; render(); return { skipped: true }; }
+    const before = Object.keys(S.overrides).length;
+    btn.click();
+    const after = Object.keys(S.overrides).length;
+    S.editing.clear(); S.drawer = null; render();
+    return { skipped: false, before, after };
+  `);
+  check('taking a row over does not silently set a value',
+        !takeover.skipped && takeover.after === takeover.before,
+        `overrides ${takeover.before} -> ${takeover.after} after one click`);
+
+  const words = await probe(`
+    const out = [];
+    for (const st of ['confirm','conflict','blocked','failed','refused','cancelled','not-checked','loading','done']) {
+      setBanner(st, 'gate probe', null);
+      out.push([st, document.getElementById('bannerword').textContent]);
+    }
+    setBanner(null);
+    return { out };
+  `);
+  const rawEnum = words.out.filter(([st, w]) => w === st || w === st.replace('-', ' '));
+  check('no banner headline is a raw system enum', rawEnum.length === 0,
+        rawEnum.length ? rawEnum.map(r => r.join('=')).join(', ') : words.out.map(r => r[1]).join(' · '));
 
   const rm = await probe(`return { reduce: matchMedia('(prefers-reduced-motion: reduce)').matches }`);
   check('prefers-reduced-motion was actually emulated', rm.reduce === true, rm.reduce);

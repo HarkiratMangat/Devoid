@@ -333,8 +333,10 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .banner[data-state="blocked"]{background:var(--ruby-bg)}
 .banner[data-state="refused"] .bword,.banner[data-state="failed"] .bword,
 .banner[data-state="blocked"] .bword{color:var(--ruby-ink)}
-.banner[data-state="conflict"],.banner[data-state="not-checked"]{background:var(--amber-bg)}
-.banner[data-state="conflict"] .bword,.banner[data-state="not-checked"] .bword{color:var(--amber)}
+.banner[data-state="conflict"],.banner[data-state="not-checked"],
+.banner[data-state="confirm"]{background:var(--amber-bg)}
+.banner[data-state="conflict"] .bword,.banner[data-state="not-checked"] .bword,
+.banner[data-state="confirm"] .bword{color:var(--amber)}
 .banner[data-state="cancelled"] .bword,.banner[data-state="loading"] .bword{color:var(--graphite-2)}
 
 /* ── the questions the engine refused to answer ───────────────────────── */

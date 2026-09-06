@@ -809,6 +809,17 @@
     seekToFrame: seekToFrame,
     renderLedger: renderLedger,
     metric: function () { return W.metric; },
+    /* app.js's renderLedger has to be able to ASK whether a measurement exists
+       here before it writes "nothing was measured" over one that does. */
+    ledgers: function () { return { a: W.ledgerA, b: W.ledgerB }; },
+    /* ⚠️ `renderLedger` takes (ledgerA, ledgerB, tags). app.js has none of
+       those and calling it bare drew "not checked" over a real measurement —
+       which is the very defect F12 is about, reintroduced by the fix for it.
+       This wrapper is the only correct way for another module to ask for a
+       redraw: wipe.js owns the state, so wipe.js supplies the arguments. */
+    redrawLedger: function () {
+      renderLedger(W.ledgerA, W.ledgerB, tagsFor(W.flag, W.valueA, W.valueB));
+    },
     sides: function () { return { a: W.a, b: W.b }; },
     clock: PURE
   };

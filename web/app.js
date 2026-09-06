@@ -82,6 +82,7 @@ const S = {
   answers: {},           // id → {byColour:{hex:'protect'|'remove'}, fade:'artwork'|'not-artwork'|null}
   overrides: {},         // dest → explicit value. ONLY these are sent. Absent === auto.
   adviceDismissed: new Set(),   // suggestion keys the person waved away; they do not come back
+  editing: new Set(),    // dests opened for editing but NOT yet committed to overrides
   goal: { format: null, target_kb: null, min_dim: null },   // ⚠️ target_kb starts EMPTY
   qerror: null,          // the server's validation message, shown where it happened
   frame: 0,
@@ -118,6 +119,7 @@ const PENCIL = {
   refused:    ['M50 15 a35 35 0 1 1 -.1 0 M25 25 l50 50',        'var(--ruby)'],   // the circle, struck through
   cancelled:  ['M32 32 h36 v36 h-36 z',                          'var(--graphite-2)'], // a stop square
   failed:     ['M50 20 v36 M50 68 v2',                           'var(--ruby)'],   // an exclamation
+  confirm:    ['M18 50 h64 M18 38 v24 M82 38 v24',              'var(--amber)'],  // the same gate, asking rather than barring
   conflict:   ['M28 24 h30 v30 h-30 z M42 46 h30 v30 h-30 z',    'var(--amber)'],  // two files, offset
   blocked:    ['M18 50 h64 M18 38 v24 M82 38 v24',               'var(--ruby)'],   // a gate across the way
 };
@@ -396,6 +398,11 @@ function copy(text) {
 /* ── the banner: refused, failed, conflict, blocked, cancelled, loading ────
    ⚠️ Never colour alone. It carries the state's own grease-pencil MARK and
    the state's WORD, and the sentence after them. */
+const BANNER_WORD = {
+  confirm: 'Just checking', conflict: 'Heads up', blocked: 'Answer first',
+  failed: 'It stopped', refused: 'It refused', cancelled: 'Stopped',
+  'not-checked': 'Nothing measured', loading: 'Reading', done: 'Saved',
+};
 function setBanner(state, text, action) { S.banner = state ? { state, text, action } : null; renderBanner(); }
 function renderBanner() {
   const n = $('#banner');
@@ -403,7 +410,13 @@ function renderBanner() {
   n.hidden = false;
   n.dataset.state = S.banner.state;
   $('#bannermark').replaceChildren(pencil(S.banner.state, 'bpencil'));
-  $('#bannerword').textContent = S.banner.state.replace('-', ' ');
+  /* ⚠️ F11. This printed `S.banner.state.replace('-', ' ')` — the internal enum
+     as the headline word — so confirming a batch cut and a SUCCESSFUL escalated
+     save both shouted `conflict`. DESIGN.md: "The vocabulary is a person's, not
+     the system's." The mark still carries the semantics; the word is for the
+     reader. An unmapped state falls back to the enum, so a new state is visible
+     rather than silently blank. */
+  $('#bannerword').textContent = BANNER_WORD[S.banner.state] || S.banner.state.replace('-', ' ');
   $('#bannertext').textContent = S.banner.text;
   const b = $('#bannerbtn');
   b.hidden = !S.banner.action;
@@ -764,6 +777,20 @@ function renderLedger(a) {
   const L = $('#ledger');
   L.replaceChildren();
   const j = S.jobs[a.id];
+  /* ⚠️ F12. Measured before/after: answering the question replaced two-sided
+     figures with "not checked — nothing was measured on this one", while the
+     state word flipped to `ready` — so the app said `ready` and `not checked`
+     about the same asset at the same time. TWO writers were fighting over one
+     element. A finished job's own ledger wins; failing that, while the wipe
+     owns the element its pair's numbers ARE the measurement that was taken, and
+     wipe.js draws both sides itself. Only when neither exists is "not checked"
+     the truth — and then it is said loudly, which is the correct relationship. */
+  const W = window.Devoid && window.Devoid.wipe;
+  const pair = wipeOwned && W && typeof W.ledgers === 'function' ? W.ledgers() : null;
+  if (!(j && j.ledger) && pair && (pair.a || pair.b) && typeof W.redrawLedger === 'function') {
+    W.redrawLedger();
+    return;
+  }
   const px = (j && j.ledger) || a.ledger || null;
   if (!px) {
     L.append(pencil('not-checked', 'lmark'));
@@ -918,17 +945,43 @@ function flagRow(label, dest) {
   }
   row.title = f.help || '';
   const taken = Object.prototype.hasOwnProperty.call(S.overrides, dest);
-  if (!taken) {
-    const b = el('button', 'auto', `auto · ${show(f.default)}`);
-    b.setAttribute('aria-label', `${label} — left to the tool, currently ${show(f.default)}. Take it over`);
-    b.addEventListener('click', () => { S.overrides[dest] = f.default === null ? defaultFor(f) : f.default; render(); });
+  const editing = S.editing.has(dest);
+  if (!taken && !editing) {
+    /* ⚠️ F9, one level deeper than "null renders as off". `pixel_art` and
+       `recover_fade_alpha` have a REAL `False` default, so `auto · off` was
+       literally the argparse value — and still a false claim, because `--auto`
+       applies its recommendation precisely where a row was left at its default.
+       The row was reporting the starting point as the outcome. What an auto row
+       owes the reader is what the tool will DO: its own recommendation where it
+       made one, and an honest "the tool decides" where it has not spoken.
+       PRODUCT.md's phrase is "a live readout of the tool's own reasoning". */
+    const engine = openRecommendation(f);
+    const reading = engine === undefined ? 'the tool decides' : show(engine);
+    const b = el('button', 'auto', `auto · ${reading}`);
+    b.title = `${f.help || ''}${f.help ? '  ·  ' : ''}engine default ${show(f.default)}`;
+    b.setAttribute('aria-label',
+      `${label} — left to the tool, ${engine === undefined
+        ? 'which has not chosen a value' : 'which would use ' + show(engine)}. Take it over`);
+    /* ⚠️ F10. This used to do `S.overrides[dest] = f.default === null ?
+       defaultFor(f) : f.default` — and every engine default IS null, so taking
+       a row over silently flipped a bool to `true` and a choice to its first
+       option, then sent that as an explicit override. Clicking "take it over"
+       changed the render you were about to make, without saying so. Taking over
+       now only OPENS the row; nothing enters `overrides` until the person
+       edits, so the tri-state truth (present === deliberately set) stays exact. */
+    b.addEventListener('click', () => { S.editing.add(dest); render(); });
     row.append(b);
     return row;
   }
-  row.append(editor(f, S.overrides[dest], v => { S.overrides[dest] = v; render(); }));
+  /* The value shown while editing: the engine's own recommendation where it
+     made one, then the flag's default, and only then a type-shaped placeholder.
+     It is displayed, not committed. */
+  const shown = taken ? S.overrides[dest] : startingValueFor(f);
+  row.append(editor(f, shown, v => { S.editing.delete(dest); S.overrides[dest] = v; render(); }));
+  if (!taken) row.append(el('span', 'missing', 'not set yet — edit to take it over'));
   const undo = el('button', 'undo', 'back to auto');
   undo.setAttribute('aria-label', `${label} — hand it back to the tool`);
-  undo.addEventListener('click', () => { delete S.overrides[dest]; render(); });
+  undo.addEventListener('click', () => { S.editing.delete(dest); delete S.overrides[dest]; render(); });
   row.append(undo);
   return row;
 }
@@ -1103,8 +1156,35 @@ async function loadHistoryLine(line) {
     null);
 }
 
-const show = v => v === null || v === undefined ? 'off' : (v === true ? 'on' : (v === false ? 'off' : String(v)));
+/* ⚠️ F9. `null` is NOT `off`. Every one of the engine's argparse defaults is
+   None, so this used to render `auto · off` on all nine controls — nine
+   identical rows claiming erosion is off, dithering is off, when in fact
+   `--auto` has not chosen yet. PRODUCT.md calls this readout "a live readout of
+   the tool's own reasoning"; it read out one word, and the word was false. */
+const show = v => v === null || v === undefined ? 'the tool decides'
+  : (v === true ? 'on' : (v === false ? 'off' : String(v)));
 const defaultFor = f => f.type === 'bool' ? true : (f.choices && f.choices.length ? f.choices[0] : '');
+/* What an editing row shows before anything is committed. The engine's own
+   recommendation first — it is on `questions.suggested_flag_tokens` and it is
+   what `--auto` would do — so opening a row does not quietly propose a
+   different render than the one you were already going to get. */
+/* The engine's own value for one flag on the open asset, type-coerced, or
+   `undefined` when it said nothing about it. */
+function openRecommendation(f) {
+  const a = S.assets.find(x => x.id === S.open);
+  if (!a) return undefined;
+  const rec = recommendedByName(a).get(f.name);
+  if (rec === undefined) return undefined;
+  if (rec === true) return f.type === 'bool' ? true : undefined;
+  if (f.type === 'int') { const n = parseInt(rec, 10); return Number.isNaN(n) ? rec : n; }
+  if (f.type === 'float') { const n = parseFloat(rec); return Number.isNaN(n) ? rec : n; }
+  return rec;
+}
+function startingValueFor(f) {
+  const rec = openRecommendation(f);
+  if (rec !== undefined) return rec;
+  return f.default === null || f.default === undefined ? defaultFor(f) : f.default;
+}
 
 function editor(f, value, set) {
   if (f.choices && f.choices.length) {
@@ -1204,7 +1284,9 @@ async function cut(confirmed) {
      An explicit selection is taken at its word; an implicit one is confirmed,
      naming the count and where the files land. */
   if (!confirmed && !S.sel.size && list.length > 1) {
-    setBanner('conflict',
+    /* ⚠️ This was `conflict`, which is the wrong STATE and not merely the wrong
+       word: nothing has conflicted, the app is asking permission. */
+    setBanner('confirm',
       `Cut all ${list.length}? Each one is written beside its own file`,
       { label: `Cut ${list.length}`, run: () => { S.banner = null; cut(true); } });
     return;
