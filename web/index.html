@@ -101,7 +101,11 @@
         <div class="questions" id="questions" hidden></div>
         <div class="ledger" id="ledger"></div>
         <div class="film">
-          <div class="filmhead"><span id="onion">onion skin · 2 frames</span><span id="fcount"></span></div>
+          <!-- ⚠️ F14. `<span id="onion">onion skin · 2 frames</span>` lived here and
+               was referenced by NOTHING — no JS, no CSS, no server field. There
+               is no onion skin in this app. It was a hardcoded string that read
+               as a working feature for anyone looking at the strip. -->
+          <div class="filmhead"><span id="fcount"></span></div>
           <div class="frames" id="frames"></div>
         </div>
       </div>

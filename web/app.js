@@ -63,6 +63,11 @@ const stem = p => base(p).replace(/\.[^.]+$/, '');
    looks like, and is honest rather than invented. A thumbnail route would fix
    it; adding one is a contract change, so it is reported, not improvised. */
 const artUrl = a => a.url || `assets/${base(a.path)}`;
+/* ⚠️ Task 5 gave the server an /api/assets/{id}/source route and put its URL on
+   `a.url`, so `artUrl` now resolves for a file ANYWHERE on disk. The basename
+   fallback survives only for the corpus fixtures the capture script seeds
+   directly into web/assets/. The comment above this line used to say a
+   thumbnail route was needed and none existed; that is no longer true. */
 
 /* ── state ────────────────────────────────────────────────────────────────── */
 const S = {
@@ -693,10 +698,41 @@ function renderFilm(a) {
     if (i === cur) b.setAttribute('aria-current', 'true');
     if (Math.abs(i - cur) === 1) b.classList.add('ghost');
     if ((a.flagged || []).some(x => Math.abs(x - f) < step)) b.classList.add('flag');
-    b.addEventListener('click', () => { S.frame = f; renderFilm(a); });
+    b.addEventListener('click', () => {
+      S.frame = f;
+      /* ⚠️ F6. wipe.js:491's seekToFrame is exported at :804 and its own comment
+         calls it "the hook the film strip needs" — and it had ZERO callers, so
+         clicking a frame moved the counter and nothing else. The strip counted
+         frames it could not reach. */
+      const W = window.Devoid && window.Devoid.wipe;
+      if (W && typeof W.seekToFrame === 'function') W.seekToFrame(f);
+      renderFilm(a);
+    });
     return b;
   }));
-  $('#fcount').textContent = `${S.frame} of ${frames} frames · ${(a.flagged || []).length} flagged`;
+  /* ⚠️ F14. This used to append `· 0 flagged`, permanently: `flagged` appears
+     nowhere in server/, so nothing can ever set it. A counter that is
+     structurally always zero is a claim about a feature that does not exist.
+     The `.flag` notch above stays — it reads the same field and degrades to
+     nothing, so it costs no claim. */
+  /* ⚠️ AND F6 GOES DEEPER THAN "seekToFrame HAS NO CALLER". Giving it one was
+     necessary and not sufficient: measured 2026-09-06, clicking the last of 144
+     buttons moved S.frame to 132 and left the pixels byte-identical, because
+     `Devoid.wipe.sides().a` holds ONE frame. server/preview.py extracts a single
+     frame per side deliberately — its header carries the fidelity measurement —
+     so while the seam is up the stage CANNOT be scrubbed, by construction. With
+     the seam down there are no canvases at all and seekToFrame returns on its
+     first line. So the strip could never move any artwork in any state, and it
+     said nothing about that. It says it now. Making it actually scrub is Task 27. */
+  const WF = window.Devoid && window.Devoid.wipe;
+  const sideA = WF && typeof WF.sides === 'function' ? WF.sides().a : null;
+  const scrubbable = !!(sideA && sideA.timeline && sideA.timeline.count > 1);
+  const why = sideA ? 'the comparison shows one frame' : 'not scrubbable yet';
+  for (const b of $('#frames').children) b.disabled = !scrubbable;
+  $('#frames').toggleAttribute('data-inert', !scrubbable);
+  $('#fcount').textContent = scrubbable
+    ? `${S.frame} of ${frames} frames`
+    : `${frames} frames · ${why}`;
 }
 
 /* ── the drawers ──────────────────────────────────────────────────────────
@@ -1133,6 +1169,20 @@ function poll(a, jobId) {
    One pair at a time: the first colour group still unanswered. Answer it and
    the next one loads, because the key changes. */
 function maybeLoadSeamPair(a) {
+  /* ⚠️ F4. showCard() is called ONLY from inside loadPair, and this function
+     returns early whenever there is no unanswered colour group — so a card
+     raised on asset A stayed up over asset B, with B's artwork hidden behind
+     it, showing A's question. Measured: card on megaphone, openAsset(rocket),
+     `{ open: "rocket", wipeHidden: true, qcardHidden: false }`. The card is the
+     designed fallback for the small-region case the corpus actually contains,
+     so this is the normal path, not an edge. Clear it on the way in,
+     unconditionally, before any early return can skip it. */
+  const qcard = $('#qcard');
+  if (qcard && !qcard.hidden) {
+    qcard.hidden = true;
+    const w = $('#wipe'); if (w) w.hidden = false;
+  }
+
   const D = window.Devoid || {};
   const load = D.wipe && D.wipe.loadPair;
   if (typeof load !== 'function') return;      // wipe.js is deferred; it will not always be here
@@ -1296,6 +1346,21 @@ function render() {
         && j.output_path.includes('/web/assets/') && stateOf(a) !== 'running';
       const cutUrl = servable ? artUrl({ path: j.output_path }) : null;
       const cutElsewhere = j && j.output_path && !servable && stateOf(a) !== 'running';
+      /* ⚠️ The sheet tile has had an error handler since it was written
+         (`img.addEventListener('error', ...)` above); the stage's #before never
+         did. An unreachable source therefore rendered as a blank stage, which
+         is indistinguishable from `loading` — the app's own honesty rule says
+         a state it cannot show must SAY so. Mirror the tile's behaviour. */
+      const beforeImg = $('#before');
+      if (beforeImg._devoidOnError) beforeImg.removeEventListener('error', beforeImg._devoidOnError);
+      beforeImg._devoidOnError = () => {
+        beforeImg.hidden = true;
+        wipe.classList.add('noart');
+        $('.wipetag.l').textContent = 'the file could not be read';
+      };
+      beforeImg.addEventListener('error', beforeImg._devoidOnError);
+      beforeImg.hidden = false;
+      wipe.classList.remove('noart');
       $('#before').src = artUrl(a); $('#before').alt = `${base(a.path)} as it came in`;
       wipe.toggleAttribute('data-single', !cutUrl);
       if (cutUrl) {

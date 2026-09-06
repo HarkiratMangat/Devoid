@@ -431,15 +431,58 @@ F6. `wipe.js:491`'s `seekToFrame` is exported at `:804` and documented as *"the 
 
 F14. In `web/index.html:104`, remove `onion skin · 2 frames` — nothing updates it and there is no onion skin. Remove `· 0 flagged` from `#fcount`'s template in `app.js` — `flagged` appears nowhere in `server/`, so it is permanently zero and the `.flag` notch CSS has never rendered.
 
-- [ ] **Step 3: Verify the artwork actually moves**
+- [ ] **Step 3: Verify the artwork actually moves — ⚠️ CORRECTED 2026-09-06 17:50 EDT, it does not**
 
-Run `npm start`, open an asset, click frame 12. Expected: the artwork changes and `#fcount` agrees. Before this task the counter moved alone.
+This step used to read *"click frame 12. Expected: the artwork changes and `#fcount` agrees."* **Running it falsified the expectation.** With the seam up, clicking the last of 144 buttons moved `S.frame` to 132 and left `#wipe-a` byte-identical; the probe reports **side A holds 1 frame, timeline 1, side B 1**. `server/preview.py` extracts a single frame per side on purpose — its module header carries the fidelity measurement that justifies it — so `seekToFrame` cannot move the stage while the seam is up. With the seam down there are no canvases and `seekToFrame` returns on its first line (`if (!W.a) return`).
+
+**So the strip could never move any artwork in any state, and F6's "give it a caller" is necessary and not sufficient.** Wiring the caller stays — it is correct and it is what makes Task 27 work. What ships in Task 7 is the strip telling the truth: when `sides().a.timeline.count <= 1` the frame buttons are `disabled` and `#fcount` reads `144 frames · the comparison shows one frame`, or `· not scrubbable yet` when no canvases are mounted. A counter that moves while the artwork does not is the exact class of defect this whole plan exists to remove.
+
+The gate assertion has two outcomes and can fail either way: multi-frame ⇒ the pixels must change; single-frame ⇒ the buttons must be disabled and the readout must say why.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add web/app.js web/index.html
 git commit -m "fix(film): make the strip seek, and stop claiming features it lacks"
+```
+
+### Task 27: Make the film strip actually scrub the source
+
+**Filed 2026-09-06 17:50 EDT, from Task 7's falsification.** The strip is honest now; it is still inert. This is the task that makes it work.
+
+**Files:**
+- Modify: `web/wipe.js` (extract `loadUrls` from `loadPair`'s tail, export it)
+- Modify: `web/app.js` (`render()`'s non-seam branch — call it instead of setting two `<img>` `src`s)
+- Modify: `scripts/capture-window.mjs`
+
+**Interfaces:**
+- Produces: `Devoid.wipe.loadUrls(aUrl, bUrl, tagA, tagB)` → the same mounted-canvas state `loadPair` produces, from two arbitrary URLs and no engine round-trip.
+- Consumes: the existing private `decode(url)` and `prepare(decoded)`, unchanged.
+
+⚠️ **Do not touch the seam's own pair.** The answer-pair preview is single-frame *by measurement*, and `server/preview.py`'s header carries the numbers. This task is about the OTHER path — the plain source-vs-output comparison, where both files hold all their frames and there is no reason the strip cannot drive them.
+
+- [ ] **Step 1: Tighten the gate assertion so the multi-frame branch is reachable**
+
+Today the gate only ever reaches the single-frame branch, so the "pixels must move" half has never run. Add a second film check on an asset with the seam DOWN, which is where `loadUrls` will apply. Expected before the fix: **FAIL** — no `#wipe-a` on that path at all.
+
+- [ ] **Step 2: Extract `loadUrls` from `loadPair`**
+
+`loadPair` already does: `fetchPair` → `mountCanvases()` → `decode` both → `prepare` both → set tags → start. Everything after `fetchPair` is URL-agnostic. Lift it into `loadUrls(aUrl, bUrl, tagA, tagB)` and have `loadPair` call it, so there is one code path and the seam keeps its exact behaviour.
+
+- [ ] **Step 3: Use it on the non-seam path**
+
+In `render()`, where `#before.src` and `#after.src` are set today, call `loadUrls(artUrl(a), cutUrl, 'as it came', 'the background cut out')` when a cut exists. ⚠️ Keep the `<img>` path as the fallback for the `data-single`/`not cut yet` case and for a decode failure — `#before`'s new error handler is what covers that.
+
+- [ ] **Step 4: Confirm the strip drives it**
+
+`renderFilm`'s `scrubbable` test needs no change: with both sides decoded, `sides().a.timeline.count` is the source's real frame count and the buttons enable themselves.
+
+- [ ] **Step 5: Gate, then commit**
+
+```bash
+npx electron scripts/capture-window.mjs
+git add web/wipe.js web/app.js scripts/capture-window.mjs
+git commit -m "feat(film): decode the comparison so the strip can scrub it"
 ```
 
 ### Task 8: Wire the advice rail

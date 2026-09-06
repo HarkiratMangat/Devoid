@@ -344,6 +344,66 @@ app.whenReady().then(async () => {
 
   await shot('09-seam', null, 600);
 
+  // ⚠️ F6. The strip counted frames it could not reach: seekToFrame had zero
+  // callers, so a click moved #fcount and left the artwork where it was. Assert
+  // the PIXELS move, not that a handler exists -- a handler that calls nothing
+  // is exactly what shipped.
+  const film = await probe(`
+    const btns = document.querySelectorAll('#frames button');
+    const c = document.getElementById('wipe-a');
+    if (!btns.length || !c) return { skipped: true, n: btns.length, canvas: !!c };
+    const before = c.toDataURL().length ? c.toDataURL() : '';
+    btns[btns.length - 1].click();
+    const S2 = window.Devoid.wipe.sides();
+    return { skipped: false, before: before.slice(0, 4000), n: btns.length,
+             aFrames: S2.a ? S2.a.frames.length : null,
+             aCount: S2.a && S2.a.timeline ? S2.a.timeline.count : null,
+             bFrames: S2.b ? S2.b.frames.length : null };
+  `);
+  if (film.skipped) {
+    check('the film strip has frames and a mounted canvas', false, JSON.stringify(film));
+  } else {
+    await wait(400);
+    const after = await probe(`const c = document.getElementById('wipe-a');
+      const btns = document.querySelectorAll('#frames button');
+      return { after: c.toDataURL().slice(0, 4000), frame: S.frame,
+               disabled: [...btns].every(b => b.disabled),
+               count: document.getElementById('fcount').textContent }`);
+    // Two outcomes are honest and the assertion can fail either way. If the
+    // stage CAN scrub, the pixels must move. If it cannot -- the answer-pair
+    // preview is one frame by design -- the strip must DISABLE itself and say
+    // so, rather than moving a counter that points at nothing.
+    if (film.aCount > 1) {
+      check('clicking a frame moves the artwork, not just the counter',
+            after.after !== film.before,
+            `frame=${after.frame}, pixels ${after.after === film.before ? 'UNCHANGED' : 'changed'}`);
+    } else {
+      check('the strip refuses to scrub a single-frame view, and says why',
+            after.disabled && /one frame|not scrubbable/.test(after.count),
+            `disabled=${after.disabled}, reads "${after.count}", side A holds ${film.aFrames} frame(s)`);
+    }
+  }
+
+  // ⚠️ F4. Reproduce showCard(true)'s exact post-condition -- the card up, the
+  // wipe hidden -- then navigate. Driving the DOM rather than exporting a
+  // test-only hook into ship code: the bug is that NOTHING clears this on
+  // navigation, and that is what gets asserted.
+  await win.webContents.executeJavaScript(`
+    document.getElementById('qcard').hidden = false;
+    document.getElementById('wipe').hidden = true;
+  `);
+  const otherId = await probe(`
+    const other = S.assets.find(x => x.id !== S.open && !['loading','blocked','refused'].includes(stateOf(x)));
+    if (other) openAsset(other.id);
+    return { id: other ? other.id : null };
+  `);
+  await wait(900);
+  const card = await probe(`return { qcard: document.getElementById('qcard').hidden,
+                                     wipe: document.getElementById('wipe').hidden, open: S.open }`);
+  check('the question card does not follow you to the next asset',
+        !!otherId.id && card.qcard === true && card.wipe === false,
+        `qcardHidden=${card.qcard} wipeHidden=${card.wipe} on ${card.open}`);
+
   const rm = await probe(`return { reduce: matchMedia('(prefers-reduced-motion: reduce)').matches }`);
   check('prefers-reduced-motion was actually emulated', rm.reduce === true, rm.reduce);
 
