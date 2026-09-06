@@ -1,8 +1,12 @@
+<p align="center">
+  <img src="docs/banner.png" alt="Devoid" width="820">
+</p>
+
 # Devoid
 
 A local desktop app for removing the background from animated images — GIF, WebP, AVIF, APNG, and static PNG/JPEG — and fitting the result to a size or format target.
 
-It is a front end for the [gif-background-remover](../Gif-Background-Remover) skill, which stays the engine. Devoid reimplements no image processing.
+It is a front end for the [gif-background-remover](https://github.com/HarkiratMangat/gif-background-remover) skill, which stays the engine. Devoid reimplements no image processing.
 
 ## Why a front end
 
