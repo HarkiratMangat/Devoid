@@ -175,6 +175,18 @@ function stateOf(a) {
   }
   if (a.state === 'loading') return 'loading';
   if (a.state === 'refused') return 'refused';
+  /* ⚠️ These two used to fall through to `ready`, which is the worst possible
+     lie this function can tell: a source file that no longer exists, and an
+     analyze that crashed, both read as "ready to cut" with a cyan mark, and
+     the primary button offered to cut them.
+     ⚠️ `blocked` means two different things and both are real. The server's is
+     "the input is not there" (server/assets.py sets it when the path is gone);
+     this file's is "you pressed save with questions outstanding". They share a
+     word and a mark deliberately — in both cases the app cannot proceed and
+     says why — so the server's is checked FIRST and the local one is the
+     fallback, rather than one silently shadowing the other. */
+  if (a.state === 'blocked') return 'blocked';
+  if (a.state === 'failed') return 'failed';
   if (outstanding(a).length) return S.blocked.has(a.id) ? 'blocked' : 'needs-you';
   if (a.state === 'done') return 'done';
   return 'ready';
@@ -563,6 +575,8 @@ async function submitAnswers(a) {
 const wipe = $('#wipe');
 const wipeCtl = new AbortController();
 let wipeOwned = false;
+/* the pair currently behind the seam, so render() does not re-fetch on every tick */
+let seamKey = null;
 function setSeam(pct) {
   S.seam = Math.max(0, Math.min(100, pct));
   wipe.style.setProperty('--seam', S.seam + '%');
@@ -617,7 +631,17 @@ function renderLedger(a) {
      against an invented 500, and an invented number colouring the app's
      central honesty widget is the exact failure these docs exist to prevent.
      PLAN.md 3.5 gives it a real basis; until then it is stated, not judged. */
-  L.append(el('span', 'atmost', `at most ${Number(px.art).toLocaleString()} artwork px lost`));
+  /* ⚠️ `art` is DELIBERATELY null on the preview path — server/preview.py's
+     _ledger refuses to derive it from a re-encoded single frame, because that
+     would be measuring against a different image. `Number(null)` is 0, so this
+     line used to print "at most 0 artwork px lost": the strongest possible
+     claim, about a quantity nobody measured. wipe.js guards this; this copy
+     did not. Say it was not measured. */
+  if (typeof px.art === 'number') {
+    L.append(el('span', 'atmost', `at most ${px.art.toLocaleString()} artwork px lost`));
+  } else {
+    L.append(el('span', 'atmost', 'artwork lost — not measured on this one'));
+  }
   L.append(el('span', null, `${Number(px.total).toLocaleString()} px of artwork survive`));
 }
 
@@ -1057,6 +1081,43 @@ function poll(a, jobId) {
   setTimeout(tick, POLL_MS);
 }
 
+/* ── the seam's caller (PLAN.md 3.1) ──────────────────────────────────────
+   ⚠️ THIS FUNCTION IS THE WHOLE REASON THE SEAM EXISTS, AND IT DID NOT EXIST.
+   `wipe.js` had `loadPair` — the answer-pair fetch, the two synced canvases,
+   the conspicuity gate and the question-card fallback — fully built, tested,
+   exported, and called by NOTHING. So the shipped wipe was the source-vs-output
+   `<img>` pair that `server/preview.py`'s own header says cannot discriminate,
+   which is the exact mistake PLAN.md 3.3 records the prototype making.
+
+   ⚠️ It was ALSO mis-diagnosed in devoid-deferred-list.md, which blamed a
+   missing thumbnail route. That route matters for showing a rendered output
+   from outside web/; it has nothing to do with this. The answer-pair route
+   existed and worked the whole time.
+
+   One pair at a time: the first colour group still unanswered. Answer it and
+   the next one loads, because the key changes. */
+function maybeLoadSeamPair(a) {
+  const D = window.Devoid || {};
+  const load = D.wipe && D.wipe.loadPair;
+  if (typeof load !== 'function') return;      // wipe.js is deferred; it will not always be here
+
+  const ans = S.answers[a.id] || { byColour: {} };
+  const open = colourGroups(a).find(g => !ans.byColour[g.hex]) || null;
+  const key = open ? `${a.id}|protection|${open.hex}` : null;
+  if (key === seamKey) return;                 // already showing exactly this pair
+  seamKey = key;
+  if (!key) return;                            // nothing disputed — the img pair stands
+
+  /* `protection` is the pseudo-flag whose two sides are --assume-protect and
+     --assume-remove on the SAME colour (server/preview.py:_answer_argv). */
+  load(a.id, 'protection', open.hex, open.hex).catch(err => {
+    seamKey = null;                            // let it be retried
+    setBanner('failed',
+      `Could not build the comparison for ${open.hex} — ${err && err.message ? err.message : err}`,
+      null);
+  });
+}
+
 /* what a settled cut says, and the one place the conflict policy lives */
 function settle(a) {
   const j = S.jobs[a.id] || {};
@@ -1099,7 +1160,12 @@ async function stopCut(a) {
 
 /* ── regions, handed over by web/canvas.js (Stage 4) ──────────────────────
    ⚠️ ONE MECHANISM, AND IT IS THE EVENT. canvas.js dispatches
-   `devoid:regions-changed` on `document` with `{detail: {regions: [...]}}`.
+   `devoid:regions-changed` ON `window` with `{detail: {regions: [...]}}`.
+   ⚠️ This file listened on `document` and this comment said `document` too, so
+   the two agreed with each other and disagreed with the dispatcher. An event
+   dispatched on `window` never reaches `document` — window is the top of the
+   propagation path, not a child of it — so the handler had never once run and
+   `render()` never fired on a region change.
    This file mirrors the latest array onto `window.Devoid.regions` so anything
    can READ it synchronously, but the event is what carries a change — a
    mirror nobody writes to cannot go stale, and a property nobody watches
@@ -1109,15 +1175,27 @@ async function stopCut(a) {
 function currentRegions() {
   return Array.isArray(window.Devoid.regions) ? window.Devoid.regions : [];
 }
-document.addEventListener('devoid:regions-changed', e => {
+window.addEventListener('devoid:regions-changed', e => {
   const r = e.detail && e.detail.regions;
   window.Devoid.regions = Array.isArray(r) ? r : [];
   render();
 });
 
 /* ── navigation is selection, and nothing else ────────────────────────────── */
-function openAsset(id) { S.open = id; S.frame = 0; setSeam(50); render(); }
-function closeAsset()  { S.open = null; render(); }
+function openAsset(id) {
+  S.open = id;
+  S.frame = 0;
+  setSeam(50);
+  /* ⚠️ canvas.js LISTENS for this and nothing was dispatching it, so regions
+     drawn on one asset stayed armed over the next one and were sent as
+     --protect-region / --remove-region against unrelated artwork. Regions are
+     coordinates in ONE asset's source pixels; carrying them across is not a
+     stale view, it is a wrong render. Dispatched before render() so the canvas
+     is already clear by the time anything draws. */
+  window.dispatchEvent(new CustomEvent('devoid:asset-opened', { detail: { asset: id } }));
+  render();
+}
+function closeAsset()  { S.open = null; seamKey = null; render(); }
 
 function render() {
   const a = S.assets.find(x => x.id === S.open);
@@ -1209,9 +1287,17 @@ function render() {
     const plotterWelcome = st !== 'loading' && st !== 'needs-you' && st !== 'blocked' && st !== 'refused';
     $('#regiontools').hidden = !plotterWelcome;
     $('#regioncanvas').hidden = !plotterWelcome;
+    maybeLoadSeamPair(a);
     renderEdge(); renderQuestions(a); renderLedger(a); renderFilm(a);
     renderQuestionRegions(a);
-    $('#before').addEventListener('load', () => renderQuestionRegions(a), { once: true });
+    /* ⚠️ `{once: true}` only removes the listener AFTER it fires, and with an
+       unchanged src no load event ever fires — so one accumulated per render,
+       roughly 85 across a one-minute poll loop, all of which then ran on the
+       next real image load. Keep exactly one, and replace it each time. */
+    const before = $('#before');
+    if (before._devoidOnLoad) before.removeEventListener('load', before._devoidOnLoad);
+    before._devoidOnLoad = () => renderQuestionRegions(a);
+    before.addEventListener('load', before._devoidOnLoad);
   } else {
     renderSheet();
   }
@@ -1384,6 +1470,31 @@ window.Devoid = {
   /* wipe.js calls this before attaching its own seam, so two owners of one
      element never both listen */
   releaseWipe() { wipeCtl.abort(); wipeOwned = true; },
+
+  /* ⚠️ wipe.js's question card has been calling `Devoid.submitAnswer` since it
+     was written, and it did not exist — so the card always fell through to its
+     raw-fetch backstop, which posts the verdict and never tells THIS file. The
+     server recorded the answer, `S.answers` did not, the asset stayed
+     `needs-you`, and cut() refused it with no explanation.
+
+     Routing through the colour group rather than the bare region id is not
+     tidiness: an answer applies to every region sharing that outline colour
+     (API-CONTRACT "Per-colour vs per-region"), and answering one region alone
+     is what the server's `conflicting_colour` rejection exists to catch. */
+  async submitAnswer(assetId, regionId, verdict) {
+    const a = S.assets.find(x => x.id === assetId);
+    if (!a) throw new Error('that asset is not on the table any more');
+    const group = colourGroups(a).find(g =>
+      g.regions.some(r => String(r.region_id) === String(regionId)));
+    if (!group) throw new Error(`region ${regionId} is not one this asset asked about`);
+    const ans = S.answers[a.id] || (S.answers[a.id] = { byColour: {}, fade: null });
+    ans.byColour[group.hex] = verdict;
+    S.blocked.delete(a.id);
+    S.qerror = null;
+    await submitAnswers(a);
+    if (S.qerror) throw new Error(S.qerror);
+    return { state: a.state };
+  },
 };
 
 refresh();

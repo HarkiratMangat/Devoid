@@ -45,6 +45,35 @@ The "lamp over the bench" metaphor became **the void**: the ground is deep space
 | Hit targets, SC 2.5.8 | matte swatches ~~23.6px~~ → **28px**; every other element already passing |
 | Design detector | exactly one accepted finding, `repeating-stripes-gradient` |
 
+### A code review found 12 things; fixing them found 2 more
+
+**The seam works for the first time.** `loadPair` — the answer-pair fetch, the two synced canvases, the conspicuity gate, the question-card fallback — was built, tested, exported and **called by nothing**, so the shipped wipe was still the source-vs-output pair `server/preview.py`'s own header says cannot discriminate. Wiring it exposed two more failures that no test could see:
+
+- **`--assume-protect` / `--assume-remove` were sent without `--auto`,** which is the flag they answer. A plain render never poses the question, so the assumption was inert and **both sides rendered identically**. Measured on the corpus's one real ambiguous case: ~~0 differing alpha px~~ → **2,047**, on one frame and on the full 144-frame asset alike.
+- **`data-single` was never cleared,** so CSS kept `.seam`, `.wipetag.r` and the second canvas hidden. The pair mounted and displayed as one picture with one label.
+
+Both failed *silently and plausibly* — the card fallback showed instead, which looks exactly like the design working.
+
+**Four more subsystems were wired to nothing**, the same class as the plotter and the history routes:
+
+| was | is |
+|---|---|
+| `devoid:regions-changed` dispatched on `window`, heard on `document` | Heard where it is dispatched. Drawing a region updates the UI |
+| `devoid:asset-opened` heard by canvas.js, dispatched by nobody | `openAsset` dispatches it. **Regions no longer leak onto the next asset's render** |
+| `journal.open_job`/`close_job` never called | Called at the spawn and at every settle, so crash recovery has something to recover |
+| `Devoid.submitAnswer` called by the question card, never defined | Defined, and routed through the colour group so it cannot create the conflict the server rejects |
+
+**And six defects of judgement:**
+
+- A **cancel arriving before the spawn** killed nothing, then deleted the temp directory under a live subprocess and wrote a second `jobs.jsonl` row. The spawn now happens under the same lock as the cancel check, and a job journals at most once.
+- `stateOf()` never tested `a.state` for **`blocked` or `failed`** — a missing source file and a crashed analyze both read as **ready to cut**.
+- The ledger printed **"at most 0 artwork px lost"** for a figure `preview.py` deliberately leaves unmeasured. It says it was not measured.
+- **`conflict` was never assigned by anything**, so an escalated `_v2` write settled as an ordinary `done` and nobody was told where their file went. The UI's mark, word and banner for it all existed already.
+- **⌘W killed the server and left a dead Dock icon** with no `activate` handler.
+- The preview cache key omitted `target_format`, and a `load` listener accumulated once per render.
+
+**The gate grew a ninth state and three assertions**, including one that fails when the two answers do not differ — the check that would have caught the `--auto` bug on day one.
+
 ### Check for Updates…
 
 A menu item under **Devoid**, and only a menu item: it runs when clicked and at no other time, because an app whose premise is that it talks to nothing should not ping a server on launch.

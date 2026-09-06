@@ -34,7 +34,7 @@ import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import cli, engine, jobs as jobs_log
+from . import cli, engine, jobs as jobs_log, journal
 from .appendlog import utc_now
 
 log = logging.getLogger("devoid.render")
@@ -84,6 +84,15 @@ class Job:
     _tmp: str | None = field(default=None, repr=False)
     _cancelled: bool = field(default=False, repr=False)
     _settled: threading.Event = field(default_factory=threading.Event, repr=False)
+    #: ⚠️ Held across "is this cancelled?" and "spawn the subprocess", so those
+    #: two cannot interleave. Without it a cancel that arrives before the spawn
+    #: sees ``_proc is None``, kills nothing, and the render it meant to stop
+    #: runs to completion -- while cancel's own timeout path rmtree'd the temp
+    #: directory out from under it and wrote a second jobs.jsonl row.
+    _settle_lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
+    #: jobs.jsonl is append-only; a job that journals twice is a corrupt record,
+    #: not a duplicate to be deduplicated later.
+    _journalled: bool = field(default=False, repr=False)
 
     def public(self) -> dict:
         """Exactly ``GET /api/jobs/{id}``'s payload."""
@@ -119,14 +128,33 @@ def all_jobs() -> list[Job]:
 
 def _journal(job: Job) -> None:
     """One line to ``jobs.jsonl`` when a job settles, via ``server.jobs``'s writer
-    (API-CONTRACT.md's schema — the single place that file is appended to)."""
+    (API-CONTRACT.md's schema — the single place that file is appended to).
+
+    ⚠️ **At most once per job.** Two threads can reach a settle -- the render
+    thread finishing and ``cancel()`` giving up on it -- and an append-only log
+    with two rows for one job is a corrupt record, not a tidy-up problem."""
+    with job._settle_lock:
+        if job._journalled:
+            return
+        job._journalled = True
+    # However the job settled, it is no longer in flight. Closing an unknown job
+    # is not an error (journal.close_job says so), so a cancel racing a
+    # completion cannot raise here.
+    try:
+        journal.close_job(job.id)
+    except Exception:  # noqa: BLE001
+        log.warning("devoid: could not close job %s in the journal", job.id, exc_info=True)
     jobs_log.append_job(
         {
             "ts": utc_now(),
             "input_path": job.input_path,
             "settings": job.settings,
             "output_path": job.output_path,
-            "verdict": job.state if job.state in ("done", "failed", "cancelled") else "failed",
+            # ⚠️ `conflict` is a SUCCESSFUL write that escalated to _v2. The schema's
+            # verdict vocabulary is done|failed|cancelled, and mapping it to
+            # "failed" would put a false record in an append-only log.
+            "verdict": "done" if job.state == "conflict"
+            else (job.state if job.state in ("done", "failed", "cancelled") else "failed"),
             "engine_version": job.engine_version,
             "state": job.state,
         }
@@ -163,25 +191,52 @@ def _run(job: Job) -> None:
         job._settled.set()
         return
 
-    job.state = "running"
-    try:
-        proc = subprocess.Popen(
-            job.argv,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            # ⚠️ Its own process group, so cancel can kill the skill's inner
-            # --target-kb worker pool too instead of orphaning it.
-            start_new_session=True,
-        )
-    except OSError as exc:
-        job.state, job.error = "failed", f"could not start the engine: {exc}"
+    # ⚠️ THE SPAWN HAPPENS UNDER THE LOCK, and that is the whole fix. Deciding
+    # "not cancelled" and then spawning outside the lock leaves a window where
+    # cancel() sets the flag, reads `_proc is None`, kills nothing, and the
+    # render it meant to stop runs to completion. build_render_argv() above pays
+    # the engine's cold import (3.82 s, PLAN.md 1.2), so Stop is genuinely
+    # reachable in that window. Popen is a fork+exec; holding the lock for it
+    # costs nothing and makes the two outcomes exclusive: cancel finds a process
+    # to kill, or _run finds the cancel and never starts one.
+    proc = None
+    with job._settle_lock:
+        if job._cancelled:
+            job.state = "cancelled"
+        else:
+            try:
+                proc = subprocess.Popen(
+                    job.argv,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    # ⚠️ Its own process group, so cancel can kill the skill's
+                    # inner --target-kb worker pool too instead of orphaning it.
+                    start_new_session=True,
+                )
+            except OSError as exc:
+                job.state, job.error = "failed", f"could not start the engine: {exc}"
+            else:
+                job._proc = proc
+                job.state = "running"
+                # ⚠️ The crash journal's ONLY writer. Without this call
+                # .devoid-journal.json is always empty and the startup
+                # recover_orphans() that exists to surface unsettled jobs
+                # reports nothing after every crash -- a recovery mechanism
+                # that cannot fire. Written INSIDE the lock, next to the spawn,
+                # so a job is journalled as in-flight exactly when one exists.
+                try:
+                    journal.open_job(job.id, job.input_path, temp_path=tmp_output)
+                except Exception:  # noqa: BLE001 -- a journal write must never fail a render
+                    log.warning("devoid: could not journal job %s as in flight", job.id, exc_info=True)
+
+    if proc is None:                      # cancelled before the spawn, or it failed
         shutil.rmtree(tmp_dir, ignore_errors=True)
+        job._tmp = None
         _journal(job)
         job._settled.set()
         return
 
-    job._proc = proc
     _, stderr = proc.communicate()
 
     if job._cancelled:
@@ -201,7 +256,15 @@ def _run(job: Job) -> None:
         except OSError as exc:
             job.state, job.error = "failed", f"could not place the output: {exc}"
         else:
-            job.state = "done"
+            # ⚠️ `conflict` is a REAL state and nothing was ever assigning it.
+            # web/app.js carries a mark, a word and a whole "escalate then
+            # report" banner for it (PLAN.md 2.6b) and none of it could fire,
+            # because an escalated write settled as an ordinary `done` -- so the
+            # person was never told their file went to `_v2`. The escalation
+            # already happened in next_output_path(); this is only whether to
+            # SAY so.
+            escalated = final.name != f"{source.stem}_transparent.{ext}"
+            job.state = "conflict" if escalated else "done"
             job.output_path = str(final)
             job.ledger = _ledger(source, final)
 
@@ -276,8 +339,11 @@ def cancel(job_id: str) -> Job | None:
         return None
     if job.state in TERMINAL_STATES:
         return job
-    job._cancelled = True
-    proc = job._proc
+    # Set the flag and read the handle together, so _run's spawn decision and
+    # this one cannot straddle each other.
+    with job._settle_lock:
+        job._cancelled = True
+        proc = job._proc
     if proc is not None and proc.poll() is None:
         try:
             pgid = os.getpgid(proc.pid)
@@ -303,12 +369,16 @@ def cancel(job_id: str) -> Job | None:
                 pass
     job._settled.wait(timeout=KILL_GRACE_S + 5)
     if job.state not in TERMINAL_STATES:
-        # The thread never got as far as spawning. Settle it here so a cancel is
-        # never a state that just stops updating.
+        # The render thread is wedged rather than merely slow. Settle so a cancel
+        # is never a state that just stops updating.
+        #
+        # ⚠️ Do NOT delete job._tmp here. This branch is only reached when the
+        # thread has NOT settled, which means it may still be writing into that
+        # directory -- deleting it under a live subprocess was the second half of
+        # the original race. The thread owns its temp dir for its whole life;
+        # a leaked directory under /tmp is strictly better than a live one
+        # pulled out from under a running engine.
         job.state = "cancelled"
-        if job._tmp:
-            shutil.rmtree(job._tmp, ignore_errors=True)
-            job._tmp = None
         _journal(job)
         job._settled.set()
     return job

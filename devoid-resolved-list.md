@@ -115,3 +115,32 @@ This is the single largest hole in the project's evidence, and it is what made a
 ### `[P3 · XS · Sonnet5-Low]` `docs/API-CONTRACT.md` is the one hard-wrapped markdown file in the repo *(filed 2026-09-05)*
 
 `reflow-prose.mjs --check` reports 92 → 76 lines on it, and has since before this session. Left alone deliberately: reflowing rewrites every line of a **frozen** document, which makes its `git blame` worse for a formatting win. Worth doing the next time the contract changes substantively anyway, not as its own commit.
+
+## ✅ The wipe has nothing to compare on the common path — CLOSED 2026-09-05 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: closed, and the filing's own diagnosis was WRONG — which is the more useful half of this entry.**
+
+It blamed a missing thumbnail route in `API-CONTRACT.md`. That route matters for showing a rendered output written outside `web/`; it has **nothing to do with the seam**. The answer-pair route (`POST /api/assets/{id}/preview`) existed, worked, and was covered by tests the whole time. `web/wipe.js`'s `loadPair` — the fetch, the two synced canvases, the conspicuity gate, the card fallback — was built, exported and **called by nothing**. The fix was a caller.
+
+⚠️ **Wiring it then exposed two further failures, both silent and both plausible-looking:**
+
+1. `--assume-protect`/`--assume-remove` were sent **without `--auto`**, the flag they answer, so both sides rendered identically — 0 differing alpha px, on one frame and on the full asset. With `--auto`: **2,047** on the sampled frame.
+2. `data-single` was never cleared when wipe.js took the element over, so CSS kept the seam, the right tag and the second canvas hidden. The pair displayed as one picture with one label.
+
+Each failure independently drove the app into its **question-card fallback**, which is the correct designed behaviour below the visible-difference threshold — so the app looked healthy while measuring nothing.
+
+Verified in the real window: two canvases, a seam bar at the midpoint, tags "keep it" and "cut it", **2,043 differing alpha px**, region fraction 0.33. `npm run gate:ui` now fails if the two answers do not differ.
+
+⚠️ **The thumbnail route is still absent and is still not filed** — nothing currently needs it. If a use appears (serving a rendered output from outside `web/`), file it then, on its own evidence.
+
+**The original filing, unedited:**
+
+### `[P1 · M · Opus5-High]` The wipe has nothing to compare on the common path, and the blocker is a route that does not exist *(filed 2026-09-05, from the design audit)*
+
+The seam is the product's thesis — two answers on one clock, so you judge an edge instead of trusting a claim. On the common path it currently shows **one image and says "not cut yet"**, which is honest and is not the thesis.
+
+It refuses to lie deliberately: `web/app.js` gates the cut side on `j.output_path.includes('/web/assets/')`, so an output written anywhere else is not claimed as cut. **That gate is correct and must not be widened.** The real gap is underneath it: **`docs/API-CONTRACT.md` has no thumbnail or output-file route at all**, so a render written outside `web/` cannot be served to the browser under any circumstances.
+
+**Two candidate fixes, and they are not equivalent.** (a) Add a served-output route to the contract — the smaller change, and it makes every rendered asset comparable, not just the wipe. (b) Wire the answer-pair preview (`POST /api/assets/{id}/preview`, which already returns `a_url`/`b_url` and works) into the default view rather than only into the question flow. **(b) is closer to the thesis** — answer-A against answer-B is what `server/preview.py`'s own header says a before/after cannot do — but it only applies to assets that *asked* a question. Most do not. The honest answer is probably both, (a) first.
+
+⚠️ **Do not "fix" this by comparing source against output and calling it the seam.** `server/preview.py:1-20` records why that pair cannot discriminate, and `docs/PLAN.md` 3.3 records that the prototype's version of exactly that mistake looked finished.

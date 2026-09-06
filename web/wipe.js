@@ -419,6 +419,14 @@
     W.canvasB.setAttribute('aria-hidden', 'true');
     if (before) { before.hidden = true; before.removeAttribute('src'); }
     if (after) { after.hidden = true; after.removeAttribute('src'); }
+    /* ⚠️ Clear `data-single`, or there is no seam. app.js sets that attribute
+       when it has only ONE image to show, and CSS then hides `.seam`,
+       `.wipetag.r`, `.after` and `.aftbg` (app.css's `.wipe[data-single]`
+       block). Once this module owns the element app.js's branch stops running,
+       so the attribute it last set stays forever — and the answer pair
+       rendered as a single picture with one label, which is exactly what the
+       seam existing is supposed to replace. We always have two sides. */
+    wipe.removeAttribute('data-single');
     var seam = $('#seam');
     wipe.insertBefore(W.canvasA, seam || null);
     wipe.insertBefore(W.canvasB, seam || null);
@@ -728,8 +736,13 @@
    * Returns the metric object so a caller can log or assert on it.
    */
   async function loadPair(assetId, flag, valueA, valueB, regions) {
-    mountCanvases();
+    /* ⚠️ Fetch BEFORE mounting. mountCanvases() calls releaseWipe(), which hands
+       the element over permanently — so mounting first and then failing the
+       fetch left two blank canvases where the artwork had been, with app.js no
+       longer allowed to draw. Take the element only once there is something to
+       put in it. */
     var pair = await fetchPair(assetId, flag, valueA, valueB, regions);
+    mountCanvases();
     var decoded = await Promise.all([decode(pair.a_url), decode(pair.b_url)]);
 
     W.asset = assetId; W.flag = flag; W.valueA = valueA; W.valueB = valueB;

@@ -500,9 +500,31 @@ app.whenReady().then(async () => {
   );
 });
 
+/* ⚠️ On macOS this killed the server and then did NOT quit, and there was no
+ * `activate` handler — so ⌘W left a Dock icon with a dead server behind it and
+ * no way to get a window back. Two halves of one bug: the platform convention
+ * is that the app survives its last window, and surviving means being able to
+ * open another one. */
 app.on('window-all-closed', () => {
+  if (process.platform === 'darwin') return;   // keep the server; `activate` reopens
   if (serverProcess) serverProcess.kill();
-  if (process.platform !== 'darwin') app.quit();
+  app.quit();
+});
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length) return;
+  // The server is still up (window-all-closed left it alone on darwin), so this
+  // is just a window again. If it somehow died, waitForServer's deadline turns
+  // that into the same dialog a cold start would show rather than a blank frame.
+  if (serverProcess && serverProcess.exitCode === null) return void createWindow();
+  const found = resolvePython();
+  if (!found) return;
+  startServer(activePort, found.python);
+  waitForServer(activePort, createWindow, () => {
+    dialog.showErrorBox('Devoid could not restart its server',
+      `The local server did not answer on port ${activePort}.\n\n` +
+      (serverStderr ? serverStderr.slice(-1200) : 'It printed nothing.'));
+  });
 });
 
 app.on('before-quit', () => {

@@ -110,6 +110,24 @@ The lesson is the same one this project keeps relearning in new costumes: *build
 
 ---
 
+### Reachability, instance six — and the pattern is now the project's signature failure
+
+Six subsystems in this app have been finished, tested and connected to nothing: the plotter (hidden by an attribute), the history routes (no caller), `devoid:regions-changed` (dispatched on `window`, heard on `document`), `devoid:asset-opened` (heard, never dispatched), the crash journal's writers (never called), and `loadPair` — the whole answer-pair seam, which is the product's thesis.
+
+**What they have in common is that every one of them passes its own tests.** A route test proves a route answers. A pure-function test proves a function computes. Neither can see whether anything reaches them, and a `git merge` cannot either — two files do not conflict when nothing references either of them.
+
+**The check that finds this class is not a test, it is a question: where is the call site?** Grep for the export, not for the definition. If the only references are the definition and the export, it is dead — however green the suite is.
+
+### `--auto` is not optional on the flags that answer it, and the failure is invisible
+
+`--assume-protect` and `--assume-remove` answer `--auto`'s interview. Passed to a plain render they are accepted, parsed, and **do nothing**, because nothing asked the question. Measured on `megaphone.src.gif` at `002864`: without `--auto`, **0** differing alpha px between the two answers — on the sampled frame, on frames 0/30/72/110/143, and on the full 144-frame asset. With `--auto`, **875-2,076 px per frame**.
+
+⚠️ **The failure mode is what makes it dangerous.** Two identical renders drive the conspicuity gate to zero, the seam correctly decides it cannot help, and the question card appears — which is the designed fallback and looks completely healthy. The app was choosing the right behaviour from a measurement that was silently meaningless.
+
+**The tell was available and was not read:** the ordinary-flag branch of `_answer_argv` went through `build_argv(auto=True)` and the answer branch did not. Two branches of one function disagreeing about a flag that changes everything.
+
+---
+
 ## Decisions, and what was tried first
 
 ### The world: the ground is the void, the tools stay the matte world

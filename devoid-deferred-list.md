@@ -21,15 +21,11 @@ The project-local tracker for open work, real TODOs, and reminders specific to t
 
 *Ordered by priority, P1 first.*
 
-### `[P1 · M · Opus5-High]` The wipe has nothing to compare on the common path, and the blocker is a route that does not exist *(filed 2026-09-05, from the design audit)*
+### `[P2 · S · Opus5-Med]` With a question open, the artwork is 321px in a 1750px stage *(filed 2026-09-05)*
 
-The seam is the product's thesis — two answers on one clock, so you judge an edge instead of trusting a claim. On the common path it currently shows **one image and says "not cut yet"**, which is honest and is not the thesis.
+Measured in the real window at 1280x860 with `megaphone.src.gif` open: `#wipe` is **321x321**, centred in a work area about 1750px wide. `.wipe` is `height:100%` with `aspect-ratio:1`, so it is height-constrained — and the questions panel, the ledger and the film strip take the height, while the width beside it goes unused.
 
-It refuses to lie deliberately: `web/app.js` gates the cut side on `j.output_path.includes('/web/assets/')`, so an output written anywhere else is not claimed as cut. **That gate is correct and must not be widened.** The real gap is underneath it: **`docs/API-CONTRACT.md` has no thumbnail or output-file route at all**, so a render written outside `web/` cannot be served to the browser under any circumstances.
-
-**Two candidate fixes, and they are not equivalent.** (a) Add a served-output route to the contract — the smaller change, and it makes every rendered asset comparable, not just the wipe. (b) Wire the answer-pair preview (`POST /api/assets/{id}/preview`, which already returns `a_url`/`b_url` and works) into the default view rather than only into the question flow. **(b) is closer to the thesis** — answer-A against answer-B is what `server/preview.py`'s own header says a before/after cannot do — but it only applies to assets that *asked* a question. Most do not. The honest answer is probably both, (a) first.
-
-⚠️ **Do not "fix" this by comparing source against output and calling it the seam.** `server/preview.py:1-20` records why that pair cannot discriminate, and `docs/PLAN.md` 3.3 records that the prototype's version of exactly that mistake looked finished.
+This is the focal-element problem again, in the one state where the artwork matters most: you are being asked to judge an edge. ⚠️ **Do not just make it bigger** — the panels below it are the question being asked. The real options are a side-by-side layout when the stage is wide, or collapsing the film strip while a question is outstanding. Both are layout decisions that need looking at, not a number to change.
 
 ### `[P1 · M · Opus5-High]` The UI gate asserts eight things; the surface has far more than eight *(filed 2026-09-05, successor to "No automated test covers the UI — at all")*
 

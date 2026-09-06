@@ -248,6 +248,32 @@ app.whenReady().then(async () => {
   check('every history row can be loaded back', hist.loaders === hist.rows,
         `${hist.loaders} buttons for ${hist.rows} rows`);
 
+  // ⚠️ THE SEAM. This is the product's thesis and it was unreachable: loadPair
+  // had no caller, and once it had one the two sides still rendered IDENTICALLY
+  // because --assume-protect/--assume-remove were sent without --auto, which is
+  // the flag they answer. Both failures were silent — the card fallback simply
+  // showed instead, which looks like the design working. Assert the seam
+  // MOUNTS and that the two answers actually DIFFER, or this regresses to
+  // "looks fine" again.
+  await win.webContents.executeJavaScript(`S.drawer=null;openAsset(${JSON.stringify(megaId)})`);
+  let seam = { canvases: false, differing: 0 };
+  for (let i = 0; i < 40; i++) {            // two engine renders; be patient, not fixed
+    await wait(1500);
+    seam = await probe(`
+      const m = (window.Devoid.wipe && window.Devoid.wipe.metric && window.Devoid.wipe.metric()) || null;
+      return { canvases: !!document.getElementById('wipe-a') && !!document.getElementById('wipe-b'),
+               card: !document.getElementById('qcard').hidden,
+               differing: m ? m.differing : 0,
+               tagL: (document.querySelector('.wipetag.l') || {}).textContent };
+    `);
+    if (seam.canvases && seam.differing > 0) break;
+  }
+  check('the answer-pair seam mounted', seam.canvases, `canvases=${seam.canvases}`);
+  check('the two answers actually differ', seam.differing > 0,
+        `${seam.differing} differing alpha px — 0 means the flags did nothing`);
+  check('the seam is labelled with the question, not the flag', seam.tagL === 'keep it', seam.tagL);
+  await shot('09-seam', null, 600);
+
   const rm = await probe(`return { reduce: matchMedia('(prefers-reduced-motion: reduce)').matches }`);
   check('prefers-reduced-motion was actually emulated', rm.reduce === true, rm.reduce);
 

@@ -130,23 +130,54 @@ def _ledger(path: Path) -> dict:
     return {"bg": int((~opaque).sum()), "art": None, "total": int(opaque.sum())}
 
 
-def _key(asset_id: str, flag: str, value_a, value_b, regions) -> str:
+def _key(asset_id: str, flag: str, value_a, value_b, regions, target_format=None) -> str:
+    """⚠️ ``target_format`` is part of the key because it is part of the ANSWER.
+
+    The cached payload carries ``format_is_gif``, which is derived from it, and
+    that field is what tells the frontend the preview's 8-bit alpha will not
+    survive a GIF export. Leaving the format out of the key meant changing the
+    goal format returned the previous format's warning -- a stale claim about
+    the very thing the field exists to be honest about.
+    """
     blob = json.dumps(
-        [asset_id, flag, value_a, value_b, regions or []], sort_keys=True, default=str
+        [asset_id, flag, value_a, value_b, regions or [], target_format],
+        sort_keys=True,
+        default=str,
     )
     return hashlib.sha256(blob.encode()).hexdigest()[:16]
 
 
-def _answer_argv(flag: str, value) -> list[str]:
+def _answer_argv(flag: str, value, side: str = "a") -> list[str]:
     """Flags for one side of the pair.
 
-    ``assume_protect``/``assume_remove`` are the interview's own answers and take a
-    colour; every other flag is an ordinary engine option routed through the same
-    tri-state builder the render uses, so a preview can never diverge from what the
-    render would do.
+    ⚠️ **``protection`` is the one question whose two sides need two different
+    FLAGS, not two values of one flag.** "Keep it" is ``--assume-protect <hex>``
+    and "cut it" is ``--assume-remove <hex>`` — the same colour either way. The
+    preview contract is shaped as one flag with ``value_a``/``value_b``, which
+    cannot express that, and that is why the app's central question could never
+    be put behind the seam: ``web/wipe.js`` already had a ``protection`` entry in
+    its tag table and the server had no way to answer it. The side decides the
+    flag; the value stays the colour.
+
+    ⚠️ **``--auto`` IS NOT OPTIONAL ON THESE FLAGS, and leaving it off made the
+    whole seam pointless.** ``--assume-protect``/``--assume-remove`` ANSWER
+    ``--auto``'s interview; a plain render never poses the question, so the
+    assumption is inert and both sides come out identical. Measured on
+    ``megaphone.src.gif`` at colour ``002864``, the corpus's one real
+    ambiguous-protection case: without ``--auto``, **0** differing alpha px on
+    every frame sampled, on one frame and on the full 144-frame asset alike;
+    with ``--auto``, **875-2,076 px per frame, 12,502 across the sample**. The
+    ordinary-flag branch below always had ``--auto`` (``build_argv(auto=True)``);
+    only the answer branch was missing it.
+
+    ``assume_protect``/``assume_remove`` remain addressable directly. Every other
+    flag is an ordinary engine option routed through the same tri-state builder
+    the render uses, so a preview can never diverge from what the render would do.
     """
+    if flag == "protection":
+        return ["--auto", "--assume-protect" if side == "a" else "--assume-remove", str(value)]
     if flag in ("assume_protect", "assume_remove"):
-        return ["--" + flag.replace("_", "-"), str(value)]
+        return ["--auto", "--" + flag.replace("_", "-"), str(value)]
     return cli.build_argv({flag: value}, auto=True)
 
 
@@ -162,7 +193,7 @@ def render_pair(
     target_format: str | None = None,
 ) -> dict:
     """Render both answers on one frame and return API-CONTRACT.md's preview payload."""
-    key = _key(asset_id, flag, value_a, value_b, regions)
+    key = _key(asset_id, flag, value_a, value_b, regions, target_format)
     with _lock:
         hit = _cache.get(key)
     if hit is not None:
@@ -186,7 +217,7 @@ def render_pair(
     for side, value in (("a", value_a), ("b", value_b)):
         dest = work / f"{side}.{ext}"
         argv = [sys.executable, os.fspath(engine.skill_path()), str(one), str(dest)]
-        argv += _answer_argv(flag, value)
+        argv += _answer_argv(flag, value, side)
         argv += cli.region_argv(regions)
         proc = subprocess.run(argv, capture_output=True, text=True, start_new_session=True)
         if proc.returncode != 0 or not dest.is_file():
