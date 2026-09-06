@@ -140,6 +140,22 @@ Six subsystems in this app have been finished, tested and connected to nothing: 
 
 ⚠️ **This one also nearly escaped as a false green.** The check was first run as `codesign --verify … | tail -2` and `$?` read **`tail`'s** status, not `codesign`'s — a pipeline reports its last command. It printed `VERIFY_EXIT=0` over output that literally said `file added:`. **Never read `$?` after a pipe**; redirect to a file, or use `PIPESTATUS`.
 
+### The design reference's two headline moves are both things this project's detector calls slop
+
+Harkirat supplied a void/black-hole reference file and asked for its ideas rather than its markup. Two of the five pieces adopted from it were rejected before they were written — a tiled 1px grid is the exact shape of `repeating-stripes-gradient`, and `bg-clip-text` on the wordmark is unmeasurable by the contrast audit. Two more were rejected **by the detector, the moment they landed** (2026-09-06 19:24 EDT): `cubic-bezier(.34,1.56,.64,1)` tripped `bounce-easing`, and `box-shadow:0 0 10px var(--cyan)` tripped `dark-glow` twice. The contract is exactly one finding; the run came back with four.
+
+**Both are the canonical generated-UI tells, and both were the "wow" parts.** What survived is the part underneath: the *shape* of the change — a squircle collapsing to a circle — and the fact that the **ground** moves rather than only the knob. The curve became an expo-out that decelerates hard and never travels past its target, which reads as weight without reading as a bounce; the glow became a crisp 1.5px ring.
+
+⚠️ **The lesson generalises to Stage 5.** An accretion loader wants a `drop-shadow` glow and a spinning disc wants a bouncy start. Neither is available here, and the detector will say so the same day. Design the motion so the *geometry* carries it.
+
+### WCAG contrast ratio is the wrong instrument for two dark surfaces
+
+F21 asked for ≥1.35:1 between adjacent surface planes. The formula is `(L1+0.05)/(L2+0.05)`, and at the dark end the `+0.05` flare term dominates: from the void's own luminance (Y≈0.0005) a single 1.35:1 step lands at Y≈0.018 — a mid-grey near `#252525` — and five steps end near `#5E5E5E`. **Meeting F21 literally means deleting the void**, which is the one thing "Do not touch: the palette" protects.
+
+The defect F21 found is real; the metric was wrong. Adjacent planes are now measured in **ΔL\*** (CIELAB), where ~3 units is a step you can see. The shipped ladder ran **0.85, 2.09, 0.37 and 4.26** — two of four steps invisible — and is re-derived at ~4 ΔL\* per step. `scripts/check_contrast.py` carries the arithmetic and the check.
+
+⚠️ **The same script's first draft reported "all pairs meet their target" over an empty table** — its CSS parser matched nothing and it counted zero failures as success. It now refuses to run on zero tokens. A checker that passes because it read nothing is worse than no checker.
+
 ## Decisions, and what was tried first
 
 ### The world: the ground is the void, the tools stay the matte world
@@ -156,7 +172,7 @@ The question that ended it: *what object in **this** app already has two states?
 
 **The lesson is the sequence, not the answer.** Three defaults were tried before the product itself was consulted.
 
-### The starfield is generated, never tiled — ⚠️ RETRACTED 2026-09-06
+### The starfield is generated, never tiled — ⚠️ RETRACTED 2026-09-06, ✅ RESOLVED 2026-09-06 19:24 EDT
 
 The first version tiled an SVG. It was called out immediately and correctly: **a repeating star pattern is the one thing a sky never does**, and the eye catches a repeated constellation instantly. It is now drawn once to fit, into a canvas:
 
@@ -172,6 +188,8 @@ The `2.4` exponent is what makes it read as a sky rather than as noise: a unifor
 ⚠️ **RETRACTED 2026-09-06 — the heading and the sentences above are wrong, and are kept because the correction is the useful part.** Only the *full-screen* field was rebuilt as a canvas. The tiles kept the repeating SVG. `--stars-a` is still **referenced**, not merely defined, at `web/app.css:106` — applied to every `.chk-s` surface, which is the contact-sheet tile (`web/app.js:229`), the matte swatch (`web/index.html:63`) and the wipe's cut side (`#aftbg`, `web/index.html:73`) — and a second time at `web/app.css:464` for `.lamp .sg-void`. `--stars-b` is defined in both lighting blocks and referenced **zero** times: a dead token. `web/app.js:233` randomises `background-position` per tile off a hash of the asset id, which hides the repeat rather than removing it — a mitigation, not a removal.
 
 So Harkirat's own rejection — *"your star pattern is literally a copy paste. Stars are never a copy paste pattern."* — is still shipping on every tile, while this entry claimed it had been fixed. Removing `--stars-a` from `.chk-s` and deleting `--stars-b` is **Task 16 of `docs/superpowers/plans/2026-09-06-devoid-remediation.md`**; the finding is F24 in the matching design spec.
+
+✅ **DONE 2026-09-06 19:24 EDT.** `.chk-s` paints only the checkerboard now, `--stars-b` is deleted from both lighting blocks, and `web/app.js`'s per-tile `background-position` hash went with it — a workaround for a repeat that no longer exists. `.lamp .sg-void` keeps its layer: at 64×32 exactly one 470px tile is visible, so nothing repeats. **The entry above stands as written**, because the two-month gap between "recorded as fixed" and "actually fixed" is the whole lesson.
 
 ### Skills were run as background reading, and then as procedures
 

@@ -28,6 +28,10 @@
       <span class="sg-void"></span><span class="sg-lit"></span>
       <span class="sg-rim"></span><span class="sg-cut"></span>
     </button>
+    <!-- ⚠️ Nobody maps "emitting" to "light mode" from a control alone, and
+         nobody maps it from two letters either — which is why the aria-label
+         stays a full sentence while the visible word is short. -->
+    <span class="lamp-word" id="lampword" aria-hidden="true">void</span>
     <!-- ⚠️ F17. This shipped as `Save 6` — first paint, an invented count, and
          "Save" appears nowhere else in the app. The verb is Cut. -->
     <button class="btn go" id="primary">Cut</button>
@@ -71,8 +75,8 @@
           <!-- Stage 3: wipe.js replaces #before/#after (looping <img>) with two
                synced <canvas> elements decoding shared frame timing (PLAN.md 3.3),
                and swaps the pair for answer-A vs answer-B (PLAN.md 3.1). -->
-          <div class="wipe" id="wipe">
-            <div class="aftbg chk-s" id="aftbg"></div>
+          <div class="wipe chk" id="wipe">
+            <div class="aftbg" id="aftbg" hidden></div>
             <img id="before" src="assets/megaphone.src.gif" alt="">
             <img id="after" class="after" src="assets/megaphone.gif" alt="">
             <span class="seam" id="seam" aria-hidden="true"></span>

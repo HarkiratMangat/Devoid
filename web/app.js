@@ -240,7 +240,9 @@ function tile(a, big) {
   /* a different patch of sky per tile, keyed off the id so it is stable across
      re-renders rather than jumping every time the state changes */
   let seed = 0; for (let i = 0; i < a.id.length; i++) seed = (seed * 31 + a.id.charCodeAt(i)) >>> 0;
-  win.style.backgroundPosition = `${-(seed % 470)}px ${-((seed >> 9) % 470)}px, 0 0`;
+  /* ⚠️ F24. This randomised each tile's star layer to HIDE a repeat. The star
+     layer is gone from `.chk-s`, so there is nothing left to hide and the
+     workaround goes with it. */
   const img = el('img');
   img.src = artUrl(a); img.alt = '';                // animates by itself; that is the point
   img.addEventListener('error', () => { img.hidden = true; win.classList.add('noart'); });
@@ -646,7 +648,7 @@ function renderQuestions(a) {
     q.append(el('h3', null, n > 1
       ? `${n} places are marked on the artwork — one answer covers all of them`
       : 'The marked place on the artwork'));
-    const swatch = el('span', 'swatch');
+    const swatch = el('span', 'hexchip');   // F26: was `.swatch`, the matte button's class
     swatch.style.setProperty('--hex', '#' + g.hex);
     const where = el('p', 'qwhere');
     where.append(swatch, el('span', null, g.regions.map(r =>
@@ -844,7 +846,9 @@ function renderLedger(a) {
   const segArt = el('span', 'lseg lseg-total'); segArt.style.flexGrow = String(total / whole);
   bar.append(segBg, segArt);
   L.append(bar);
-  L.append(el('span', null, `removes ${bg.toLocaleString()} background px`));
+  const fig = el('span', null, '');
+  fig.append(el('b', 'fig', bg.toLocaleString()), document.createTextNode(' background px removed'));
+  L.append(fig);
   /* ⚠️ `art` is a CEILING — it counts every source pixel that differed from
      the corner colour and ended up transparent, including the antialiasing
      ramp the keyer is meant to remove. Comparable BETWEEN settings on one
@@ -1618,8 +1622,15 @@ function render() {
       }
     }
     $('#openname').textContent = stem(a.path);
+    /* ⚠️ F29. Desaturated, this line rendered as ONE uniform grey run: the state
+       word changes `color` only, and `#openstate b{font-weight:500}` matches
+       its neighbours. `pencil()` is drawn on sheet tiles and on the banner and
+       has never been drawn HERE — so the app's greyscale rule, which DESIGN.md
+       calls a runnable check, passed on the contact sheet and failed on the
+       primary surface. The mark goes where the state is stated. */
     $('#openstate').replaceChildren(
       el('span', null, `${a.ext || ''} · ${a.frames ? a.frames + ' frames · ' : ''}`),
+      pencil(stateOf(a), 'omark'),
       el('b', `s-${stateOf(a)}`, wordOf(a)));
     /* ⚠️ The plotter is summoned, not permanent. Ten enabled tools sat over
        every asset including ones still being read, with nothing selected to
@@ -1742,10 +1753,14 @@ $('#lamp').addEventListener('click', () => {
      ACTION and moves with it; there is no pressed state left to disagree. */
   $('#lamp').setAttribute('aria-label',
     emitting ? 'Switch to collapsed dark' : 'Switch to emitting light');
+  $('#lampword').textContent = emitting ? 'lit' : 'void';
   try { localStorage.setItem('devoid-lamp', emitting ? 'light' : 'dark'); } catch (e) {}
 });
 try {
-  if (localStorage.getItem('devoid-lamp') === 'light') $('#lamp').setAttribute('aria-label', 'Switch to collapsed dark');
+  if (localStorage.getItem('devoid-lamp') === 'light') {
+    $('#lamp').setAttribute('aria-label', 'Switch to collapsed dark');
+    $('#lampword').textContent = 'lit';
+  }
 } catch (e) {}
 $('#matte').addEventListener('click', e => {
   const btn = e.target.closest('button[data-matte]');
@@ -1760,6 +1775,28 @@ $('#matte').addEventListener('click', e => {
   }
   try { localStorage.setItem('devoid-matte', val); } catch (e) {}
 });
+/* ⚠️ A1. `#matte` is a `role="radiogroup"` with a roving tabindex and no arrow
+   handler, so three of the four grounds were unreachable by keyboard — and the
+   ground is a VERIFICATION control, not a preference. `canvas.js` already
+   implements this pattern correctly for its tool rows; this is the same code,
+   factored so there is one implementation rather than two. */
+function rovingArrows(container, select) {
+  container.addEventListener('keydown', e => {
+    if (!['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
+    const items = [...container.querySelectorAll('button')];
+    const i = items.indexOf(document.activeElement);
+    if (i < 0) return;
+    e.preventDefault();
+    const fwd = e.key === 'ArrowRight' || e.key === 'ArrowDown';
+    const n = e.key === 'Home' ? 0 : e.key === 'End' ? items.length - 1
+            : fwd ? (i + 1) % items.length : (i - 1 + items.length) % items.length;
+    for (const b of items) b.tabIndex = -1;
+    items[n].tabIndex = 0; items[n].focus();
+    if (select) items[n].click();          // a radiogroup selects as it moves
+  });
+}
+rovingArrows($('#matte'), true);
+
 (function initMatte() {
   let saved = 'checker';
   try { saved = localStorage.getItem('devoid-matte') || 'checker'; } catch (e) {}

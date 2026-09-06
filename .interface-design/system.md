@@ -44,7 +44,7 @@ Mono is Spline Sans Mono for every number, hex, filename and flag name. **It has
 
 Two load-bearing colours and no third accent. `--ruby` = this goes, `--cyan` = this stays. They are also the two colours of an accretion disk (hot blue inner edge, warm red-orange outer), which is why the void world fit an existing palette rather than replacing it.
 
-Void `#06050D` is violet-tinted, not neutral black: real deep-sky is, and it keeps the app out of the near-black-plus-one-acid-accent look.
+Void `#110E1B` is violet-tinted, not neutral black: real deep-sky is, and it keeps the app out of the near-black-plus-one-acid-accent look. ⚠️ **It was `#06050D` until 2026-09-06 19:24 EDT.** The five dark planes were separated by 0.85, 2.09, 0.37 and 4.26 ΔL* — two of four steps perceptually invisible — so the ladder was re-derived at ~4 ΔL* per step along the same violet ray. `scripts/check_contrast.py` measures it; the numbers here are its output, not a claim.
 
 ⚠️ **No state is ever colour alone.** Every state carries a shape or a word. This rule has been broken twice and caught twice — check any new state against it before shipping.
 
@@ -54,9 +54,12 @@ Void `#06050D` is violet-tinted, not neutral black: real deep-sky is, and it kee
 |---|---|
 | `.btn` | 7px 15px pad · `--r` radius · 12px/88% width · 34px tall |
 | `.lamp` (lighting toggle) | 56×28 · 6px radius · a miniature wipe, click-to-sweep, 11px hot rim riding the cut · **never a circle** |
-| `.swatch` (matte) | 16px specimen inside a 24px target via a 4px transparent border — WCAG 2.2 AA 2.5.8 |
+| `.swatch` (matte) | **18px specimen inside a 28px target** via a 5px transparent border — WCAG 2.2 AA 2.5.8. ⚠️ This row said *16-in-24* until 2026-09-06 19:24 EDT, which is not what the CSS has ever shipped (F27). The file records what ships |
+| `.lamp` | **64×32** with a persistent `1px solid var(--score-2)` in both states. At 56×28 and borderless it was invisible on `--bench:#FFFFFF` |
 | `.frame` (contact tile) | `--r2` radius · `--s2` pad · hairline in dark, shadow in light |
 | Starfield | canvas, drawn once to fit, density `area/3300`, radius `0.42 + m*1.18` where `m = random^2.4`. **Never tile it** |
+
+✅ **RESOLVED 2026-09-06 19:24 EDT — the tile is gone.** `--stars-a` is no longer painted by `.chk-s`, `--stars-b` is deleted from both lighting blocks, and `web/app.js`'s per-tile `background-position` randomisation went with it: there is no repeat left to hide. `.lamp .sg-void` keeps its single star layer, because a 64×32 control shows one tile and a tile that never repeats is not a pattern. The record of the failure is kept below, because the correction is the useful part.
 
 ⚠️ **RETRACTED 2026-09-06 — "never tile it" is the rule, and the shipped code breaks it.** The canvas replaced only the full-screen field. Every `.chk-s` surface still paints the tiled SVG `--stars-a` (`web/app.css:106` — contact-sheet tile, matte swatch, the wipe's cut side), as does `.lamp .sg-void` (`web/app.css:464`); `--stars-b` is defined in both lighting blocks and referenced zero times. `web/app.js:233` randomises each tile's `background-position`, which hides the repeat rather than removing it. Removing it is **Task 16 of `docs/superpowers/plans/2026-09-06-devoid-remediation.md`** (finding F24).
 

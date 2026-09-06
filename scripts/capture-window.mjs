@@ -166,6 +166,31 @@ app.whenReady().then(async () => {
     if (img.isEmpty()) { failures.push(`${name}: empty capture`); return; }
     const png = img.toPNG();
     writeFileSync(join(OUT, `${name}.png`), png);
+    /* ⚠️ The greyscale rule is called a RUNNABLE CHECK by DESIGN.md and had
+       never been run. A checker cannot find the state marks in a screenshot on
+       its own, so the window hands over their boxes at the moment of capture —
+       in capture pixels, scaled by the device ratio. scripts/check_greyscale.py
+       is the consumer. */
+    try {
+      const boxes = await probe(`
+        const dpr = window.devicePixelRatio || 1;
+        const want = ['.omark', '#openstate b', '.lseg-bg', '.lseg-total',
+                      '.frame[data-state="needs-you"]', '.frame[data-state="ready"]',
+                      '.frame[data-state="done"]', '.st', '.bword', '.bmark'];
+        const out = {};
+        for (const sel of want) {
+          const els = [...document.querySelectorAll(sel)].filter(e => e.getClientRects().length);
+          if (!els.length) continue;
+          out[sel] = els.slice(0, 8).map(e => {
+            const r = e.getBoundingClientRect();
+            return [Math.round(r.left * dpr), Math.round(r.top * dpr),
+                    Math.round(r.width * dpr), Math.round(r.height * dpr)];
+          });
+        }
+        return out;
+      `);
+      writeFileSync(join(OUT, `${name}.boxes.json`), JSON.stringify(boxes, null, 1));
+    } catch (e) { failures.push(`${name}: could not read element boxes — ${e.message}`); }
     const digest = createHash('md5').update(png).digest('hex');
     // ⚠️ THE CHECK THAT WOULD HAVE CAUGHT THE STALE FRAME ON DAY ONE. Two
     // different states cannot produce byte-identical pixels; if they do, the
@@ -560,6 +585,21 @@ app.whenReady().then(async () => {
   check('an answer can be taken back, and the question survives answering',
         !undo.skipped && undo.stillThere && undo.answered !== undo.reverted,
         `answered=${undo.answered} reverted=${undo.reverted} questionStillRendered=${undo.stillThere}`);
+
+  // ⚠️ F30's ledger BAR only renders for a finished job, and the gate has none —
+  // so the greyscale pair check had nothing to measure and reported "not on
+  // screen", which is a check that cannot fail. Drive the real render path with
+  // real numbers instead of weakening the check.
+  await win.webContents.executeJavaScript(`
+    S.jobs[S.open] = { state: 'done', ledger: { bg: 268431, art: 14822, total: 141169 } };
+    render();
+  `);
+  await shot('10-ledger', null, 900);
+  const bar = await probe(`return { segs: document.querySelectorAll('.ledger .lseg').length,
+                                    bar: !!document.querySelector('.ledger-bar') }`);
+  check('a finished job renders the ledger bar', bar.bar && bar.segs === 2,
+        `bar=${bar.bar} segments=${bar.segs}`);
+  await win.webContents.executeJavaScript(`delete S.jobs[S.open]; render()`);
 
   const rm = await probe(`return { reduce: matchMedia('(prefers-reduced-motion: reduce)').matches }`);
   check('prefers-reduced-motion was actually emulated', rm.reduce === true, rm.reduce);
