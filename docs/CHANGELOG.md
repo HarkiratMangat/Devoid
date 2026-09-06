@@ -32,6 +32,15 @@ What shipped, when, and why. Newest first.
 - **Stage 5 — memory.** Two append-only logs with two schemas and one writer each, a crash journal that surfaces orphans without resuming them, history with rerun, and advice that ships with an undo of exactly what it changed.
 - **Stage 6 — ship it.** Menus, the port probe, engine logging, self-hosted fonts, and `electron-builder` packaging. ⚠️ The `.app` is **not standalone** — see `devoid-deferred-list.md`.
 
+### The app is code-signed, and signing it found two defects nothing else could
+
+A self-signed `DEVOID` certificate (`mac.identity` in `electron-builder.yml`) produces a bundle that passes `codesign --verify --deep --strict` — `valid on disk`, `satisfies its Designated Requirement`. Identifier `Electron` → **`com.harkirat.devoid`**, hardened runtime on, `Sealed Resources version=2 rules=13 files=2451`, all five entitlements sealed in. **`build/entitlements.mac.plist` passed its first real test**: the signed app spawns Python and serves in 6s. ⚠️ Not Apple-issued, so no Gatekeeper anywhere else and no notarisation — and it does **not** unblock Check for Updates.
+
+| defect found | how it showed |
+|---|---|
+| The venv's absolute symlink let the signer walk out of the bundle and re-sign the **system** Python | build failed on `invalid destination for symbolic link in bundle`; fixed by `build/afterPack.js` |
+| The packaged app byte-compiled `site-packages` into its own bundle | **340** `.pyc` files, seal went to `a sealed resource is missing or invalid`; fixed by `PYTHONDONTWRITEBYTECODE` |
+
 ### The visual world was replaced
 
 The "lamp over the bench" metaphor became **the void**: the ground is deep space, the tools on it stay the matte world. The palette did not change — the app's two load-bearing colours turned out to already be an accretion disk's two colours, so the new world explains them. The lighting toggle is a **miniature of the wipe's own seam**. The starfield is generated to fit, never tiled. `docs/DESIGN.md` was rewritten; measured values are in `.interface-design/system.md`.

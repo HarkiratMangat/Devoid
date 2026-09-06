@@ -4,12 +4,24 @@
 # electron-builder refuses to load from package.json while a root-level
 # "directories" key is present, and that key is Stage 0's npm metadata.
 #
-# ⚠️ Signing and notarisation are driven ENTIRELY by environment variables and
-# every one of them is deliberately unset. With none set this produces an
-# unsigned, un-notarised build, which is what a local run wants:
-#   CSC_LINK, CSC_KEY_PASSWORD                            — the signing certificate
+# ⚠️ SIGNING — a LOCAL, SELF-SIGNED identity, not a Developer ID (2026-09-06 17:05 EDT).
+# `mac.identity: DEVOID` names a self-signed Code Signing certificate created in
+# Keychain Access. It is enough to produce a real, verifiable seal and — the
+# actual reason it is here — it is the ONLY way to exercise hardenedRuntime and
+# build/entitlements.mac.plist without an Apple Developer account. Those
+# entitlements exist because a signed app may not spawn the unsigned .venv
+# interpreter without them, and until this identity existed they had never run.
+#
+# ⛔ WHAT THIS IS NOT. It is not Apple-issued, so it does NOT satisfy Gatekeeper
+# on any other Mac, it can never be notarised, and it does NOT unblock
+# Check for Updates — Squirrel.Mac needs a signature the destination machine
+# trusts, and the repository being private is a second, independent blocker.
+# See devoid-deferred-list.md, "Devoid cannot install its own updates".
+#
+# Notarisation stays driven entirely by environment variables, all unset:
 #   APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID  — notarisation
-# See README.md "Packaging". Set notarize: true below once those five exist.
+# CSC_LINK / CSC_KEY_PASSWORD still override `identity` when a real Developer ID
+# certificate arrives. See README.md "Packaging"; set notarize: true then.
 #
 # ⚠️ WHAT MAKES THIS RUN OUTSIDE THE REPO (6.3), and why it is arranged this way:
 #
@@ -33,6 +45,10 @@ copyright: Devoid — a front end for the gif-background-remover skill
 directories:
   output: dist
   buildResources: build
+
+# ⚠️ Dereferences the venv's escaping absolute symlink before signing.
+# Without it the signer walks OUT of the bundle. See build/afterPack.js.
+afterPack: build/afterPack.js
 
 files:
   - main.js
@@ -67,6 +83,7 @@ extraResources:
 
 mac:
   icon: build/icon.icns
+  identity: DEVOID
   category: public.app-category.graphics-design
   target:
     - dmg

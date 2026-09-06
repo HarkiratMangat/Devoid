@@ -76,6 +76,14 @@ function startServer(port, python) {
    * they stay in the repo, where labels/protection.jsonl is tracked evidence. */
   const env = { ...process.env };
   if (PACKAGED) env.DEVOID_DATA_DIR = app.getPath('userData');
+  /* ⚠️ ...and "never write inside its own bundle" includes BYTECODE, which is
+   * the case the line above does not cover. Python byte-compiles site-packages
+   * on first import, and packaged that lands in Contents/Resources/pyvenv as
+   * __pycache__. Measured 2026-09-06: one launch of the signed build wrote 340
+   * .pyc files into the bundle and `codesign --verify --deep --strict` went
+   * from exit 0 to "a sealed resource is missing or invalid". The app broke its
+   * own signature by running. Unset, this is invisible until something checks. */
+  if (PACKAGED) env.PYTHONDONTWRITEBYTECODE = '1';
 
   serverProcess = spawn(
     python,

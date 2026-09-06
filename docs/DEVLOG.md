@@ -128,6 +128,18 @@ Six subsystems in this app have been finished, tested and connected to nothing: 
 
 ---
 
+### Code signing follows symlinks OUT of the bundle, and re-signs what it finds
+
+`.venv` ships as `extraResources`, and a venv's `bin/python3.11` is an **absolute symlink** to its base interpreter. On the first signed build (2026-09-06 17:29 EDT) `electron-builder`'s signing walk followed it and re-signed `/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11` in place — replacing the CPython installer's `Developer ID Application: Ned Deily` signature with this project's self-signed one. **A build modified a file outside the project, and nothing in the build output said so.** It was found only because the build then failed anyway, on `invalid destination for symbolic link in bundle`.
+
+`build/afterPack.js` now dereferences every absolute symlink in `pyvenv/bin` before signing and throws if one survives — which is the layout `python -m venv --copies` produces. Proven by hashing the system binary either side of a build: identical sha256, identical mtime. ⚠️ **The general lesson is bigger than Python.** Anything shipped as `extraResources` that contains an absolute symlink gives the signer a path out of the sandbox you think you are in. Check with `fd -H -I -t l` and read every target before the first signed build, not after.
+
+### The packaged app broke its own signature by running
+
+`main.js` already carried "⚠️ The app must never write inside its own bundle: that breaks under signing" — and it guarded the **logs**, which is not what writes there. Python byte-compiles `site-packages` on first import, so one launch of the signed build wrote **340 `.pyc` files** into `Contents/Resources/pyvenv`, and `codesign --verify --deep --strict` went from exit 0 to `a sealed resource is missing or invalid`. Fixed with `env.PYTHONDONTWRITEBYTECODE = '1'` on the packaged spawn; red-green verified by launching either side of the fix — 340 files and exit 1 before, 0 files and exit 0 after.
+
+⚠️ **This one also nearly escaped as a false green.** The check was first run as `codesign --verify … | tail -2` and `$?` read **`tail`'s** status, not `codesign`'s — a pipeline reports its last command. It printed `VERIFY_EXIT=0` over output that literally said `file added:`. **Never read `$?` after a pipe**; redirect to a file, or use `PIPESTATUS`.
+
 ## Decisions, and what was tried first
 
 ### The world: the ground is the void, the tools stay the matte world

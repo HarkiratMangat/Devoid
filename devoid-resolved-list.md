@@ -19,6 +19,19 @@ Heading shape, matching the engine repo's archive:
 
 ## Closed items
 
+## ✅ Signing and notarisation are configured and have never run — CLOSED 2026-09-06 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: half closed, and the half that closed answered the question the item was actually about.** A self-signed `DEVOID` Code Signing certificate made in Keychain Access is enough to exercise `hardenedRuntime` and `build/entitlements.mac.plist` without an Apple Developer account. The signed build launches, spawns Python and serves on port 8732 in 6s — **the entitlements are correct**, which had never been tested. `codesign --verify --deep --strict` returns exit 0, `valid on disk`, `satisfies its Designated Requirement`. Notarisation is genuinely untouched and is refiled as its own item; the ⛔ never-fabricate rule was not bent — the certificate is real, it is just not Apple-issued.
+
+⚠️ **Getting there cost two defects that only a signed build could expose**, both now fixed and both recorded in `docs/DEVLOG.md`: the venv's escaping absolute symlink, which made the signer walk out of the bundle and re-sign the system Python; and the packaged app byte-compiling `site-packages` into its own bundle, which broke its own seal on first launch.
+
+### `[P2 · S · Sonnet5-High]` Signing and notarisation are configured and have never run *(filed 2026-09-05, `PLAN.md` 6.2)*
+
+Five environment variables drive both paths and **all five are deliberately unset** — the user's own choice; there is no certificate and no Apple ID. Unsigned local builds work. ⚠️ **`build/entitlements.mac.plist` is the thing most likely to bite on a first signed build**: without the right entitlements a signed build launches and then fails at the Python spawn, which looks exactly like a server bug. The file is written for that case and has never been tested against it.
+
+⛔ **Never fabricate signing credentials to make this testable.** The variables stay unset until real ones exist.
+
+
 ⚠️ **The fixes made during the build session are not here.** They were never filed as deferred items in the first place, so they do not belong in an archive of filed items — they are in `docs/CHANGELOG.md` (what shipped) and `docs/DEVLOG.md` (why, and what was tried and walked back).
 
 ## ✅ `jobs.jsonl` is tracked in git, so every real use dirties the working tree — CLOSED 2026-09-05 (branch `feat/devoid-v1`, unreleased in v1.0.0)
