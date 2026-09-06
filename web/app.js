@@ -581,6 +581,11 @@ function setSeam(pct) {
   S.seam = Math.max(0, Math.min(100, pct));
   wipe.style.setProperty('--seam', S.seam + '%');
   wipe.setAttribute('aria-valuenow', String(Math.round(S.seam)));
+  /* ⚠️ A bare number tells a screen reader nothing. Both canvases are
+     aria-hidden, so `52` was the entire description of the app's central
+     widget — the listener had no way to know which side was which. */
+  wipe.setAttribute('aria-valuetext',
+    `${Math.round(S.seam)}% — keep it on the left, cut it on the right`);
 }
 function seamFrom(e) {
   const r = wipe.getBoundingClientRect();
@@ -597,6 +602,10 @@ wipe.addEventListener('pointermove', e => { if (e.buttons) seamFrom(e); }, sig);
 wipe.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft')  { setSeam(S.seam - 4); e.preventDefault(); }
   if (e.key === 'ArrowRight') { setSeam(S.seam + 4); e.preventDefault(); }
+  /* the two ends of the comparison, one key each -- a slider without them
+     makes "show me only the cut side" a twenty-five-press job */
+  if (e.key === 'Home')       { setSeam(0);   e.preventDefault(); }
+  if (e.key === 'End')        { setSeam(100); e.preventDefault(); }
 }, sig);
 
 /* ── the ledger ───────────────────────────────────────────────────────────
@@ -1467,9 +1476,20 @@ window.Devoid = {
   refresh,
   render,
   regions: [],
-  /* wipe.js calls this before attaching its own seam, so two owners of one
-     element never both listen */
-  releaseWipe() { wipeCtl.abort(); wipeOwned = true; },
+  /* ⚠️ THIS USED TO CALL `wipeCtl.abort()`, AND THAT KILLED THE PRODUCT'S ONE
+     GESTURE. The only pointerdown, pointermove and keydown listeners on #wipe
+     are registered above with `{signal: wipeCtl.signal}`, and wipe.js attaches
+     no replacement — so from the moment the answer pair mounted the seam could
+     not be dragged with a mouse or moved with an arrow key, while the element
+     went on advertising `cursor:ew-resize`, a rendered handle, `role="slider"`
+     and "Drag to compare…". `wipeCtl` is one-shot, so it was permanent.
+
+     Both files reasoned at length about why the handover was safe and neither
+     noticed that nobody picked the element up. wipe.js's own comment has the
+     answer: these handlers only ever write the shared `--seam` variable, which
+     the <img> pair and the canvases both read. Ownership of the CONTENT moves.
+     Ownership of the GESTURE never needed to. */
+  releaseWipe() { wipeOwned = true; },
 
   /* ⚠️ wipe.js's question card has been calling `Devoid.submitAnswer` since it
      was written, and it did not exist — so the card always fell through to its

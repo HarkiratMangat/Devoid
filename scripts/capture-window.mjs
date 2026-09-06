@@ -142,7 +142,15 @@ app.whenReady().then(async () => {
     win.webContents.sendInputEvent({ type: 'mouseDown', x: a.x, y: a.y, button: 'left', clickCount: 1 });
     for (let i = 1; i <= 6; i++) {
       const x = Math.round(a.x + (b.x - a.x) * (i / 6));
-      win.webContents.sendInputEvent({ type: 'mouseMove', x, y: a.y, button: 'left', buttons: 1 });
+      // ⚠️ `modifiers: ['leftButtonDown']` is what makes this a DRAG. A
+      // `mouseMove` without it arrives in the page as `PointerEvent.buttons === 0`
+      // -- measured -- and app.js's handler is `if (e.buttons) seamFrom(e)`, so
+      // the move is correctly ignored and the test reports a defect that is its
+      // own. Passing `buttons: 1` on the Electron event does NOT do this; the
+      // field is not propagated.
+      win.webContents.sendInputEvent({
+        type: 'mouseMove', x, y: a.y, button: 'left', modifiers: ['leftButtonDown'],
+      });
       await wait(30);
     }
     win.webContents.sendInputEvent({ type: 'mouseUp', x: b.x, y: b.y, button: 'left', clickCount: 1 });

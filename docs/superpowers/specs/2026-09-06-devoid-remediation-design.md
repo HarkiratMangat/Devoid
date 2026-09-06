@@ -290,7 +290,7 @@ Every finding here breaks a rule this project wrote down and asserted it was fol
 
 **Where:** `web/app.css:589` — `.st,.crumb,.bword,.rt-lab,.qhint,.nm,.ledger,.filmhead,.tabs button,.ctl .lab{font-stretch:80%}`
 
-**Evidence.** `.st`, `.crumb`, `.bword`, `.qhint`, `.nm`, `.ledger`, `.filmhead` and `.ctl .lab` all declare `font-family:"Spline Sans Mono",monospace`, whose woff2 has a `wght` axis and **no `wdth` axis** (fontTools, above). Browsers do not synthesise width. Only `.tabs button` and `.rt-lab` can render it.
+**Evidence.** `.st`, `.crumb`, `.bword`, `.qhint`, `.nm`, `.ledger`, `.filmhead` and `.rt-lab` all declare `font-family:"Spline Sans Mono",monospace`, whose woff2 has a `wght` axis and **no `wdth` axis** (fontTools, above). Browsers do not synthesise width. Only `.tabs button` and `.ctl .lab` can render it — they inherit Archivo. ⚠️ **Corrected 2026-09-06:** an earlier draft of this line had `.rt-lab` and `.ctl .lab` swapped. `.rt-lab` declares the mono at `web/canvas.css:43`; `.ctl .lab` declares no family and inherits. The count of eight was right and the membership was not — caught by the agent that was writing the same retraction into the docs.
 
 ⚠️ **RETRACTED.** A previous session reported the width axis fixed after the swap test. That fix corrected the *values* and never checked whether the named elements could render them. **The same bug class one level deeper.**
 
