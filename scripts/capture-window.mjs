@@ -124,6 +124,31 @@ app.whenReady().then(async () => {
   const probe = async (expr) => JSON.parse(await win.webContents.executeJavaScript(
     `Promise.resolve((() => { ${expr} })()).then((v) => JSON.stringify(v))`));
 
+  /** A REAL pointer drag across the wipe, in window coordinates.
+   *
+   * ⚠️ NOT `.click()` and NOT executeJavaScript. The whole point is that input
+   * arrives the way a hand delivers it, through the listener chain. Nine green
+   * captures were taken of a seam that could not be dragged, because every
+   * assertion in this file tested PRESENCE -- geometry, ids, computed styles --
+   * and presence is exactly what a disconnected control has. `sendInputEvent`
+   * is the only thing here that can prove a listener is attached.
+   */
+  const drag = async (fromPct, toPct) => {
+    const box = await probe(`
+      const r = document.getElementById('wipe').getBoundingClientRect();
+      return { x: r.left, y: r.top, w: r.width, h: r.height };`);
+    const at = (p) => ({ x: Math.round(box.x + box.w * p), y: Math.round(box.y + box.h / 2) });
+    const a = at(fromPct), b = at(toPct);
+    win.webContents.sendInputEvent({ type: 'mouseDown', x: a.x, y: a.y, button: 'left', clickCount: 1 });
+    for (let i = 1; i <= 6; i++) {
+      const x = Math.round(a.x + (b.x - a.x) * (i / 6));
+      win.webContents.sendInputEvent({ type: 'mouseMove', x, y: a.y, button: 'left', buttons: 1 });
+      await wait(30);
+    }
+    win.webContents.sendInputEvent({ type: 'mouseUp', x: b.x, y: b.y, button: 'left', clickCount: 1 });
+    await wait(250);
+  };
+
   const shot = async (name, js, settle = 1400) => {
     if (js) { try { await win.webContents.executeJavaScript(js); } catch (e) { failures.push(`${name}: ${e.message}`); } }
     await wait(settle);                 // ⚠️ transitions are 300-420ms; never shoot mid-flight
@@ -156,7 +181,13 @@ app.whenReady().then(async () => {
   // "Reading the log…" 2s in. Ordering is not cosmetic in this file.
   await shot('06-history', `S.drawer='what you did';S.history=null;render()`, 1800);
 
-  await shot('07-arrival', `S.arrivalUsed=false;S.arriving.clear();
+  // ⚠️ closeAsset() and S.drawer=null are load-bearing. Without them this shot
+  // inherited the open asset from step 02 and the drawer from step 06, so the
+  // file called 07-arrival showed an open asset under the history drawer --
+  // the app's one orchestrated moment has never actually been photographed.
+  // The byte-distinctness check below catches two IDENTICAL frames; it cannot
+  // catch a correct capture of the wrong state.
+  await shot('07-arrival', `closeAsset();S.drawer=null;S.arrivalUsed=false;S.arriving.clear();
     addPaths(${JSON.stringify(['galaxy.gif','rocket.gif','hurricane.gif','megaphone.gif','secure.gif','satellite.gif']
       .map((n) => join(ROOT, 'web', 'assets', n)))})`, 420);
 
@@ -272,6 +303,19 @@ app.whenReady().then(async () => {
   check('the two answers actually differ', seam.differing > 0,
         `${seam.differing} differing alpha px — 0 means the flags did nothing`);
   check('the seam is labelled with the question, not the flag', seam.tagL === 'keep it', seam.tagL);
+
+  // ⚠️ THE CHECK THIS FILE EXISTED WITHOUT. Everything above proves the seam is
+  // THERE. This proves it WORKS. app.js registers the only pointerdown /
+  // pointermove / keydown on #wipe with {signal: wipeCtl.signal}, and
+  // releaseWipe() aborts that controller the moment the answer pair mounts --
+  // so the app's signature gesture has been dead since the seam was wired,
+  // while the element kept advertising cursor:ew-resize, a rendered handle and
+  // role="slider".
+  const seamBefore = await probe(`return { v: S.seam }`);
+  await drag(0.5, 0.82);
+  const seamAfter = await probe(`return { v: S.seam }`);
+  check('the seam responds to a real drag', seamAfter.v !== seamBefore.v,
+        `${seamBefore.v} -> ${seamAfter.v} after dragging 50% -> 82%`);
   await shot('09-seam', null, 600);
 
   const rm = await probe(`return { reduce: matchMedia('(prefers-reduced-motion: reduce)').matches }`);
