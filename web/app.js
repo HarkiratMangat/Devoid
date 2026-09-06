@@ -125,6 +125,15 @@ const PENCIL = {
   conflict:   ['M28 24 h30 v30 h-30 z M42 46 h30 v30 h-30 z',    'var(--amber)'],  // two files, offset
   blocked:    ['M18 50 h64 M18 38 v24 M82 38 v24',               'var(--ruby)'],   // a gate across the way
 };
+/* the app's loading state, at any size. ⚠️ Never on #stage — the no-lensing
+   rule. Tiles, the drawer, the boot state. */
+function core(size) {
+  const c = el('span', 'core');
+  c.style.setProperty('--core-size', size + 'px');
+  c.setAttribute('aria-hidden', 'true');
+  c.append(el('span', 'core-disk'), el('span', 'core-ring'));
+  return c;
+}
 function pencil(kind, cls) {
   const [d, stroke] = PENCIL[kind] || PENCIL.ready;
   const NS = 'http://www.w3.org/2000/svg';
@@ -247,7 +256,7 @@ function tile(a, big) {
   img.src = artUrl(a); img.alt = '';                // animates by itself; that is the point
   img.addEventListener('error', () => { img.hidden = true; win.classList.add('noart'); });
   win.append(img, pencil(st));
-  if (st === 'loading') win.append(el('span', 'devbar'));   // opacity, not movement — survives reduced motion
+  if (st === 'loading') win.append(core(28));   // the accretion core; reduced-motion safe
   b.append(win);
 
   if (big) {
@@ -817,6 +826,9 @@ const wipeCtl = new AbortController();
 let wipeOwned = false;
 /* the pair currently behind the seam, so render() does not re-fetch on every tick */
 let seamKey = null;
+/* and the plain source-vs-output pair, which is a different path with a
+   different lifetime — see the comment at its call site */
+let sourcePairKey = null;
 function setSeam(pct) {
   S.seam = Math.max(0, Math.min(100, pct));
   wipe.style.setProperty('--seam', S.seam + '%');
@@ -1174,7 +1186,13 @@ async function fetchHistory() {
 }
 
 function historyRows() {
-  if (S.history === null) { fetchHistory(); return [el('p', 'refusal', 'Reading the log…')]; }
+  if (S.history === null) {
+    fetchHistory();
+    const row = el('p', 'refusal');
+    row.style.display = 'flex'; row.style.alignItems = 'center'; row.style.gap = 'var(--s2)';
+    row.append(core(20), el('span', null, 'Reading the log…'));
+    return [row];
+  }
   if (S.historyErr) return [el('p', 'refusal', `The log could not be read — ${S.historyErr}`)];
   if (!S.history.length) {
     return [el('p', 'refusal', 'Nothing cut yet. Every finished job lands here, oldest at the bottom')];
@@ -1632,7 +1650,28 @@ function render() {
     : `Cut ${targets().length}`;
   P.classList.toggle('stop', busy.length > 0);
 
+  /* ⚠️ The pip runs on renderPrimary's own cadence — every render and every
+     poll tick — which is exactly what it needs. Do not add a second timer. */
+  const pip = $('#pip');
+  if (pip) {
+    const stuck = targets().some(x => ['blocked', 'failed', 'refused'].includes(stateOf(x)));
+    const s = stuck ? 'blocked' : busy.length ? 'working' : 'idle';
+    pip.dataset.pip = s;
+    pip.setAttribute('aria-label',
+      s === 'working' ? `Engine working on ${busy.length}` :
+      s === 'blocked' ? 'Engine blocked' : 'Engine idle');
+  }
+
   if (a) {
+    /* ⚠️ Hoisted out of the `!wipeOwned` guard below. Once wipe.js has mounted
+       its canvases `wipeOwned` is true FOREVER, so everything inside that guard
+       stops running the moment the seam appears once — which is why Task 27's
+       decode never fired and the film strip stayed inert on the very path it
+       was written for. Deriving the cut URL is not the <img> path's business. */
+    const j = S.jobs[a.id];
+    const servableCut = j && j.output_path
+      && j.output_path.includes('/web/assets/') && stateOf(a) !== 'running';
+    const cutHere = servableCut ? artUrl({ path: j.output_path }) : null;
     if (!wipeOwned) {
       /* ⚠️ This used to put the SAME file on both sides and label the right
          half "cut" -- an uncut source presented as a cut result, in the app's
@@ -1640,7 +1679,6 @@ function render() {
          forbids. A seam compares two things; until a second thing exists
          there is nothing to compare, so the wipe collapses to one honest
          image and says so. */
-      const j = S.jobs[a.id];
       /* ⚠️ The server serves ONLY web/, and the engine writes beside the
          source. So an output is showable exactly when its source was already
          inside web/assets/ -- true for the corpus, false for a real drop from
@@ -1648,9 +1686,8 @@ function render() {
          image under a "cut" label, which is a worse claim than the one this
          branch exists to prevent. There is no thumbnail route to fix this
          properly (API-CONTRACT has none); until there is, say so. */
-      const servable = j && j.output_path
-        && j.output_path.includes('/web/assets/') && stateOf(a) !== 'running';
-      const cutUrl = servable ? artUrl({ path: j.output_path }) : null;
+      const servable = servableCut;
+      const cutUrl = cutHere;
       const cutElsewhere = j && j.output_path && !servable && stateOf(a) !== 'running';
       /* ⚠️ The sheet tile has had an error handler since it was written
          (`img.addEventListener('error', ...)` above); the stage's #before never
@@ -1702,6 +1739,32 @@ function render() {
     $('#regiontools').hidden = !plotterWelcome;
     $('#regioncanvas').hidden = !plotterWelcome;
     maybeLoadSeamPair(a);
+    /* ⚠️ Task 27. Two <img>s cannot be scrubbed — a GIF animates itself and
+       nothing can seek it — so the film strip could never move any artwork in
+       any state. Decoding both halves into the wipe's canvases is what gives
+       the strip something to drive. Runs only when nothing is disputed: while a
+       question is live the seam owns the canvases and its pair is deliberately
+       one frame per side (server/preview.py, with the measurement in its
+       header). ⚠️ Its OWN key, because maybeLoadSeamPair sets `seamKey = null`
+       in exactly this case and sharing it re-decoded on every tick. */
+    const disputed = seamGroup(a);
+    const sourceKey = cutHere && !disputed ? `${a.id}|source|${cutHere}` : null;
+    if (sourceKey && sourcePairKey !== sourceKey) {
+      const W2 = window.Devoid && window.Devoid.wipe;
+      if (W2 && typeof W2.loadUrls === 'function') {
+        sourcePairKey = sourceKey;
+        /* ⚠️ The decode is async and renderFilm reads `sides().a.timeline.count`
+           SYNCHRONOUSLY, so the strip computed `scrubbable` from the pair that
+           was there before — 144 frames decoded and every button still
+           disabled. One render once the frames exist; `sourcePairKey` is
+           already set, so it cannot re-enter. */
+        W2.loadUrls(artUrl(a), cutHere, 'as it came', 'the background cut out')
+          .then(() => render())
+          .catch(() => { sourcePairKey = null; });
+      }
+    } else if (!sourceKey) {
+      sourcePairKey = null;
+    }
     renderEdge(); renderQuestions(a); renderAnswerBar(a); renderAdvice(a); renderLedger(a); renderFilm(a);
     renderQuestionRegions(a);
     /* ⚠️ `{once: true}` only removes the listener AFTER it fires, and with an

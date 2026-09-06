@@ -19,6 +19,41 @@ Heading shape, matching the engine repo's archive:
 
 ## Closed items
 
+## ✅ With a question open, the artwork is 321px in a 1750px stage — CLOSED 2026-09-06 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: closed by Task 21, measured.** The decision moved into a 340px column beside the artwork and the film strip lost its excess padding. `npm run gate:ui` reports **1037x1037** with a question open, and asserts `>= 550` so it cannot regress quietly. Below 1080px the column returns underneath, where a column would squeeze the artwork rather than free it.
+
+### `[P2 · S · Opus5-Med]` With a question open, the artwork is 321px in a 1750px stage *(filed 2026-09-05)*
+
+Measured in the real window at 1280x860 with `megaphone.src.gif` open: `#wipe` is **321x321**, centred in a work area about 1750px wide. `.wipe` is `height:100%` with `aspect-ratio:1`, so it is height-constrained — and the questions panel, the ledger and the film strip take the height, while the width beside it goes unused.
+
+This is the focal-element problem again, in the one state where the artwork matters most: you are being asked to judge an edge. ⚠️ **Do not just make it bigger** — the panels below it are the question being asked. The real options are a side-by-side layout when the stage is wide, or collapsing the film strip while a question is outstanding. Both are layout decisions that need looking at, not a number to change.
+
+
+## ✅ The film strip counts frames and cannot scrub to one — CLOSED 2026-09-06 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: closed by Tasks 7 and 27, and it was two bugs wearing one label.** `seekToFrame` had zero callers — that was F6, and wiring it was necessary and not sufficient: `sides().a` held **one frame**, because the answer-pair preview is single-frame by design. With the seam down there were no canvases at all. Task 27 extracted `mountPair` out of `loadPair` so the plain source-vs-output comparison decodes into the same canvases; the strip now scrubs **144** frames, asserted in the gate by hashing the canvas either side of a click. ⚠️ The strip still refuses to scrub while the seam is up, and **says so** — that preview is one frame on purpose.
+
+### `[P2 · S · Sonnet5-Med]` The film strip counts frames and cannot scrub to one *(filed 2026-09-05, `PLAN.md` 3.3)*
+
+The strip highlights and reports `n frames`, and the artwork beside it is a looping `<img>` that **never seeks**. Clicking a frame does not go to it. Frame-accurate seeking needs the canvas decoder that `PLAN.md` 3.3 describes and that the wipe already has half of — `web/wipe.js` decodes shared frame timing to keep two canvases synced, which is the harder part.
+
+⚠️ This is also the blocker under the motion-sensitivity edge case: an animated `<img>` cannot be paused by CSS, so "stop the animation" is unreachable until frames decode to canvas.
+
+
+## ✅ The UI gate asserts eight things; the surface has far more than eight — CLOSED 2026-09-06 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: closed.** The gate now runs roughly thirty assertions across ten captured states, and the ones that matter test CONNECTION rather than presence: a real pointer drag, a canvas hash either side of a frame click, an apply/undo cycle on a suggestion, the drawer's computed `position`, the artwork's measured width, and the pip's state before and after work. Two new scripts run beside it — `check:contrast` (every pair, both lighting states, alpha composited) and `check:greyscale` (`DESIGN.md`'s runnable check, which had never been run).
+
+### `[P1 · M · Opus5-High]` The UI gate asserts eight things; the surface has far more than eight *(filed 2026-09-05, successor to "No automated test covers the UI — at all")*
+
+`npm run gate:ui` now drives the real Electron window and **fails** on: rAF never firing, a zero-size region canvas, a hidden plotter, an unsized starfield, a drawer that disagrees with the log, a history row without its load button, `prefers-reduced-motion` not emulating, a dirty console, and **any two states producing byte-identical pixels**. That last one is what caught the camera lying.
+
+**What it still does not cover:** the wipe's seam drag, selection and shift-range, drag-and-drop through the `FileSource` boundary, the tri-state controls' auto/override/undo cycle, answering a question end to end, the region tools' roving tabindex, and every one of the eleven states as a *state* rather than as a screenshot.
+
+⛔ **Do not close this with pixel baselines.** A screenshot diff over a generated starfield fails for reasons that are not defects, and a gate that cries wolf gets switched off — which is how the surface ended up with no coverage in the first place. The pattern that works here is the one the eight use: drive the real window, then assert something that **can** be false.
+
+
 ## ✅ The system Python interpreter carries this project's signature, not its own — CLOSED 2026-09-06 (branch `feat/devoid-v1`, unreleased in v1.0.0)
 
 **Outcome: restored by the user, verified 2026-09-06 18:37 EDT.** `codesign -dv` on `/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11` now reports `Authority=Developer ID Application: Ned Deily (DJ3H93M7VJ)`, the full Apple chain, and `TeamIdentifier=DJ3H93M7VJ`; `codesign --verify --strict` exits **0**. The project venv still imports `starlette` on 3.11.3, so reinstalling the framework in place cost nothing. `build/afterPack.js` is what stops it recurring, and its guard throws rather than warns.

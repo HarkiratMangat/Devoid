@@ -41,20 +41,6 @@ The project-local tracker for open work, real TODOs, and reminders specific to t
 
 **Worth keeping because the shape recurs:** an exact-key-set assertion on a public payload converts every additive change into a failure, which trains people to edit the test rather than read it. **Assert the keys you depend on, not the absence of keys you do not.** Sweep `tests/` for other exact-shape assertions before the next contract change.
 
-### `[P2 · S · Opus5-Med]` With a question open, the artwork is 321px in a 1750px stage *(filed 2026-09-05)*
-
-Measured in the real window at 1280x860 with `megaphone.src.gif` open: `#wipe` is **321x321**, centred in a work area about 1750px wide. `.wipe` is `height:100%` with `aspect-ratio:1`, so it is height-constrained — and the questions panel, the ledger and the film strip take the height, while the width beside it goes unused.
-
-This is the focal-element problem again, in the one state where the artwork matters most: you are being asked to judge an edge. ⚠️ **Do not just make it bigger** — the panels below it are the question being asked. The real options are a side-by-side layout when the stage is wide, or collapsing the film strip while a question is outstanding. Both are layout decisions that need looking at, not a number to change.
-
-### `[P1 · M · Opus5-High]` The UI gate asserts eight things; the surface has far more than eight *(filed 2026-09-05, successor to "No automated test covers the UI — at all")*
-
-`npm run gate:ui` now drives the real Electron window and **fails** on: rAF never firing, a zero-size region canvas, a hidden plotter, an unsized starfield, a drawer that disagrees with the log, a history row without its load button, `prefers-reduced-motion` not emulating, a dirty console, and **any two states producing byte-identical pixels**. That last one is what caught the camera lying.
-
-**What it still does not cover:** the wipe's seam drag, selection and shift-range, drag-and-drop through the `FileSource` boundary, the tri-state controls' auto/override/undo cycle, answering a question end to end, the region tools' roving tabindex, and every one of the eleven states as a *state* rather than as a screenshot.
-
-⛔ **Do not close this with pixel baselines.** A screenshot diff over a generated starfield fails for reasons that are not defects, and a gate that cries wolf gets switched off — which is how the surface ended up with no coverage in the first place. The pattern that works here is the one the eight use: drive the real window, then assert something that **can** be false.
-
 ### `[P2 · S · Sonnet5-Med]` The history drawer can sit on "Reading the log…" while analyses run *(filed 2026-09-05)*
 
 Observed in a real window: with six ~18s analyses in flight, the drawer stayed on its loading text for over two seconds, while `/api/history` on an idle server answers in milliseconds. Every route that touches the engine is a plain `def` and runs in Starlette's threadpool by design (`server/app.py`'s header, and the 1,290x stall it exists to prevent) — but the *log reader*, which touches no engine at all, queues behind them.
@@ -131,12 +117,6 @@ Every accessibility finding — six were fixed — came from **markup and comput
 The contact sheet renders every asset as a looping `<img>` at full source resolution. At corpus size that is fine; the layout claim above was written about **layout** and has been read as a **performance** claim. Two hundred concurrent decoders at source resolution is a different question and has never been measured.
 
 **Concrete next action:** measure first — 200 real assets, real window, memory and first-paint — before building anything. The fix if one is needed is a `loading` state that does something (`loading="lazy"`, a decode queue, or thumbnails, which is the same missing route as item 1).
-
-### `[P2 · S · Sonnet5-Med]` The film strip counts frames and cannot scrub to one *(filed 2026-09-05, `PLAN.md` 3.3)*
-
-The strip highlights and reports `n frames`, and the artwork beside it is a looping `<img>` that **never seeks**. Clicking a frame does not go to it. Frame-accurate seeking needs the canvas decoder that `PLAN.md` 3.3 describes and that the wipe already has half of — `web/wipe.js` decodes shared frame timing to keep two canvases synced, which is the harder part.
-
-⚠️ This is also the blocker under the motion-sensitivity edge case: an animated `<img>` cannot be paused by CSS, so "stop the animation" is unreachable until frames decode to canvas.
 
 ### `[P3 · S · Sonnet5-Med]` This file's conservation rule is unenforced *(filed 2026-09-05)*
 

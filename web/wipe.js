@@ -745,25 +745,11 @@
        longer allowed to draw. Take the element only once there is something to
        put in it. */
     var pair = await fetchPair(assetId, flag, valueA, valueB, regions);
-    mountCanvases();
-    var decoded = await Promise.all([decode(pair.a_url), decode(pair.b_url)]);
-
-    W.asset = assetId; W.flag = flag; W.valueA = valueA; W.valueB = valueB;
-    W.regions = regions || null;
-    W.a = prepare(decoded[0]);
-    W.b = prepare(decoded[1]);
-    W.ledgerA = pair.ledger_a || null;
-    W.ledgerB = pair.ledger_b || null;
-    W.formatIsGif = !!pair.format_is_gif;
-
+    await mountPair(pair.a_url, pair.b_url, tagsFor(flag, valueA, valueB),
+                    { assetId: assetId, flag: flag, valueA: valueA, valueB: valueB,
+                      regions: regions, ledgerA: pair.ledger_a, ledgerB: pair.ledger_b,
+                      formatIsGif: pair.format_is_gif });
     var tags = tagsFor(flag, valueA, valueB);
-    var lt = document.querySelector('.wipetag.l'), rt = document.querySelector('.wipetag.r');
-    if (lt) lt.textContent = tags.a;
-    if (rt) rt.textContent = tags.b;
-    var wipe = $('#wipe');
-    if (wipe) wipe.setAttribute('aria-label', 'Drag to compare "' + tags.a + '" with "' + tags.b + '"');
-
-    renderLedger(W.ledgerA, W.ledgerB, tags);
 
     /* Measure the two renders against each other before deciding how to ask. */
     var region = disputedRegion(assetId, regions);
@@ -800,6 +786,44 @@
     return metric;
   }
 
+  /* ⚠️ Everything loadPair does after fetchPair is URL-agnostic, and it was
+     welded to the engine round trip — which is why the film strip could not
+     scrub anything: the ONLY path that ever decoded frames into the canvases
+     was the answer-pair preview, and that preview is a single frame per side
+     by design (server/preview.py extracts one, with the fidelity measurement
+     in its header). With the seam down there were no canvases at all and
+     seekToFrame returned on its first line. One extraction gives the plain
+     source-vs-output comparison the same decoded canvases, and the strip drives
+     them because it drives whatever `sides()` holds. */
+  async function mountPair(aUrl, bUrl, tags, meta) {
+    mountCanvases();
+    var decoded = await Promise.all([decode(aUrl), decode(bUrl)]);
+    meta = meta || {};
+    W.asset = meta.assetId || null; W.flag = meta.flag || null;
+    W.valueA = meta.valueA; W.valueB = meta.valueB;
+    W.regions = meta.regions || null;
+    W.a = prepare(decoded[0]);
+    W.b = prepare(decoded[1]);
+    W.ledgerA = meta.ledgerA || null;
+    W.ledgerB = meta.ledgerB || null;
+    W.formatIsGif = !!meta.formatIsGif;
+    var lt = document.querySelector('.wipetag.l'), rt = document.querySelector('.wipetag.r');
+    if (lt) lt.textContent = tags.a;
+    if (rt) rt.textContent = tags.b;
+    var wipe = $('#wipe');
+    if (wipe) wipe.setAttribute('aria-label', 'Drag to compare "' + tags.a + '" with "' + tags.b + '"');
+    renderLedger(W.ledgerA, W.ledgerB, tags);
+  }
+
+  /* the public form: two URLs, no engine round trip, no question. */
+  async function loadUrls(aUrl, bUrl, tagA, tagB) {
+    await mountPair(aUrl, bUrl, { a: tagA, b: tagB }, {});
+    showCard(false);
+    start();
+    if (root.Devoid && typeof root.Devoid.requeryRegions === 'function') root.Devoid.requeryRegions();
+    return { frames: W.a ? W.a.timeline.count : 0 };
+  }
+
   wireCard();
 
   /* ── the export  (extend window.Devoid, never clobber it) ─────────────── */
@@ -807,6 +831,7 @@
   D.loadPair = loadPair;
   D.wipe = {
     loadPair: loadPair,
+    loadUrls: loadUrls,
     play: play,
     pause: pause,
     seekToFrame: seekToFrame,

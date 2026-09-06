@@ -157,6 +157,15 @@ app.whenReady().then(async () => {
     await wait(250);
   };
 
+  /* ⚠️ Comparing the first 4000 characters of a PNG data URL is not comparing
+     the image: PNG is scanline-ordered, so two frames that share a transparent
+     top region share their prefix, and the check reported "pixels UNCHANGED"
+     over a canvas that had genuinely repainted. Hash the whole thing. */
+  const CANVAS_HASH = `(() => { const c = document.getElementById('wipe-a');
+    if (!c) return null; const d = c.toDataURL();
+    let h = 0; for (let i = 0; i < d.length; i++) { h = (h * 31 + d.charCodeAt(i)) | 0; }
+    return d.length + ':' + h; })()`;
+
   const shot = async (name, js, settle = 1400) => {
     if (js) { try { await win.webContents.executeJavaScript(js); } catch (e) { failures.push(`${name}: ${e.message}`); } }
     await wait(settle);                 // ⚠️ transitions are 300-420ms; never shoot mid-flight
@@ -379,6 +388,45 @@ app.whenReady().then(async () => {
   await wait(900);
   const ledgerAfter = await probe(`return { text: document.getElementById('ledger').textContent,
                                             word: document.getElementById('openstate').textContent }`);
+  // ⚠️ Task 27. With the question answered the seam comes down and the plain
+  // source-vs-output comparison takes over — which is the path loadUrls decodes.
+  // THIS is where the strip must actually scrub, and before Task 27 there were
+  // no canvases on this path at all, so the "pixels must move" branch of the
+  // film check had never once run.
+  // The non-seam path needs a cut output to compare against, and the gate has
+  // run no job. Drive the real render path with the corpus's own cut file
+  // rather than weakening the assertion.
+  await win.webContents.executeJavaScript(`
+    const a = S.assets.find(x => x.id === S.open);
+    S.jobs[S.open] = { state: 'done',
+      output_path: '/Applications/Claude Code/Devoid/web/assets/megaphone.gif',
+      ledger: { bg: 268431, art: 14822, total: 141169 } };
+    render();
+  `);
+  await wait(3000);
+  const scrub = await probe(`
+    const S2 = window.Devoid.wipe.sides();
+    const c = document.getElementById('wipe-a');
+    const btns = document.querySelectorAll('#frames button');
+    if (!c || !S2.a || !btns.length) return { ready: false, canvas: !!c, sides: !!S2.a, n: btns.length };
+    const before = ${CANVAS_HASH};
+    const live = [...btns].filter(b => !b.disabled).length;
+    btns[btns.length - 1].click();
+    return { ready: true, before, frames: S2.a.timeline.count, live, n: btns.length };
+  `);
+  if (scrub.ready) {
+    await wait(500);
+    const after = await probe(`return { after: ${CANVAS_HASH} }`);
+    check('with the seam down the strip scrubs the real comparison',
+          scrub.frames > 1 && scrub.live === scrub.n && after.after !== scrub.before,
+          `${scrub.frames} frames decoded, ${scrub.live}/${scrub.n} buttons live, pixels `
+          + `${after.after === scrub.before ? 'UNCHANGED' : 'changed'}`);
+  } else {
+    check('with the seam down the strip scrubs the real comparison', false, JSON.stringify(scrub));
+  }
+
+  await win.webContents.executeJavaScript(`delete S.jobs[S.open]; render()`);
+
   check('answering does not erase the ledger',
         !/nothing was measured/.test(ledgerAfter.text),
         `before "${ledgerBefore.text.slice(0, 40)}" -> after "${ledgerAfter.text.slice(0, 60)}"`);
@@ -391,10 +439,17 @@ app.whenReady().then(async () => {
     const btns = document.querySelectorAll('#frames button');
     const c = document.getElementById('wipe-a');
     if (!btns.length || !c) return { skipped: true, n: btns.length, canvas: !!c };
-    const before = c.toDataURL().length ? c.toDataURL() : '';
-    btns[btns.length - 1].click();
+    const before = ${CANVAS_HASH};
+    /* ⚠️ Click a frame that is NOT the one already showing. Task 27's own check
+       seeks to the last frame and stops the clock there, so clicking the last
+       button again is a no-op and the canvas is legitimately unchanged — a
+       false red saying "the strip is broken" about a strip working correctly.
+       Nothing in the probe itself told you that; the diagnostic did (shown=132
+       with pixels UNCHANGED, which can only mean it was already at 132). */
+    const cur = [...btns].findIndex(b => b.getAttribute('aria-current') === 'true');
+    btns[cur === 0 ? btns.length - 1 : 0].click();
     const S2 = window.Devoid.wipe.sides();
-    return { skipped: false, before: before.slice(0, 4000), n: btns.length,
+    return { skipped: false, before, n: btns.length, wasAt: cur,
              aFrames: S2.a ? S2.a.frames.length : null,
              aCount: S2.a && S2.a.timeline ? S2.a.timeline.count : null,
              bFrames: S2.b ? S2.b.frames.length : null };
@@ -403,9 +458,12 @@ app.whenReady().then(async () => {
     check('the film strip has frames and a mounted canvas', false, JSON.stringify(film));
   } else {
     await wait(400);
-    const after = await probe(`const c = document.getElementById('wipe-a');
+    const after = await probe(`
       const btns = document.querySelectorAll('#frames button');
-      return { after: c.toDataURL().slice(0, 4000), frame: S.frame,
+      const W3 = window.Devoid.wipe.sides();
+      return { after: ${CANVAS_HASH}, frame: S.frame, open: S.open,
+               count: W3.a ? W3.a.timeline.count : null,
+               shown: W3.a ? W3.a.shown : null,
                disabled: [...btns].every(b => b.disabled),
                count: document.getElementById('fcount').textContent }`);
     // Two outcomes are honest and the assertion can fail either way. If the
@@ -415,7 +473,8 @@ app.whenReady().then(async () => {
     if (film.aCount > 1) {
       check('clicking a frame moves the artwork, not just the counter',
             after.after !== film.before,
-            `frame=${after.frame}, pixels ${after.after === film.before ? 'UNCHANGED' : 'changed'}`);
+            `frame=${after.frame} on ${after.open}, count=${after.count}, shown=${after.shown}, `
+            + `disabled=${after.disabled}, pixels ${after.after === film.before ? 'UNCHANGED' : 'changed'}`);
     } else {
       check('the strip refuses to scrub a single-frame view, and says why',
             after.disabled && /one frame|not scrubbable/.test(after.count),
@@ -643,6 +702,40 @@ app.whenReady().then(async () => {
         tabs.labelled === tabs.n && tabs.controls === tabs.n,
         `${tabs.labelled} labelled, ${tabs.controls} wired of ${tabs.n}`);
   await win.webContents.executeJavaScript(`S.drawer=null;render()`);
+
+  // ⚠️ Stage 5. Three components that ADD rather than repair, so each is
+  // asserted on the thing that makes it not decoration: the core must appear on
+  // a real loading tile, the pip must move with real engine state, and the
+  // stage's well must be a radial gradient rather than the tiled grid the
+  // reference used (which is the shape of `repeating-stripes-gradient`).
+  const sig = await probe(`
+    const st = getComputedStyle(document.getElementById('stage'));
+    const p = document.getElementById('pip');
+    const before = p.dataset.pip;
+    S.assets.forEach(a => { S.jobs[a.id] = { state: 'running' }; });
+    render();
+    const working = p.dataset.pip, label = p.getAttribute('aria-label');
+    S.assets.forEach(a => delete S.jobs[a.id]);
+    render();
+    return { well: st.backgroundImage, before, working, label,
+             idleAgain: p.dataset.pip };
+  `);
+  check('the stage sits in a gravitational well, not on a grid',
+        /radial-gradient/.test(sig.well) && !/repeating/.test(sig.well),
+        sig.well.slice(0, 70));
+  check('the pip follows real engine state',
+        sig.working === 'working' && /working on/.test(sig.label || '') && sig.idleAgain === 'idle',
+        `${sig.before} -> ${sig.working} ("${sig.label}") -> ${sig.idleAgain}`);
+  const loader = await probe(`
+    S.assets[0] && (S.assets[0].state = 'loading');
+    S.drawer = null; closeAsset(); render();
+    const c = document.querySelector('.frame .core');
+    const disk = c && c.querySelector('.core-disk');
+    const anim = disk ? getComputedStyle(disk).animationName : null;
+    return { core: !!c, ring: !!(c && c.querySelector('.core-ring')), anim };
+  `);
+  check('a loading tile draws the accretion core', loader.core && loader.ring,
+        `core=${loader.core} ring=${loader.ring} animation=${loader.anim}`);
 
   const rm = await probe(`return { reduce: matchMedia('(prefers-reduced-motion: reduce)').matches }`);
   check('prefers-reduced-motion was actually emulated', rm.reduce === true, rm.reduce);

@@ -32,6 +32,23 @@ What shipped, when, and why. Newest first.
 - **Stage 5 — memory.** Two append-only logs with two schemas and one writer each, a crash journal that surfaces orphans without resuming them, history with rerun, and advice that ships with an undo of exactly what it changed.
 - **Stage 6 — ship it.** Menus, the port probe, engine logging, self-hosted fonts, and `electron-builder` packaging. ⚠️ The `.app` is **not standalone** — see `devoid-deferred-list.md`.
 
+### The remediation plan is executed — 27 tasks, five stages
+
+`docs/superpowers/plans/2026-09-06-devoid-remediation.md`, finished 2026-09-06 19:46 EDT. Four systems that were built, tested, exported and wired to nothing are connected; the interface stopped making claims that are false; the token, type and surface systems are derived and checked by script; the layout puts the artwork first; and three signature components were added.
+
+| what changed | measured |
+|---|---|
+| The artwork in the open view | ~~289x289~~ → **1037x1037** with a question open |
+| The film strip | scrubs **144** frames; it could move nothing in any state before |
+| Adjacent surface planes | ~~0.85, 2.09, 0.37, 4.26~~ → **~4 ΔL\*** per step |
+| The needs-you tile under a desaturated blur | ~~loses by 1.7~~ → **wins by 73.0** |
+| Type | ~~37 raw sizes, 31 in a 1.5px band~~ → **nine tokens** |
+| Gate assertions | ~~8~~ → **~30**, testing connection rather than presence |
+
+⚠️ **The plan was wrong four times and running it proved so** — each corrected in place with the falsification recorded, never quietly dropped. F3 was specced as "closed by F2"; the hatch drew and the hex string stayed. Task 7's "click frame 12, the artwork changes" was false in every state. Task 8's call site would have switched `--auto` off for the flag it suggested. Task 8's gate assertion named selectors that do not exist and could not fail.
+
+⚠️ **Two of the design reference's five headline moves are things this project's own detector calls slop**, and it said so the day they landed: an overshoot curve is `bounce-easing` and a cyan glow is `dark-glow`. What survived is the geometry underneath.
+
 ### The app is code-signed, and signing it found two defects nothing else could
 
 A self-signed `DEVOID` certificate (`mac.identity` in `electron-builder.yml`) produces a bundle that passes `codesign --verify --deep --strict` — `valid on disk`, `satisfies its Designated Requirement`. Identifier `Electron` → **`com.harkirat.devoid`**, hardened runtime on, `Sealed Resources version=2 rules=13 files=2451`, all five entitlements sealed in. **`build/entitlements.mac.plist` passed its first real test**: the signed app spawns Python and serves in 6s. ⚠️ Not Apple-issued, so no Gatekeeper anywhere else and no notarisation — and it does **not** unblock Check for Updates.

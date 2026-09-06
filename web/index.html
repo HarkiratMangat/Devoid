@@ -20,6 +20,9 @@
          the lighting swap is pure CSS and never flashes. role+aria-label keep
          the accessible name the old <span> had. -->
     <span class="wordmark" role="img" aria-label="Devoid"></span>
+    <!-- ⚠️ Driven by real engine state, which is the whole difference from the
+         reference this was adapted from, where the same dot is hardcoded. -->
+    <span class="pip" id="pip" data-pip="idle" role="status" aria-label="Engine idle"></span>
     <span class="crumb" id="crumb"></span>
     <span class="grow"></span>
     <button class="btn" id="selectall">Select all</button>
