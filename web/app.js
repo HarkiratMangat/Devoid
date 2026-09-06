@@ -260,7 +260,17 @@ function tile(a, big) {
   b.addEventListener('click', e => onTileClick(e, a.id));
   return b;
 }
-const renderSheet = () => $('#sheet').replaceChildren(...S.assets.map(a => tile(a, true)));
+const renderSheet = () => {
+  /* ⚠️ F36. Sort by STATE, not by arrival: the ones that need you first, then
+     the refused, then everything else. Hierarchy was being set by the source
+     file's own canvas colour, which made the needs-you card loud by coincidence
+     and would have left six already-cut assets with no focal point at all. */
+  const RANK = { 'needs-you': 0, blocked: 1, refused: 2, failed: 3 };
+  const order = [...S.assets].sort((x, y) =>
+    (RANK[stateOf(x)] ?? 9) - (RANK[stateOf(y)] ?? 9));
+  $('#sheet').toggleAttribute('data-few', S.assets.length <= 6);   // F37
+  $('#sheet').replaceChildren(...order.map(a => tile(a, true)));
+};
 const renderEdge  = () => $('#edge').replaceChildren(...S.assets.map(a => tile(a, false)));
 
 /* ── selection (PLAN.md 2.3) ──────────────────────────────────────────────
@@ -623,12 +633,36 @@ function renderAdvice(a) {
   }
 }
 
+/* ⚠️ The seam shows exactly ONE disputed pair — maybeLoadSeamPair loads the
+   first unanswered group — so its two answers belong under its two halves, and
+   the decision column carries that group's evidence plus any other groups.
+   Never two controls for one decision: the group on the seam renders its
+   evidence in the column WITHOUT a button pair. */
+function seamGroup(a) {
+  if (!a || !wipeOwned) return null;
+  const ans = S.answers[a.id] || { byColour: {} };
+  return colourGroups(a).find(g => !ans.byColour[g.hex]) || null;
+}
+function renderAnswerBar(a) {
+  const bar = $('#answerbar');
+  if (!bar) return;
+  const g = seamGroup(a);
+  if (!g) { bar.hidden = true; bar.replaceChildren(); return; }
+  const ans = S.answers[a.id] || (S.answers[a.id] = { byColour: {}, fade: null });
+  bar.hidden = false;
+  bar.replaceChildren(...answerPair(a, [
+    ['Keep it', 'protect', ans.byColour[g.hex] === 'protect'],
+    ['Cut it',  'remove',  ans.byColour[g.hex] === 'remove'],
+  ], v => { noteAnswer(a, g.hex, v); ans.byColour[g.hex] = v; S.blocked.delete(a.id); S.qerror = null; render(); }).childNodes);
+}
+
 function renderQuestions(a) {
   const box = $('#questions');
   const groups = colourGroups(a), fade = hasFade(a);
   if (!groups.length && !fade) { box.hidden = true; box.replaceChildren(); return; }
   box.hidden = false;
   const ans = S.answers[a.id] || (S.answers[a.id] = { byColour: {}, fade: null });
+  const onSeam = seamGroup(a);
   box.replaceChildren();
 
   for (const g of groups) {
@@ -655,10 +689,15 @@ function renderQuestions(a) {
       `held on ${r.frames_enclosed} of ${r.frames_checked} frames`
     ).join('  ·  ')));
     q.append(where);
-    q.append(answerPair(a, [
-      ['Keep it', 'protect', ans.byColour[g.hex] === 'protect'],
-      ['Cut it',  'remove',  ans.byColour[g.hex] === 'remove'],
-    ], v => { noteAnswer(a, g.hex, v); ans.byColour[g.hex] = v; S.blocked.delete(a.id); S.qerror = null; render(); }));
+    /* the group the seam is showing is answered under the seam, not here */
+    if (!(onSeam && onSeam.hex === g.hex)) {
+      q.append(answerPair(a, [
+        ['Keep it', 'protect', ans.byColour[g.hex] === 'protect'],
+        ['Cut it',  'remove',  ans.byColour[g.hex] === 'remove'],
+      ], v => { noteAnswer(a, g.hex, v); ans.byColour[g.hex] = v; S.blocked.delete(a.id); S.qerror = null; render(); }));
+    } else {
+      q.append(el('p', 'qhint', 'answer it under the seam'));
+    }
     box.append(q);
   }
 
@@ -1266,17 +1305,37 @@ function editor(f, value, set) {
    lowercase — they are identifiers used for lookup and comparison — and only
    the rendered label is cased, so nothing downstream has to change. */
 const sentence = t => t.charAt(0).toUpperCase() + t.slice(1);
+/* one mark per drawer, from the pencil vocabulary the frames already carry */
+const TAB_MARK = {
+  'what to keep': 'ready', 'what to make': 'done', 'the edge': 'running',
+  'how small': 'loading', 'what it found': 'conflict', 'it refused': 'refused',
+  'what you did': 'cancelled',
+};
 function renderTabs() {
-  $('#tabs').replaceChildren(...Object.keys(DRAWERS).map(name => {
-    const b = el('button', null, sentence(name));
+  /* ⚠️ F35. No rail on an empty table: six controls for a table with nothing
+     on it is chrome asking to be paid for before anything has happened. */
+  const empty = !S.assets.length;
+  $('#tabs').hidden = empty;
+  $('#tabs').replaceChildren(...Object.keys(DRAWERS).map((name, i) => {
+    const b = el('button');
     b.setAttribute('aria-expanded', String(S.drawer === name));
+    b.setAttribute('aria-controls', 'drawer');
+    b.setAttribute('aria-label', sentence(name));
+    b.title = `${sentence(name)}  ⌘${i + 1}`;
+    b.append(pencil(TAB_MARK[name] || 'ready', 'tmark'), el('span', 'tlab', sentence(name)));
     b.addEventListener('click', () => { S.drawer = S.drawer === name ? null : name; render(); });
     return b;
   }));
   const d = $('#drawer');
-  d.hidden = !S.drawer;
-  if (!S.drawer) return;
-  d.replaceChildren(el('h2', null, sentence(S.drawer)));
+  d.hidden = !S.drawer || empty;
+  if (d.hidden) return;
+  d.setAttribute('aria-labelledby', 'drawer-title');
+  const close = el('button', 'drawer-close', '×');
+  close.setAttribute('aria-label', 'Close this drawer');
+  close.addEventListener('click', () => { S.drawer = null; render(); });
+  const h = el('h2', null, sentence(S.drawer));
+  h.id = 'drawer-title';
+  d.replaceChildren(close, h);
 
   /* the drawers act on the SELECTION, and they say so -- except the history,
      which is the whole log and would be lying if it claimed a scope. */
@@ -1643,7 +1702,7 @@ function render() {
     $('#regiontools').hidden = !plotterWelcome;
     $('#regioncanvas').hidden = !plotterWelcome;
     maybeLoadSeamPair(a);
-    renderEdge(); renderQuestions(a); renderAdvice(a); renderLedger(a); renderFilm(a);
+    renderEdge(); renderQuestions(a); renderAnswerBar(a); renderAdvice(a); renderLedger(a); renderFilm(a);
     renderQuestionRegions(a);
     /* ⚠️ `{once: true}` only removes the listener AFTER it fires, and with an
        unchanged src no load event ever fires — so one accumulated per render,
@@ -1812,7 +1871,12 @@ $('#primary').addEventListener('click', () => {
   cut();
 });
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && S.drawer) { S.drawer = null; render(); return; }
   if (e.key === 'Escape' && S.open) closeAsset();
+  if ((e.metaKey || e.ctrlKey) && /^[1-9]$/.test(e.key)) {
+    const name = Object.keys(DRAWERS)[Number(e.key) - 1];
+    if (name) { e.preventDefault(); S.drawer = S.drawer === name ? null : name; render(); }
+  }
   /* ⚠️ F13. CLAUDE.md: "Advice always ships with an undo of exactly what it
      changed." The answer is the app's most consequential decision and it had
      none. ⌘Z restores the previous snapshot, not a guessed prior state. */

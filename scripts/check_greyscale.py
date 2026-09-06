@@ -31,6 +31,7 @@ SHOTS = ROOT / "local" / "window-shots"
 # ⚠️ These margins are what a desaturated eye can separate, not what looks nice.
 MARK_MARGIN = 8.0          # 0-255; a mark must stand off its own background
 PAIR_MARGIN = 6.0          # two segments of one bar must not read as one block
+SQUINT_MARGIN = 8.0        # the focal tile must lead the field, not tie with it
 
 MARKS = [
     ("09-seam", ".omark", "F29 — the open view's state mark"),
@@ -53,24 +54,43 @@ def load(name: str):
     return Image.open(png).convert("L"), json.loads(boxes.read_text())
 
 
-def mean(img, box) -> float:
+def clamp(img, box):
+    """A box clipped to the image, or None when nothing of it is visible.
+
+    ⚠️ An element scrolled above the viewport reports a NEGATIVE top, and an
+    element in a collapsed container reports zero height. Both produced a crop
+    whose lower edge was above its upper edge and PIL raised — a checker that
+    crashes on a real, ordinary state is a checker nobody will run.
+    """
     x, y, w, h = box
-    w, h = max(1, w), max(1, h)
-    x, y = max(0, x), max(0, y)
-    crop = img.crop((x, y, min(img.width, x + w), min(img.height, y + h)))
-    px = list(crop.getdata())
+    x0, y0 = max(0, x), max(0, y)
+    x1, y1 = min(img.width, x + max(0, w)), min(img.height, y + max(0, h))
+    if x1 <= x0 or y1 <= y0:
+        return None
+    return (x0, y0, x1, y1)
+
+
+def mean(img, box) -> float:
+    r = clamp(img, box)
+    if r is None:
+        return 0.0
+    px = list(img.crop(r).getdata())
     return sum(px) / len(px) if px else 0.0
 
 
 def ring(img, box, pad: int = 10) -> float:
     """The mean of the band around a box — what the mark has to stand off."""
+    inner = clamp(img, box)
+    if inner is None:
+        return 0.0
     x, y, w, h = box
-    outer = (max(0, x - pad), max(0, y - pad),
-             min(img.width, x + w + pad), min(img.height, y + h + pad))
+    outer = clamp(img, (x - pad, y - pad, w + 2 * pad, h + 2 * pad))
+    if outer is None:
+        return 0.0
     o = img.crop(outer)
     total, count = sum(o.getdata()), o.width * o.height
     inner_mean = mean(img, box)
-    inner_count = max(1, min(img.width, x + w) - max(0, x)) * max(1, min(img.height, y + h) - max(0, y))
+    inner_count = (inner[2] - inner[0]) * (inner[3] - inner[1])
     band = count - inner_count
     if band <= 0:
         return inner_mean
@@ -89,9 +109,14 @@ def main() -> int:
             continue
         worst = None
         for box in got:
+            if clamp(img, box) is None:
+                continue                      # off-screen or collapsed: not a failure, not a score
             d = abs(mean(img, box) - ring(img, box))
             if worst is None or d < worst[0]:
                 worst = (d, box)
+        if worst is None:
+            failures.append(f"{name}: every `{sel}` box was off-screen or collapsed ({why})")
+            continue
         d, box = worst
         ok = d >= MARK_MARGIN
         if not ok:
@@ -114,6 +139,41 @@ def main() -> int:
                             f"needs {PAIR_MARGIN} ({why})")
         print(f"{name:20} {a_sel + ' vs ' + b_sel:34} {da:7.1f} {db:7.1f} {d:6.1f}  "
               f"{PAIR_MARGIN}{'' if ok else '  ✗'}")
+
+    # --- F36: the squint test, as a measurement -----------------------------
+    # `DESIGN.md` claims the contact sheet's hierarchy survives a desaturated
+    # blur and `HANDOFF.md` claimed it was checked. Hierarchy was actually being
+    # set by the SOURCE FILE's own canvas colour, so the needs-you card was loud
+    # by coincidence — and six already-cut assets would have left no focal point
+    # at all. Blur hard enough that only mass and value survive, then ask which
+    # tile wins.
+    from PIL import Image, ImageFilter
+    img, boxes = load("01-contact-sheet")
+    blurred = img.filter(ImageFilter.GaussianBlur(radius=12))
+    want = boxes.get('.frame[data-state="needs-you"]') or []
+    # ⚠️ Compare against EVERY other tile, not against two hand-picked states.
+    # The corpus does not always contain a `ready` and a `done`, and a check
+    # that silently has nothing to compare against is a check that cannot fail.
+    wanted = {tuple(b) for b in want}
+    others = [b for b in (boxes.get('.frame') or []) if tuple(b) not in wanted]
+    if not want:
+        failures.append("01-contact-sheet: no needs-you tile was on the sheet (F36 squint test)")
+    elif not others:
+        failures.append("01-contact-sheet: nothing to compare the needs-you tile against (F36 squint test)")
+    else:
+        mine = max(mean(blurred, b) for b in want)
+        theirs = max(mean(blurred, b) for b in others)
+        # ⚠️ `> 0` is not a squint test. The first run of this check passed by
+        # 0.4/255, which no eye can separate — a pass with no margin is a fail
+        # wearing a tick. SQUINT_MARGIN is what a blurred, desaturated glance
+        # can actually pick out.
+        ok = (mine - theirs) >= SQUINT_MARGIN
+        if not ok:
+            failures.append(f"01-contact-sheet: under a desaturated blur the needs-you tile reads "
+                            f"{mine:.1f} against {theirs:.1f}, a margin of {mine - theirs:.1f} — state is not setting the "
+                            f"hierarchy (F36 squint test)")
+        print(f"{'01-contact-sheet':20} {'squint: needs-you vs the rest':34} "
+              f"{mine:7.1f} {theirs:7.1f} {mine - theirs:6.1f}  {SQUINT_MARGIN}{'' if ok else '  ✗'}")
 
     if failures:
         print(f"\nFAILURES ({len(failures)}):")

@@ -183,8 +183,45 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .work{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
 
 /* ── the contact sheet: the strip with nothing selected ─────────────────── */
+/* ⚠️ F37. Density responds to COUNT, and deliberately not by centring a fixed
+   grid: that breaks at n=200 and contradicts "one asset, twelve and two hundred
+   are the same layout", which is an information-architecture claim rather than
+   a sizing one. A few assets get bigger cards and a capped measure; many get
+   the dense grid. Same layout, different density. */
 .sheet{flex:1;overflow:auto;padding:var(--s4);display:grid;align-content:start;
   grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:var(--s3)}
+.sheet[data-few]{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  max-width:1180px;margin-inline:auto;width:100%}
+
+/* ⚠️ F36. Hierarchy was set by the SOURCE FILE's own canvas colour — the
+   needs-you card was loud by coincidence, and six already-cut assets would
+   leave no focal point at all. State sets it now: a ring and the hatch, on a
+   ground every tile shares. */
+.frame[data-state="needs-you"],.frame[data-state="refused"],.frame[data-state="blocked"]{
+  box-shadow:inset 0 0 0 2px var(--ruby)}
+.frame[data-state="needs-you"] .win::before,.frame[data-state="refused"] .win::before,
+.frame[data-state="blocked"] .win::before{content:"";position:absolute;inset:0;
+  pointer-events:none;z-index:1;
+  background:repeating-linear-gradient(45deg,rgba(226,64,42,.26) 0 3px,transparent 3px 9px)}
+.frame .win{background:var(--well)}
+/* ⚠️ F36, and the squint test measured the first attempt failing: a ruby ring
+   and a hatch DARKEN a bright tile, so the needs-you card came out at 164.0
+   against a brighter 165.8 — it lost the squint to a tile with lighter artwork
+   in it. Adding emphasis to one card cannot win when the competition is the
+   artwork's own canvas colour. The field recedes instead.
+   ⚠️ This is the CONTACT SHEET, which is a navigation surface. Nothing dims on
+   the stage, which is where an edge is actually judged — dimming artwork you
+   are judging would be showing you something you are not going to get. */
+/* ⚠️ Written as "everything EXCEPT the demanding states", not as a list of the
+   settled ones: the first version listed done/ready/cancelled and left
+   loading, running, conflict, not-checked and failed at full brightness, so
+   the needs-you tile won the squint by 0.4/255 — a pass with no margin, which
+   is a fail wearing a tick. Enumerate the exception, never the rule. */
+.sheet .frame:not([data-state="needs-you"]):not([data-state="refused"]):not([data-state="blocked"]) .win img{
+  filter:brightness(.55) saturate(.65)}
+.sheet .frame:hover .win img{filter:none}
+.sheet .frame[data-state="needs-you"],.sheet .frame[data-state="refused"],
+.sheet .frame[data-state="blocked"]{background:var(--raise)}
 .frame{background:var(--sprocket);border-radius:var(--r2);padding:var(--s2);display:block;
   text-align:left;box-shadow:inset 0 0 0 1px var(--score);
   transition:background .18s var(--ease),transform .18s var(--ease),box-shadow .18s var(--ease)}
@@ -208,10 +245,31 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 
 /* ── one asset open ─────────────────────────────────────────────────────── */
 .open{flex:1;display:flex;flex-direction:column;min-height:0}
-.openhead{flex:none;padding:var(--s3) var(--s4) 0;display:flex;align-items:baseline;gap:var(--s3)}
+/* ⚠️ F32. The chrome is on the SHORT axis now. A square focal element in a
+   1.55:1 window has spare width and no spare height, so the question, its
+   answers and the ledger move into a column beside the artwork instead of
+   stacking under it. The column is 340px — wide enough for the question and
+   its evidence at --t-body, narrow enough that the artwork still leads. */
+.openbody{flex:1;min-height:0;display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(300px,340px);gap:0}
+.stagecol{display:flex;flex-direction:column;min-width:0;min-height:0}
+.decide{border-left:1px solid var(--score);background:var(--bench);
+  overflow:auto;display:flex;flex-direction:column;min-height:0}
+/* below the point where a column would squeeze the artwork instead of freeing
+   it, the decision goes back under the stage */
+@media (max-width:1080px){
+  .openbody{grid-template-columns:minmax(0,1fr)}
+  .decide{border-left:none;border-top:1px solid var(--score);max-height:38%}
+}
+
+/* the answers, under their own half of the seam */
+.answerbar{flex:none;display:flex;justify-content:space-between;gap:var(--s3);
+  padding:var(--s1) var(--s4) 0}
+.answerbar .btn{min-width:132px}
+.openhead{flex:none;padding:var(--s2) var(--s4) 0;display:flex;align-items:center;gap:var(--s3)}
 .openhead h1{margin:0;font-size:var(--t-h1);font-weight:700;font-stretch:104%;letter-spacing:-.03em}
 .openhead p{margin:0;font-family:"Spline Sans Mono",monospace;font-size:var(--t-meta);color:var(--graphite-3)}
-.stage{flex:1;display:grid;place-items:center;padding:var(--s3) var(--s4);min-height:0;
+.stage{flex:1;display:grid;place-items:center;padding:var(--s2) var(--s3);min-height:0;
   overflow:hidden;position:relative}
 
 /* THE WIPE — the seam is the cut line. Drag it across a playing loop and the
@@ -240,25 +298,25 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 
 /* THE LEDGER — what this setting is about to destroy. Numbers the engine already
    computes and currently discards. */
-.ledger{flex:none;display:flex;align-items:center;gap:var(--s4);padding:var(--s2) var(--s4);
-  background:var(--bench);border-top:1px solid var(--score);font-family:"Spline Sans Mono",monospace;
-  font-size:var(--t-meta);color:var(--graphite-2);flex-wrap:wrap}
+.ledger{flex:none;display:flex;align-items:baseline;gap:var(--s2);padding:var(--s3);
+  background:transparent;border-top:1px solid var(--score);font-family:"Spline Sans Mono",monospace;
+  font-size:var(--t-meta);color:var(--graphite-2);flex-wrap:wrap;margin-top:auto}
 .ledger b{color:var(--graphite);font-weight:500}
-/* the app's first number worth looking at. ⚠️ --t-figure (34px) is the scale's
-   figure step and it does not fit this row, which is `flex:none` under the
-   stage; it lands when Task 21 moves the ledger into the decision column. */
-.ledger .fig{font-size:var(--t-h2);font-variant-numeric:tabular-nums;
+/* the app's first number worth looking at, at the scale's figure step. It did
+   not fit while the ledger was a thin row under the stage; Task 21 gave it a
+   column, which is what the step was waiting for. */
+.ledger .fig{font-size:var(--t-figure);font-variant-numeric:tabular-nums;
   color:var(--graphite);font-weight:500;line-height:1}
 .ledger .loss{color:var(--ruby-ink)}
 .ledger .safe{color:var(--ok)}
 .ledger .blank{color:var(--amber)}
 
-.film{flex:none;background:var(--sprocket);border-top:1px solid var(--score);padding:var(--s2) var(--s3) var(--s3)}
-.filmhead{display:flex;justify-content:space-between;gap:var(--s3);margin-bottom:var(--s2);
+.film{flex:none;background:var(--sprocket);border-top:1px solid var(--score);padding:var(--s1) var(--s3) var(--s2)}
+.filmhead{display:flex;justify-content:space-between;gap:var(--s3);margin-bottom:var(--s1);
   font-family:"Spline Sans Mono",monospace;font-size:var(--t-meta);color:var(--graphite-3)}
 .frames{display:flex;gap:2px}
 /* no easing on the playhead — scrubbing must feel like dragging a physical strip */
-.frames button{flex:1;height:40px;background:var(--void);position:relative;
+.frames button{flex:1;height:30px;background:var(--void);position:relative;
   border-top:3px solid transparent;border-bottom:3px solid transparent}
 .frames button:hover{background:var(--raise)}
 .frames button.ghost{opacity:.4}
@@ -279,15 +337,48 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .edge img{width:100%;height:100%;object-fit:contain;padding:5px}
 
 /* ── drawers: summoned, and they open beside what they affect ───────────── */
-.tabs{flex:none;width:38px;background:var(--bench);border-left:1px solid var(--score);
+/* ⚠️ F33. The rail was `writing-mode:vertical-rl` — six labels rotated 90°, in
+   an app you read horizontally. Rotated text is measurably slower to read and
+   it was the only rotated type in the product. The rail keeps its width (the
+   drawers-not-columns decision is measured and survives); the LABEL comes off
+   the rail and into a popover, and a mark from the app's own pencil vocabulary
+   takes its place. A rest-state inset border makes them read as tabs before
+   you click one. */
+.tabs[hidden]{display:none}
+.tabs{flex:none;width:52px;background:var(--bench);border-left:1px solid var(--score);
   display:flex;flex-direction:column;align-items:center;gap:var(--s1);padding:var(--s2) 0}
-.tabs button{writing-mode:vertical-rl;padding:var(--s2) 4px;font-size:var(--t-micro);border-radius:var(--r);
-  color:var(--graphite-2);letter-spacing:.02em;transition:background .15s var(--ease)}
+.tabs button{position:relative;width:40px;height:40px;border-radius:var(--r);
+  display:grid;place-items:center;color:var(--graphite-2);
+  box-shadow:inset 0 0 0 1px var(--score);
+  transition:background .15s var(--ease),box-shadow .15s var(--ease)}
+.tabs button .tmark{width:20px;height:20px;display:block}
+.tabs button .tmark path,.tabs button .tmark circle{fill:none;stroke-width:8;
+  stroke-linecap:round;stroke-linejoin:round}
 .tabs button:hover{background:var(--raise);color:var(--graphite)}
-.tabs button[aria-expanded="true"]{background:var(--raise);color:var(--graphite);font-weight:600;
-  box-shadow:inset 2px 0 0 var(--cyan)}
-.drawer{flex:none;width:250px;background:var(--bench);border-left:1px solid var(--score);
+.tabs button[aria-expanded="true"]{background:var(--raise);color:var(--graphite);
+  box-shadow:inset 0 0 0 1px var(--cyan),inset 3px 0 0 var(--cyan)}
+/* the label, on hover and on focus — never rotated */
+.tabs .tlab{position:absolute;right:calc(100% + 8px);top:50%;transform:translateY(-50%);
+  white-space:nowrap;font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);
+  background:var(--raise);color:var(--graphite);padding:4px 9px;border-radius:var(--r);
+  box-shadow:var(--float);opacity:0;pointer-events:none;transition:opacity .12s var(--ease)}
+.tabs button:hover .tlab,.tabs button:focus-visible .tlab{opacity:1}
+
+/* ⚠️ F34. `.drawer` was a flex SIBLING, so opening it shrank the artwork you
+   were judging — and the codebase already carried a ResizeObserver working
+   around the symptom. It overlays now: opening a drawer costs the work nothing. */
+/* ⚠️ `.table>*:not(#starfield){position:relative}` is (1,1,0) because the id
+   inside :not() counts, so a bare `.drawer{position:absolute}` lost to it and
+   the drawer stayed in flow — measured: the artwork went 539 -> 428px when a
+   drawer opened, exactly the defect this rule exists to remove. The id makes
+   the specificity match, and source order does the rest. */
+#drawer.drawer{position:absolute;top:0;right:52px;bottom:0;width:300px;z-index:3;
+  background:var(--bench);border-left:1px solid var(--score);
   padding:var(--s3);overflow:auto;box-shadow:var(--float)}
+.drawer-close{position:absolute;top:var(--s2);right:var(--s2);width:28px;height:28px;
+  border-radius:var(--r);color:var(--graphite-2);display:grid;place-items:center;
+  font-size:var(--t-h3);line-height:1}
+.drawer-close:hover{background:var(--raise);color:var(--graphite)}
 .drawer h2{margin:0 0 var(--s2);font-size:var(--t-label);font-weight:600}
 .ctl{padding:9px 2px;display:flex;align-items:center;gap:var(--s2);border-bottom:1px dashed var(--score)}
 .ctl:last-child{border-bottom:none}
@@ -405,8 +496,8 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .banner[data-state="cancelled"] .bword,.banner[data-state="loading"] .bword{color:var(--graphite-2)}
 
 /* ── the questions the engine refused to answer ───────────────────────── */
-.questions{flex:none;max-height:30%;overflow:auto;padding:var(--s3) var(--s4);
-  background:var(--bench);border-top:1px solid var(--score)}
+/* in the decision column now: no max-height, no top border, it IS the column */
+.questions{flex:none;padding:var(--s3);background:transparent;border-top:none}
 .questions .q{padding-bottom:var(--s3);margin-bottom:var(--s3);border-bottom:1px dashed var(--score)}
 .questions .q:last-of-type{border-bottom:none;margin-bottom:var(--s2)}
 .questions h3{margin:0 0 var(--s1);font-size:var(--t-h3);font-weight:600;font-stretch:104%}

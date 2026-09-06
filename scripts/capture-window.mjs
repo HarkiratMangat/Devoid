@@ -175,13 +175,12 @@ app.whenReady().then(async () => {
       const boxes = await probe(`
         const dpr = window.devicePixelRatio || 1;
         const want = ['.omark', '#openstate b', '.lseg-bg', '.lseg-total',
-                      '.frame[data-state="needs-you"]', '.frame[data-state="ready"]',
-                      '.frame[data-state="done"]', '.st', '.bword', '.bmark'];
+                      '.frame[data-state="needs-you"]', '.frame', '.st', '.bword', '.bmark'];
         const out = {};
         for (const sel of want) {
           const els = [...document.querySelectorAll(sel)].filter(e => e.getClientRects().length);
           if (!els.length) continue;
-          out[sel] = els.slice(0, 8).map(e => {
+          out[sel] = els.slice(0, 24).map(e => {
             const r = e.getBoundingClientRect();
             return [Math.round(r.left * dpr), Math.round(r.top * dpr),
                     Math.round(r.width * dpr), Math.round(r.height * dpr)];
@@ -375,7 +374,7 @@ app.whenReady().then(async () => {
   // Answer for real -- click the button a person clicks -- and read the ledger.
   const ledgerBefore = await probe(`return { text: document.getElementById('ledger').textContent }`);
   await win.webContents.executeJavaScript(`
-    const b = document.querySelector('#questions button'); if (b) b.click();
+    const b = document.querySelector('#answerbar button, #questions button'); if (b) b.click();
   `);
   await wait(900);
   const ledgerAfter = await probe(`return { text: document.getElementById('ledger').textContent,
@@ -573,11 +572,11 @@ app.whenReady().then(async () => {
     S.answers[S.open] = { byColour: {}, fade: null };
     S.answerUndo.length = 0;
     render();
-    const b = document.querySelector('#questions button');
+    const b = document.querySelector('#answerbar button, #questions button');
     if (!b) return { skipped: true };
     b.click();
     const answered = JSON.stringify(S.answers[S.open] || {});
-    const stillThere = !!document.querySelector('#questions button');
+    const stillThere = !!document.querySelector('#questions .q');
     undoAnswer();
     return { skipped: false, answered, stillThere,
              reverted: JSON.stringify(S.answers[S.open] || {}) };
@@ -600,6 +599,50 @@ app.whenReady().then(async () => {
   check('a finished job renders the ledger bar', bar.bar && bar.segs === 2,
         `bar=${bar.bar} segments=${bar.segs}`);
   await win.webContents.executeJavaScript(`delete S.jobs[S.open]; render()`);
+
+  // ⚠️ F32. Measured before this stage at 1280x796: #wipe was 289x289 with a
+  // question open and 553x553 without — 359px of chrome arriving exactly when
+  // judging mattered most. The decision moved beside the artwork; assert the
+  // artwork actually grew, in the state that was worst.
+  await win.webContents.executeJavaScript(`S.drawer=null;openAsset(${JSON.stringify(megaId)})`);
+  await wait(1200);
+  const lead = await probe(`
+    const r = document.getElementById('wipe').getBoundingClientRect();
+    const q = !!document.querySelector('#questions .q');
+    return { w: Math.round(r.width), h: Math.round(r.height), question: q,
+             answersUnderSeam: !document.getElementById('answerbar').hidden };
+  `);
+  check('the artwork leads its own view', lead.w >= 550,
+        `${lead.w}x${lead.h} with a question ${lead.question ? 'open' : 'absent'} (was 289)`);
+  check('the two answers sit under the seam, not under a stack of chrome',
+        lead.answersUnderSeam, `answerbar hidden=${!lead.answersUnderSeam}`);
+
+  // ⚠️ F34. Opening a drawer used to shrink the artwork being judged, and the
+  // codebase carried a ResizeObserver working around the symptom.
+  const beforeDrawer = await probe(`return { w: Math.round(document.getElementById('wipe').getBoundingClientRect().width) }`);
+  await win.webContents.executeJavaScript(`S.drawer=Object.keys(DRAWERS)[0];render()`);
+  await wait(600);
+  const withDrawer = await probe(`
+    const r = document.getElementById('wipe').getBoundingClientRect();
+    const d = document.getElementById('drawer');
+    return { w: Math.round(r.width), overlay: getComputedStyle(d).position };
+  `);
+  check('opening a drawer does not resize the work',
+        withDrawer.w === beforeDrawer.w && withDrawer.overlay === 'absolute',
+        `${beforeDrawer.w} -> ${withDrawer.w}px, drawer position=${withDrawer.overlay}`);
+  const tabs = await probe(`
+    const bs = [...document.querySelectorAll('#tabs button')];
+    return { n: bs.length,
+             rotated: bs.filter(b => getComputedStyle(b).writingMode.startsWith('vertical')).length,
+             labelled: bs.filter(b => b.getAttribute('aria-label')).length,
+             controls: bs.filter(b => b.getAttribute('aria-controls') === 'drawer').length };
+  `);
+  check('no label in the app is rotated', tabs.n > 0 && tabs.rotated === 0,
+        `${tabs.rotated} of ${tabs.n} tabs still vertical`);
+  check('every tab names and controls its drawer',
+        tabs.labelled === tabs.n && tabs.controls === tabs.n,
+        `${tabs.labelled} labelled, ${tabs.controls} wired of ${tabs.n}`);
+  await win.webContents.executeJavaScript(`S.drawer=null;render()`);
 
   const rm = await probe(`return { reduce: matchMedia('(prefers-reduced-motion: reduce)').matches }`);
   check('prefers-reduced-motion was actually emulated', rm.reduce === true, rm.reduce);

@@ -71,6 +71,14 @@
             <button class="swatch sw-black" role="radio" data-matte="black" aria-checked="false" tabindex="-1" aria-label="Black ground"></button>
             <button class="swatch sw-chroma" role="radio" data-matte="chroma" aria-checked="false" tabindex="-1" aria-label="Chroma-key ground"></button>
           </div></div>
+        <!-- ⚠️ F32. Measured at 1280x796: #wipe was 289x289 with a question open
+             and 553x553 without — 359px of chrome appeared exactly when judging
+             mattered most, because the question, the ledger and the film strip
+             all stacked UNDER a square focal element in a 1.55:1 window. A
+             square wants its companions BESIDE it. The stage keeps the long
+             axis; the decision moves into a column of its own. -->
+        <div class="openbody">
+        <div class="stagecol">
         <div class="stage" id="stage">
           <!-- Stage 3: wipe.js replaces #before/#after (looping <img>) with two
                synced <canvas> elements decoding shared frame timing (PLAN.md 3.3),
@@ -104,18 +112,15 @@
                falsifier-first task. Hidden until a drawing tool is active. -->
           <canvas id="regioncanvas" aria-label="Regions drawn on the artwork" hidden></canvas>
         </div>
+        <!-- ⚠️ The two answers sit under their own half of the seam, so the
+             choice and the evidence for it are ONE object. The seam shows
+             exactly one disputed pair at a time (maybeLoadSeamPair loads the
+             first unanswered group), so this bar answers that pair and the
+             decision column carries the rest. Never both for one group. -->
+        <div class="answerbar" id="answerbar" hidden></div>
         <!-- Stage 4's toolbar: six region tools (protect, remove, remove-track,
              unprotect, translucent, fade-protect) plus the eyedropper. -->
         <div class="regiontools" id="regiontools" hidden></div>
-        <!-- Stage 2: the questions the engine refused to answer, grouped BY
-             OUTLINE COLOUR (API-CONTRACT "Per-colour vs per-region"). Filled
-             and shown by app.js; the wipe that illustrates them is #wipe. -->
-        <div class="questions" id="questions" hidden></div>
-        <!-- advice.js renders its own DOM and its own <style> into here. Without
-             this element it falls back to document.body, which would put
-             suggestions outside the open view entirely. -->
-        <div id="advice-host"></div>
-        <div class="ledger" id="ledger"></div>
         <div class="film">
           <!-- ⚠️ F14. `<span id="onion">onion skin · 2 frames</span>` lived here and
                was referenced by NOTHING — no JS, no CSS, no server field. There
@@ -124,6 +129,13 @@
           <div class="filmhead"><span id="fcount"></span></div>
           <div class="frames" id="frames"></div>
         </div>
+        </div><!-- /.stagecol -->
+        <aside class="decide" id="decide" aria-label="The decision">
+          <div class="questions" id="questions" hidden></div>
+          <div id="advice-host"></div>
+          <div class="ledger" id="ledger"></div>
+        </aside>
+        </div><!-- /.openbody -->
       </div>
 
       <!-- the empty table. emptiness is the subject, so no illustration. -->
