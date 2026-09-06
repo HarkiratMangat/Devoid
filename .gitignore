@@ -14,6 +14,14 @@ out/
 .devoid-journal.json.tmp
 .claude/worktrees/
 
+# Brand source art. The eight FINALS at the top level are tracked -- the icon,
+# the two wordmarks, the three banners and the nebula are what anything else
+# gets rebuilt from. Every SUBFOLDER is ignored: the PSDs are 59 MB of the
+# 157 MB total, and the WIP renders are exploration, not source. Harkirat's
+# call 2026-09-05. The trailing `/` matches directories only, so a new WIP
+# folder is ignored the day it appears without anyone remembering to add it.
+DEVOID Logo Assets/*/
+
 # Your work history (PLAN.md 5.1). Per-machine, not shared: every real render
 # appends a row carrying local absolute paths, so tracking it dirties the tree
 # on every use and makes two branches conflict on a merge that means nothing.

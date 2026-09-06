@@ -35,7 +35,10 @@ import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-MASTER = Path(sys.argv[1]) if len(sys.argv) > 1 else Path.home() / "Downloads" / "devoid_wordmark_transparent.png"
+#: ⚠️ The master lives IN THE REPO. It was first read from ~/Downloads, and that
+#: file was gone within the hour — a build script whose input can vanish is not
+#: reproducible, which is this project's rule about every quoted number.
+MASTER = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "DEVOID Logo Assets" / "DEVOID Workmark_Transparent.png"
 OUT = ROOT / "web" / "assets"
 
 #: 6x the ~22px the header renders it at, which covers a 2x display with room.
