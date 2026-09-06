@@ -45,6 +45,18 @@ The "lamp over the bench" metaphor became **the void**: the ground is deep space
 | Hit targets, SC 2.5.8 | matte swatches ~~23.6px~~ → **28px**; every other element already passing |
 | Design detector | exactly one accepted finding, `repeating-stripes-gradient` |
 
+### Check for Updates…
+
+A menu item under **Devoid**, and only a menu item: it runs when clicked and at no other time, because an app whose premise is that it talks to nothing should not ping a server on launch.
+
+It cannot install anything, deliberately. macOS auto-update goes through Squirrel.Mac, which validates the code signature of the download, so an unsigned build **cannot** install its own update — wiring `electron-updater` now would ship a path guaranteed to fail. It reports what exists and opens the release page.
+
+`compareVersions` lives in `lib/versions.js` rather than in `main.js`, for one reason: `main.js` cannot be required without booting Electron, and this is the only piece of the check that can be wrong **silently**. A string compare calls `1.9.0` newer than `1.10.0` and the app then never offers an update again. **Five tests, red-green verified** — the naive version fails four of them. `npm run test:versions`.
+
+⚠️ **A GitHub 404 is ambiguous and is not reported as one thing.** It means both "no releases published" and "private repository, anonymous caller" — and this repository is private, so the app says it cannot tell which rather than claiming the first.
+
+Verified against the live API: the 404 path on this repo, and the 200 path on a public one, where the tag parses, compares, and carries the release URL.
+
 ### The wordmark is the artwork now
 
 DEVOID with the **O drawn as the accretion disk itself** — supplied by the user, and it is the same object the empty table's horizon and the lighting toggle already are, in the same cyan and ruby the palette was built from. It replaces the CSS letterform whose O was a knocked-out counter with a rubylith fill.

@@ -10,7 +10,8 @@
     "vendor:gifuct": "esbuild node_modules/gifuct-js/src/index.js --bundle --format=iife --global-name=gifuct --minify --outfile=web/vendor/gifuct.js",
     "test:wipe": "node --test tests/test_wipe_sync.mjs",
     "gate:ui": "electron scripts/capture-window.mjs",
-    "test:coords": "node --test tests/test_canvas_coords.mjs"
+    "test:coords": "node --test tests/test_canvas_coords.mjs",
+    "test:versions": "node --test tests/test_versions.mjs"
   },
   "author": "Harkirat Mangat",
   "repository": {

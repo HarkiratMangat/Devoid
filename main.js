@@ -3,6 +3,8 @@ const { spawn } = require('child_process');
 const path = require('path');
 const http = require('http');
 const net = require('net');
+const https = require('https');
+const { compareVersions } = require('./lib/versions');
 const fs = require('fs');
 
 const BASE_PORT = 8732;
@@ -251,6 +253,100 @@ function deliverPaths(filePaths) {
   console.log(`[devoid] opened ${filePaths.length} file(s)`);
 }
 
+/* ── Check for Updates (6.4) ───────────────────────────────────────────────
+ * ⚠️ USER-INITIATED ONLY, NEVER ON LAUNCH. This app's whole premise is that it
+ * works on your machine with your files and talks to nothing; a version ping
+ * fired at startup would quietly break that promise for a feature nobody asked
+ * for at that moment. It runs when the menu item is clicked and at no other time.
+ *
+ * ⚠️ And it does NOT auto-update, deliberately. On macOS electron-updater goes
+ * through Squirrel.Mac, which VALIDATES THE CODE SIGNATURE of what it downloads
+ * — so an unsigned build cannot install its own update, and wiring one would
+ * ship a path that fails at runtime. This tells you what exists and opens the
+ * release page. See README's Packaging section for the signing story.
+ */
+const RELEASES_API = 'https://api.github.com/repos/HarkiratMangat/Devoid/releases/latest';
+
+function fetchLatestRelease() {
+  return new Promise((resolve, reject) => {
+    const req = https.get(
+      RELEASES_API,
+      { headers: { 'user-agent': `Devoid/${app.getVersion()}`, accept: 'application/vnd.github+json' } },
+      (res) => {
+        let body = '';
+        res.on('data', (c) => { body += c; });
+        res.on('end', () => {
+          // ⚠️ 404 is AMBIGUOUS and must not be reported as one thing. GitHub
+          // returns it both when a repository has no published releases and
+          // when the repository is PRIVATE and the caller is anonymous — and
+          // HarkiratMangat/Devoid is private today, so this app cannot tell
+          // "nothing released" from "released, but not visible to you".
+          if (res.statusCode === 404) return resolve(null);
+          if (res.statusCode !== 200) {
+            return reject(new Error(`GitHub answered ${res.statusCode}`));
+          }
+          try { resolve(JSON.parse(body)); } catch (e) { reject(new Error('GitHub sent something unreadable')); }
+        });
+      }
+    );
+    req.setTimeout(10000, () => { req.destroy(new Error('GitHub did not answer within 10 seconds')); });
+    req.on('error', reject);
+  });
+}
+
+async function checkForUpdates() {
+  const current = app.getVersion();
+  let release;
+  try {
+    release = await fetchLatestRelease();
+  } catch (err) {
+    dialog.showMessageBox(mainWindow, {
+      type: 'warning',
+      message: 'Could not check for updates',
+      detail: `${err.message}.\n\nDevoid ${current} is what you are running. Nothing was changed.`,
+      buttons: ['OK'],
+    });
+    return;
+  }
+
+  if (!release || !release.tag_name) {
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      message: 'GitHub has no release to show',
+      detail: `You are running Devoid ${current}.\n\n` +
+        'Either nothing has been published yet, or the repository is private — ' +
+        'Devoid asks anonymously and GitHub answers both cases identically, so ' +
+        'it cannot tell you which. This is not an error, and nothing was changed.',
+      buttons: ['OK'],
+    });
+    return;
+  }
+
+  const latest = release.tag_name;
+  if (compareVersions(latest, current) <= 0) {
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      message: `Devoid ${current} is up to date`,
+      detail: `The newest published release is ${latest}.`,
+      buttons: ['OK'],
+    });
+    return;
+  }
+
+  const { response } = await dialog.showMessageBox(mainWindow, {
+    type: 'info',
+    message: `Devoid ${latest.replace(/^v/, '')} is available`,
+    detail: `You are running ${current}.\n\n` +
+      'Devoid cannot install its own updates — it is not code-signed, and macOS ' +
+      'refuses an unsigned update. Opening the release page downloads the new ' +
+      'disk image, which you drag into Applications the same way as the first one.',
+    buttons: ['Open the release page', 'Later'],
+    defaultId: 0,
+    cancelId: 1,
+  });
+  if (response === 0 && release.html_url) shell.openExternal(release.html_url);
+}
+
 // ── Menus, shortcuts, About panel (6.1) ──────────────────────────────────────
 
 function setAboutPanel() {
@@ -273,6 +369,7 @@ function buildMenu() {
     label: 'Devoid',
     submenu: [
       { label: 'About Devoid', click: () => app.showAboutPanel() },
+      { label: 'Check for Updates…', click: checkForUpdates },
       { type: 'separator' },
       { role: 'services' },
       { type: 'separator' },

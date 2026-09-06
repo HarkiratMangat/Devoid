@@ -51,6 +51,16 @@ The assets in it are **real outputs from the skill's own corpus**, not icons dra
 
 **Fonts are local.** Archivo and Spline Sans Mono are self-hosted under `web/fonts/`, declared in `web/fonts.css`, so an app whose whole premise is local does not fall back to Helvetica when the network is gone — the width axis and `tabular-nums` are load-bearing in `docs/DESIGN.md`. Regenerate them with `python3 scripts/fetch-fonts.py`.
 
+## Updates
+
+**Devoid → Check for Updates…** asks the GitHub Releases API what the newest published release is, compares it with the running version, and — if there is a newer one — offers to open the release page so you can download the disk image.
+
+⚠️ **It never checks on launch, only when you click it.** This app's premise is that it works on your machine with your files and talks to nothing; a version ping at startup would quietly break that for a feature nobody asked for at that moment.
+
+⚠️ **It cannot install an update, and that is a signing constraint rather than a missing feature.** A real auto-updater on macOS runs through Squirrel.Mac, which **validates the code signature** of what it downloads — an unsigned build cannot install its own update, so wiring `electron-updater` today would ship a path that fails at runtime. See Signing below.
+
+⚠️ **A 404 from GitHub is ambiguous and the dialog says so.** GitHub answers identically for "no releases published" and "this repository is private and you are anonymous", and this repository is private, so Devoid reports that it cannot tell which rather than claiming one.
+
 ## Packaging
 
 ```sh
