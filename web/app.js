@@ -423,11 +423,27 @@ function renderQuestionRegions(a) {
   if (!a) return;
   const groups = colourGroups(a);
   if (!groups.length) return;
+  /* ⚠️ Where the source dimensions come from decides whether this function can
+     run AT ALL. It used to read #before.naturalWidth -- and wipe.js's
+     mountCanvases() does `before.hidden = true; before.removeAttribute('src')`,
+     which takes naturalWidth to 0. So the hatch and its "is this yours?" tag
+     were mutually exclusive with the seam BY CONSTRUCTION, and the seam is on
+     screen exactly when a question is live: the region has never once been
+     drawn in the state it exists for. Prefer the decoded canvas; fall back to
+     the <img> only on the pre-seam path, where #before still has a src. */
+  const sides = window.Devoid && window.Devoid.wipe && window.Devoid.wipe.sides
+    ? window.Devoid.wipe.sides() : null;
   const art = $('#before');
-  const sw = art.naturalWidth, sh = art.naturalHeight;
+  const sw = (sides && sides.a && sides.a.width) || art.naturalWidth;
+  const sh = (sides && sides.a && sides.a.height) || art.naturalHeight;
   const P = window.Devoid && window.Devoid.plotter;
   if (!sw || !sh || !P) return;                 // nothing to register against yet
-  const cs = getComputedStyle(art);
+  /* ⚠️ ...and the padding has to come from whichever element is actually
+     laid out. `.wipe>canvas` and `.wipe>img` carry different padding rules, so
+     reading the hidden <img> once the canvases own the box puts every mark out
+     by the difference. */
+  const laidOut = $('#wipe-a') || art;
+  const cs = getComputedStyle(laidOut);
   const pad = k => parseFloat(cs[k]) || 0;
   const box = wipe.getBoundingClientRect();
   const disp = { x: pad('paddingLeft'), y: pad('paddingTop'),
@@ -480,14 +496,25 @@ function renderQuestions(a) {
   for (const g of groups) {
     const q = el('div', 'q');
     const n = g.regions.length;
+    /* ⚠️ F3. This used to read "The place outlined in 002864" over a raw
+       `[94, 56, 164, 145]`. PRODUCT.md line 31 names that exact shape as the
+       thing the app exists to abolish: "Nobody can answer 'is the region at
+       bbox [230,135,406,359] outlined in 002864 design or background?' by
+       reading it. They have to see it." The spec assumed F2 closed this for
+       free -- draw the region and the string stops mattering -- and the 09-seam
+       capture falsified that: the hatch and the hex string were on screen
+       together. The mark on the artwork is the identity now; the swatch carries
+       the colour; the hex and the bbox are machine coordinates and are gone.
+       The frame count STAYS -- it is a real measurement the engine earned, and
+       it is the one thing here you cannot see by looking. */
     q.append(el('h3', null, n > 1
-      ? `${n} places outlined in ${g.hex} — one answer covers all of them`
-      : `The place outlined in ${g.hex}`));
+      ? `${n} places are marked on the artwork — one answer covers all of them`
+      : 'The marked place on the artwork'));
     const swatch = el('span', 'swatch');
     swatch.style.setProperty('--hex', '#' + g.hex);
     const where = el('p', 'qwhere');
     where.append(swatch, el('span', null, g.regions.map(r =>
-      `[${(r.bbox_xyxy || []).join(', ')}] · encloses on ${r.frames_enclosed} of ${r.frames_checked} frames`
+      `held on ${r.frames_enclosed} of ${r.frames_checked} frames`
     ).join('  ·  ')));
     q.append(where);
     q.append(answerPair(a, [
@@ -1471,6 +1498,9 @@ window.addEventListener('devoid:open-files', e => {
 /* ── what the other two frontend modules read ─────────────────────────────── */
 window.Devoid = {
   openAsset,
+  /* wipe.js calls this when the answer pair finishes decoding -- app.js owns
+     the region overlay and cannot otherwise know the canvases have dimensions. */
+  requeryRegions: () => requeryRegions(),
   getAsset: id => S.assets.find(a => a.id === id) || null,
   stateOf: id => { const a = S.assets.find(x => x.id === id); return a ? stateOf(a) : null; },
   refresh,

@@ -324,6 +324,24 @@ app.whenReady().then(async () => {
   const seamAfter = await probe(`return { v: S.seam }`);
   check('the seam responds to a real drag', seamAfter.v !== seamBefore.v,
         `${seamBefore.v} -> ${seamAfter.v} after dragging 50% -> 82%`);
+  // ⚠️ F2. The megaphone is open with a live question and the seam is mounted --
+  // which is the ONLY state the disputed region exists for, and the one state it
+  // has never drawn in. renderQuestionRegions reads #before.naturalWidth, and
+  // wipe.js's mountCanvases() strips that element's src, so the hatch and the
+  // seam are mutually exclusive BY CONSTRUCTION.
+  const qr = await probe(`return { n: document.querySelectorAll('.qregion').length }`);
+  check('the disputed region is drawn on the artwork', qr.n > 0, `${qr.n} .qregion nodes`);
+
+  // ⚠️ F3 was specced as "closed by F2 -- no separate work", and the 09-seam
+  // capture falsified that: the hatch drew AND the panel still said "The place
+  // outlined in 002864" over a raw bbox array. Drawing the mark does not delete
+  // the string. Assert the string is gone, not that the mark is present.
+  const qtext = await probe(`const q = document.getElementById('questions');
+    return { text: q ? q.textContent : '' }`);
+  check('the question is not a hex string and a bbox array',
+        !/outlined in [0-9a-fA-F]{6}/.test(qtext.text) && !/\[\s*\d+\s*,\s*\d+\s*,/.test(qtext.text),
+        qtext.text.slice(0, 80).replace(/\s+/g, ' '));
+
   await shot('09-seam', null, 600);
 
   const rm = await probe(`return { reduce: matchMedia('(prefers-reduced-motion: reduce)').matches }`);

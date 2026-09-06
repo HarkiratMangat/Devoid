@@ -789,6 +789,11 @@
     } else {
       start();
     }
+    /* app.js owns the region overlay and cannot know the canvases finished
+       decoding. Without this the first draw races the decode, finds no
+       dimensions and returns -- which is the second half of why the disputed
+       region never appeared. */
+    if (root.Devoid && typeof root.Devoid.requeryRegions === 'function') root.Devoid.requeryRegions();
     return metric;
   }
 

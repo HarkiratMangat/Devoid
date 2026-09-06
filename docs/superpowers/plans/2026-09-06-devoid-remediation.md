@@ -233,7 +233,21 @@ git add web/app.js web/wipe.js scripts/capture-window.mjs
 git commit -m "fix(questions): draw the disputed region on the artwork again"
 ```
 
-**Closes F3 too.** With the region drawn, the app stops delivering the coin-flip question as `The place outlined in 002864` plus a bbox array — the exact string `PRODUCT.md` says it exists to abolish.
+- [ ] **Step 6: Close F3, which Step 2 does NOT close on its own**
+
+⚠️ **Corrected 2026-09-06 17:42 EDT.** This task used to end by claiming *"Closes F3 too — with the region drawn, the app stops delivering the coin-flip question as `The place outlined in 002864` plus a bbox array."* Running Step 4 falsified it: the hatch drew and the string was still sitting under it in the same capture. The mark and the string were never coupled.
+
+In `renderQuestions` (`web/app.js:499-506`) the heading becomes `The marked place on the artwork` (`${n} places are marked on the artwork — one answer covers all of them` in the plural branch), the bbox array is dropped, and the row reads `held on ${r.frames_enclosed} of ${r.frames_checked} frames`. ⚠️ **Keep the frame count.** It is a measurement the engine earned and the only thing in that row you cannot get by looking at the artwork; deleting it would trade one honesty defect for another.
+
+Its own gate assertion, because the mark being present proves nothing about the string:
+
+```js
+  const qtext = await probe(`const q = document.getElementById('questions');
+    return { text: q ? q.textContent : '' }`);
+  check('the question is not a hex string and a bbox array',
+        !/outlined in [0-9a-fA-F]{6}/.test(qtext.text) && !/\[\s*\d+\s*,\s*\d+\s*,/.test(qtext.text),
+        qtext.text.slice(0, 80).replace(/\s+/g, ' '));
+```
 
 ### Task 4: Stop the question card following you to the next asset
 

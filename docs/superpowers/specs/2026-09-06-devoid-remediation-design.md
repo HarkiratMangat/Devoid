@@ -97,7 +97,9 @@ With F2 dead, the only description of the disputed region is the questions panel
 
 `PRODUCT.md` line 31: *"Nobody can answer 'is the region at bbox [230,135,406,359] outlined in 002864 design or background?' by reading it. **They have to see it.** That is the product."*
 
-**Decision.** Closed by F2. No separate work.
+**Decision.** ~~Closed by F2. No separate work.~~ ⚠️ **CORRECTED 2026-09-06 17:42 EDT — this was an inference, and running it falsified it.** F2's fix landed, the hatch and the `is this yours?` tag drew on the megaphone's cone, and `local/window-shots/09-seam.png` shows the panel *still* reading **The place outlined in 002864** `[94, 56, 164, 145]` underneath it. Drawing the mark does not delete the string; the two were simply never coupled. F3 needs its own edit at `web/app.js:499-506` and its own gate assertion, both of which are now part of Task 3. The heading becomes *"The marked place on the artwork"*, the bbox array goes, and `encloses on 102 of 144 frames` becomes `held on 102 of 144 frames` — **the frame count stays**, because it is a measurement the engine earned and the one thing on that row you cannot get by looking.
+
+**The general lesson, and it is this document's own rule.** F3 was marked **VERIFIED** for the half that was observed — the string is real, it was read live — and its *decision* was an untested inference riding on that mark. Arbitration rule 3 exists for evidence; nothing in this spec was checking the reasoning attached to it. **A verified finding does not make its proposed remedy verified.**
 
 ### F4 · The question card is sticky — it survives navigation and shows the wrong asset — **VERIFIED (reported measurement, mechanism confirmed by reading)**
 
