@@ -47,6 +47,10 @@ class Asset:
 
     def public(self, *, full: bool = False) -> dict:
         out = {"id": self.id, "path": self.path, "ext": self.ext, "state": self.state}
+        # ⚠️ The frontend used to derive this from the basename, which only ever
+        # resolved for files already inside ``web/assets/``. Publishing it here
+        # means every consumer gets a URL that works for a file anywhere on disk.
+        out["url"] = f"/api/assets/{self.id}/source"
         if self.frames is not None:
             out["frames"] = self.frames
         if self.result is not None:

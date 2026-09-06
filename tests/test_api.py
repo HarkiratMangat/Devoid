@@ -54,7 +54,9 @@ def test_static_mount_still_serves_the_front_end(client):
 def test_end_to_end_register_then_analyze(client, fast_asset):
     created = client.post("/api/assets", json={"paths": [str(fast_asset)]}).json()
     assert len(created) == 1
-    assert set(created[0]) == {"id", "path", "ext", "state"}
+    # ``url`` joined the shape when GET /api/assets/{id}/source landed — the
+    # frontend can no longer derive an image URL from the basename.
+    assert set(created[0]) == {"id", "path", "ext", "state", "url"}
     assert created[0]["state"] == "loading"
     asset_id = created[0]["id"]
 

@@ -79,6 +79,36 @@ def list_assets(request: Request) -> JSONResponse:
     return JSONResponse([a.public() for a in registry.all_assets()])
 
 
+def asset_source(request: Request):
+    """The registered input file's own bytes — API-CONTRACT.md "Assets".
+
+    ⚠️ **Why this exists.** ``web/app.js`` built every image URL as
+    ``assets/<basename>``, so anything outside ``web/assets/`` 404'd and the app
+    showed a blank frame — on the sheet AND in the open view, where there is no
+    error handler at all. The corpus was the only input this app had a visible
+    interface for, and the first real use, on a file from ``~/Downloads``
+    (``docs/DEVLOG.md``), rendered nothing. A comment in ``app.js`` argued a
+    thumbnail route would be a contract change; this IS that change, made
+    deliberately rather than worked around.
+
+    ⚠️ **The registry is the only door in.** This takes an asset id, never a
+    path, so it cannot be steered at an arbitrary file on disk — the same
+    reasoning as ``preview_file`` below, but enforced by construction instead of
+    by a string check. ``tests/test_source_route.py`` is the falsifier.
+
+    The path is re-checked here rather than trusted from ``register()``: a file
+    that existed at registration can be moved before the browser asks for it,
+    and ``input_missing`` is what the rest of the app already calls that.
+    """
+    asset = registry.get(request.path_params["id"])
+    if asset is None:
+        return _error("unknown asset", 404)
+    path = Path(asset.path)
+    if not path.is_file():
+        return _error("input_missing", 404, path=asset.path)
+    return FileResponse(path)
+
+
 def analyze_asset(request: Request) -> JSONResponse:
     asset = registry.get(request.path_params["id"])
     if asset is None:
@@ -318,6 +348,7 @@ routes = [
     Route("/api/flags", api_flags),
     Route("/api/assets", create_assets, methods=["POST"]),
     Route("/api/assets", list_assets, methods=["GET"]),
+    Route("/api/assets/{id}/source", asset_source),
     Route("/api/assets/{id}/analyze", analyze_asset, methods=["POST"]),
     Route("/api/assets/{id}/answers", submit_answers, methods=["POST"]),
     Route("/api/assets/{id}/preview", preview_pair, methods=["POST"]),
