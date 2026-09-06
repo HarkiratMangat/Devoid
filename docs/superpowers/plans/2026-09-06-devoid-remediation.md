@@ -503,20 +503,34 @@ F7. `web/advice.js` is 172 lines, complete, and has never run. Read it end to en
 
 Every suggestion must carry an undo of **exactly what it changed** — that is the rule, and the module enforces it.
 
-1. **After an analyze returns a recommendation.** `--recommend`'s JSON is already on `S.assets[].questions`. Where it names a flag the drawers expose, offer it: apply sets `S.overrides[dest]`, undo deletes that one key. Nothing else.
+1. ~~**After an analyze returns a recommendation.** Where it names a flag the drawers expose, offer it: apply sets `S.overrides[dest]`, undo deletes that one key.~~ ⚠️ **CORRECTED 2026-09-06 17:54 EDT — this is backwards and would have made the app worse.** `suggested_command` *is* what `--auto` already applies. Writing it into `S.overrides` changes no output and switches `--auto` off for that flag — `server/cli.py:38` leaves every absent key to `--auto`, which is the whole of the tri-state rule. The suggestion's only effect would have been to disable the mechanism this app is built around, and it would have been unearned besides: nothing was wrong. **The earned suggestion is the DISAGREEMENT.** When a row has been taken over (`S.overrides[dest]` exists) to a value the engine would not have chosen, offer to hand it back: apply does `delete S.overrides[dest]` and returns the prior value, undo puts that exact value back. It fires only when there is a real conflict, and it pushes toward auto rather than away from it.
 2. **When a fade answer collides with a stated GIF goal.** `PRODUCT.md`: answering "it is artwork" forces an 8-bit-alpha container, *"which collides with a stated GIF goal — the app resolves that, it does not discover it."* Offer the format change; undo restores the previous `S.goal.format`.
 
 ⚠️ **Do not invent a third.** An unearned suggestion is a measured failure mode in this project's history, and the rule exists because of it.
 
 - [ ] **Step 3: Assert it in the gate**
 
+⚠️ **CORRECTED 2026-09-06 17:54 EDT.** The assertion drafted here named `.advice` and `[data-undo]`; `advice.js` builds `.devoid-advice` with `.devoid-advice__action` and no such attribute, so it would have passed by matching nothing. Worse, `!adv.rail || ...` passes whenever no rail exists — a check that cannot fail on the very defect it is for.
+
+Neither call site fires on its own in a fresh window, so the gate **creates** the condition and then exercises the whole contract: take a row over to a value the engine would not choose, assert the chip appears, click apply and assert the row went back to auto, click undo and assert the taken-over value came back exactly.
+
 ```js
-  const adv = await probe(`
-    return { rail: !!document.querySelector('.advice'),
-             undoable: document.querySelectorAll('.advice [data-undo]').length };`);
-  check('a suggestion carries its undo', !adv.rail || adv.undoable > 0,
-        `${adv.undoable} undo controls for a visible rail`);
+  const cycle = await probe(`
+    const chip = document.querySelector('#advice-host .devoid-advice');
+    const btn = chip.querySelector('.devoid-advice__action');
+    const before = S.overrides[dest];
+    btn.click();                                    // apply -> back to auto
+    const mid = Object.prototype.hasOwnProperty.call(S.overrides, dest);
+    document.querySelector('#advice-host .devoid-advice')
+      .querySelector('.devoid-advice__action').click();   // undo
+    return { before, stillSetAfterApply: mid, after: S.overrides[dest] };
+  `);
+  check('the suggestion undoes exactly what it changed',
+        cycle.stillSetAfterApply === false && cycle.after === cycle.before,
+        `before=${cycle.before} after=${cycle.after}`);
 ```
+
+⚠️ `advice.js` renders into `#advice-host` or falls back to `document.body`. The element did not exist; it is added to `web/index.html` after `#questions`, or every suggestion would have appeared outside the open view.
 
 - [ ] **Step 4: Commit**
 

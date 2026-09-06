@@ -129,6 +129,14 @@ class RecommendResult:
             "recommended_format": self.recommended_format,
             "not_applicable_reason": self.not_applicable_reason,
             "alternative_command": self.alternative_command,
+            # ⚠️ ADDITIVE, 2026-09-06 17:55 EDT. ``suggested_flag_tokens`` was parsed, typed,
+            # documented and never sent to anyone -- the same reachability class
+            # this remediation exists to close. The advice rail needs the
+            # engine's per-flag opinion to spot a row you took over that the
+            # engine would not have chosen; nothing else on the client carries
+            # it. Adding a key is backwards compatible; the two exact-key-set
+            # assertions are updated with it.
+            "suggested_flag_tokens": list(self.suggested_flag_tokens),
         }
 
 

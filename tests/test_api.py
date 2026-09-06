@@ -72,6 +72,7 @@ def test_end_to_end_register_then_analyze(client, fast_asset):
         "recommended_format",
         "not_applicable_reason",
         "alternative_command",
+        "suggested_flag_tokens",
     }
     assert isinstance(q["ambiguous_protection"], list)
     assert body["took_ms"] >= 0

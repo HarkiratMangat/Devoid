@@ -23,12 +23,15 @@ Server: `server/app.py` mounts these under `/api/*` alongside the existing stati
       "nameable_fade": {"color": "hex", "faint_px": 0, "frame_index": 0} ,
       "recommended_format": "gif-ok | webp-or-apng | webp-or-avif",
       "not_applicable_reason": "str or null",
-      "alternative_command": "str or null"
+      "alternative_command": "str or null",
+      "suggested_flag_tokens": ["--protect-outline-color", "002864,f0c850", "--feather-band-multiplier", "3.3"]
     },
     "engine_version": "str",
     "took_ms": 0
   }
   ```
+  `suggested_flag_tokens` is `suggested_command` already split into the flag tokens after `py script in out`, flat and in order, `[]` when the engine refused — added 2026-09-06 17:55 EDT, additive. It is the engine's per-flag opinion, and it is what lets the advice rail tell a row you deliberately took over apart from one the engine would have set the same way. ⚠️ **It is not a list of controls.** Nothing may render a widget per token; `CLAUDE.md`'s rule against a control per flag is unaffected.
+
   `nameable_fade` is `null` when absent. `questions.ambiguous_protection` groups by **region**, not by colour — see "Per-colour vs per-region" below, which every consumer must handle the same way.
 
 ## Preview (the wipe's answer-A vs answer-B pair — PLAN.md 3.0b/3.1)

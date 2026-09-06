@@ -99,6 +99,10 @@
              OUTLINE COLOUR (API-CONTRACT "Per-colour vs per-region"). Filled
              and shown by app.js; the wipe that illustrates them is #wipe. -->
         <div class="questions" id="questions" hidden></div>
+        <!-- advice.js renders its own DOM and its own <style> into here. Without
+             this element it falls back to document.body, which would put
+             suggestions outside the open view entirely. -->
+        <div id="advice-host"></div>
         <div class="ledger" id="ledger"></div>
         <div class="film">
           <!-- ⚠️ F14. `<span id="onion">onion skin · 2 frames</span>` lived here and

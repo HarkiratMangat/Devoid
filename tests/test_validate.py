@@ -45,6 +45,7 @@ def test_questions_matches_the_contract_shape(recommend_sample):
         "recommended_format",
         "not_applicable_reason",
         "alternative_command",
+        "suggested_flag_tokens",
     }
     assert set(q["ambiguous_protection"][0]) == {
         "region_id",

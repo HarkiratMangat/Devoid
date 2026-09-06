@@ -81,6 +81,7 @@ const S = {
   blocked: new Set(),    // ids where a save was attempted with questions outstanding
   answers: {},           // id → {byColour:{hex:'protect'|'remove'}, fade:'artwork'|'not-artwork'|null}
   overrides: {},         // dest → explicit value. ONLY these are sent. Absent === auto.
+  adviceDismissed: new Set(),   // suggestion keys the person waved away; they do not come back
   goal: { format: null, target_kb: null, min_dim: null },   // ⚠️ target_kb starts EMPTY
   qerror: null,          // the server's validation message, shown where it happened
   frame: 0,
@@ -488,6 +489,121 @@ window.addEventListener('resize', requeryRegions);
 if (typeof ResizeObserver !== 'undefined') {
   const wipeEl = $('#wipe');          // ⚠️ not the `wipe` const -- it is declared
   if (wipeEl) new ResizeObserver(requeryRegions).observe(wipeEl);   // far below
+}
+
+/* ── advice  (PLAN.md 5.3, D1 answered 2026-09-06) ──────────────────────────
+   `web/advice.js` is 172 lines, complete, loaded by index.html since it was
+   written, and had ZERO callers — instance seven of this project's signature
+   failure. It is the MECHANISM: a caller supplies text, an apply that returns
+   the prior value, and an undo that is handed exactly that value back. There is
+   nowhere else for the undo to get its idea of "before" from, which is what
+   makes `CLAUDE.md`'s rule enforceable rather than aspirational.
+
+   ⚠️ TWO CALL SITES, AND NOT A THIRD. An unearned suggestion is a measured
+   failure mode in this project's history; the rule exists because of it.
+
+   ⚠️ AND THE FIRST ONE IS NOT WHAT THE PLAN SPECIFIED. The plan said: where
+   `--recommend` names a flag the drawers expose, offer it, apply setting
+   `S.overrides[dest]`. That is backwards. `suggested_command` IS what `--auto`
+   already applies; writing it into `overrides` changes no output and turns
+   `--auto` off for that flag (`server/cli.py:38` — everything absent is left to
+   `--auto`). It would have been a suggestion whose only effect was to disable
+   the thing this app is built around. The earned suggestion is the DISAGREEMENT:
+   a row you took over, whose value the engine would not have chosen. Apply hands
+   it back to auto and returns what you had; undo puts your value back. */
+const adviceChips = new Map();          // key -> the handle advice.js returned
+/* ⚠️ RE-ENTRANCY, and the gate caught it. Both apply and undo call render() so
+   the rest of the UI follows the change — and render() calls renderAdvice(),
+   which reconciles. advice.js sets `applied = true` only AFTER applyFn()
+   returns, so during that inner render the chip reports applied === false while
+   its own condition has already gone false, and the reconcile below retired the
+   chip mid-apply. The undo then had nothing to click and the value never came
+   back: "before=devoid-gate-disagrees setAfterApply=false after=undefined".
+   Reconciliation is suspended for the duration of a suggestion's own callback. */
+let adviceBusy = false;
+const duringAdvice = fn => (...args) => {
+  adviceBusy = true;
+  try { return fn(...args); } finally { adviceBusy = false; }
+};
+
+function recommendedByName(a) {
+  /* ⚠️ `suggested_flag_tokens`, not `suggested_command`. The command string is
+     NOT on the client — `questions()` never sent it — and re-splitting a shell
+     line here would be the fourth instance of the shape-assumption bug
+     `server/validate.py`'s header lists. The server already split it with
+     `shlex`; this pairs the flat token list. A bare switch carries no value. */
+  const toks = (a.questions && a.questions.suggested_flag_tokens) || [];
+  const out = new Map();
+  for (let i = 0; i < toks.length; i++) {
+    if (!/^--/.test(toks[i])) continue;
+    const next = toks[i + 1];
+    if (next !== undefined && !/^--/.test(next)) { out.set(toks[i], next); i++; }
+    else out.set(toks[i], true);
+  }
+  return out;
+}
+
+function renderAdvice(a) {
+  const host = $('#advice-host');
+  if (!host || typeof (window.Devoid && window.Devoid.suggest) !== 'function') return;
+  if (adviceBusy) return;               // a chip's own apply/undo is mid-flight
+
+  const want = new Map();               // key -> { text, apply, undo }
+
+  /* 1. A taken-over row the engine would not have chosen. */
+  if (a && S.byDest) {
+    const rec = recommendedByName(a);
+    for (const [name, value] of rec) {
+      const f = S.flags && S.flags.find(x => x.name === name);
+      if (!f) continue;                                   // not a row the drawers expose
+      if (!Object.prototype.hasOwnProperty.call(S.overrides, f.dest)) continue;   // still on auto
+      const mine = String(S.overrides[f.dest]);
+      if (mine === String(value)) continue;               // you and it agree
+      const dest = f.dest;
+      want.set('flag:' + dest, {
+        text: `The engine would use ${value} for ${name}; you have set ${mine}`,
+        applyText: 'hand it back to auto',
+        apply: duringAdvice(() => { const was = S.overrides[dest]; delete S.overrides[dest]; render(); return was; }),
+        undo: duringAdvice(was => { S.overrides[dest] = was; render(); }),
+      });
+    }
+  }
+
+  /* 2. The fade answer that collides with a stated GIF goal. PRODUCT.md: the
+        app RESOLVES that collision, it does not discover it. Until now this was
+        a sentence with no action attached (`renderQuestions`, the .qwarn row). */
+  const ans = a ? S.answers[a.id] : null;
+  if (ans && ans.fade === 'artwork' && S.goal.format === 'gif') {
+    want.set('fade-format', {
+      text: 'Keeping the fade needs 8-bit alpha; the goal says gif',
+      applyText: 'switch the goal to webp',
+      apply: duringAdvice(() => { const was = S.goal.format; S.goal.format = 'webp'; render(); return was; }),
+      undo: duringAdvice(was => { S.goal.format = was; render(); }),
+    });
+  }
+
+  /* Reconcile rather than rebuild: render() runs on every poll tick, and
+     rebuilding would destroy an applied chip's undo. ⚠️ An APPLIED chip is never
+     retired automatically — applying it is exactly what makes its own condition
+     false, so retiring it would delete the undo the moment it became useful. */
+  for (const [key, handle] of [...adviceChips]) {
+    if (!handle.element.isConnected) { adviceChips.delete(key); continue; }
+    if (want.has(key) || handle.applied()) continue;
+    handle.dismiss();
+    adviceChips.delete(key);
+  }
+  for (const [key, spec] of want) {
+    if (adviceChips.has(key) || S.adviceDismissed.has(key)) continue;
+    const handle = window.Devoid.suggest(spec.text, spec.apply, spec.undo, {
+      host,
+      applyText: spec.applyText,
+      onDismiss: reason => {
+        adviceChips.delete(key);
+        if (reason === 'dismissed' || reason === 'kept') S.adviceDismissed.add(key);
+      },
+    });
+    adviceChips.set(key, handle);
+  }
 }
 
 function renderQuestions(a) {
@@ -1389,7 +1505,7 @@ function render() {
     $('#regiontools').hidden = !plotterWelcome;
     $('#regioncanvas').hidden = !plotterWelcome;
     maybeLoadSeamPair(a);
-    renderEdge(); renderQuestions(a); renderLedger(a); renderFilm(a);
+    renderEdge(); renderQuestions(a); renderAdvice(a); renderLedger(a); renderFilm(a);
     renderQuestionRegions(a);
     /* ⚠️ `{once: true}` only removes the listener AFTER it fires, and with an
        unchanged src no load event ever fires — so one accumulated per render,

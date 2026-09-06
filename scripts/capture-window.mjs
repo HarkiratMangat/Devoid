@@ -404,6 +404,58 @@ app.whenReady().then(async () => {
         !!otherId.id && card.qcard === true && card.wipe === false,
         `qcardHidden=${card.qcard} wipeHidden=${card.wipe} on ${card.open}`);
 
+  // ⚠️ F7. advice.js was 172 lines, loaded by index.html, and had zero callers.
+  // Neither call site fires on its own in a fresh window, so the gate CREATES
+  // the condition -- a row taken over to a value the engine would not choose --
+  // and then exercises the whole contract: the chip appears, applying it hands
+  // the row back to auto, and undo puts the taken-over value back. A check that
+  // only asserted "a rail exists" would pass on a rail that does nothing.
+  await win.webContents.executeJavaScript(`openAsset(${JSON.stringify(megaId)})`);
+  await wait(900);
+  const advSetup = await probe(`
+    const a = S.assets.find(x => x.id === S.open);
+    const toks = (a && a.questions && a.questions.suggested_flag_tokens) || [];
+    const i = toks.findIndex((t, k) => /^--/.test(t) && toks[k + 1] && !/^--/.test(toks[k + 1]));
+    if (i < 0) return { ok: false, why: 'no valued flag in suggested_flag_tokens', toks: toks.slice(0, 6) };
+    const m = [null, toks[i], toks[i + 1]];
+    const f = (S.flags || []).find(x => x.name === m[1]);
+    if (!f) return { ok: false, why: 'flag not exposed by the drawers', name: m[1] };
+    S.overrides[f.dest] = 'devoid-gate-disagrees';
+    render();
+    return { ok: true, dest: f.dest, name: m[1], engine: m[2] };
+  `);
+  check('the engine named a flag the drawers expose', advSetup.ok, JSON.stringify(advSetup));
+  if (advSetup.ok) {
+    await wait(400);
+    const adv = await probe(`
+      const host = document.getElementById('advice-host');
+      const chip = host && host.querySelector('.devoid-advice');
+      return { host: !!host, chip: !!chip,
+               action: chip ? chip.querySelector('.devoid-advice__action').textContent : null,
+               text: chip ? chip.querySelector('.devoid-advice__text').textContent : null };
+    `);
+    check('a disagreement raises a suggestion in the rail', adv.chip,
+          `host=${adv.host} chip=${adv.chip} "${adv.text || ''}"`);
+
+    const cycle = await probe(`
+      const chip = document.querySelector('#advice-host .devoid-advice');
+      if (!chip) return { skipped: true };
+      const btn = chip.querySelector('.devoid-advice__action');
+      const before = S.overrides[${JSON.stringify(advSetup.dest)}];
+      btn.click();                                        // apply -> back to auto
+      const mid = Object.prototype.hasOwnProperty.call(S.overrides, ${JSON.stringify(advSetup.dest)});
+      const chip2 = document.querySelector('#advice-host .devoid-advice');
+      if (chip2) chip2.querySelector('.devoid-advice__action').click();   // undo
+      return { skipped: false, before, stillSetAfterApply: mid,
+               after: S.overrides[${JSON.stringify(advSetup.dest)}] };
+    `);
+    check('the suggestion undoes exactly what it changed',
+          !cycle.skipped && cycle.stillSetAfterApply === false && cycle.after === cycle.before,
+          `before=${cycle.before} setAfterApply=${cycle.stillSetAfterApply} after=${cycle.after}`);
+    await win.webContents.executeJavaScript(
+      `delete S.overrides[${JSON.stringify(advSetup.dest)}]; render()`);
+  }
+
   const rm = await probe(`return { reduce: matchMedia('(prefers-reduced-motion: reduce)').matches }`);
   check('prefers-reduced-motion was actually emulated', rm.reduce === true, rm.reduce);
 
