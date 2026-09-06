@@ -114,12 +114,6 @@ The void (dark) state is the designed one. Emitting (light) passes every measure
 
 ⛔ **Never fabricate signing credentials to make this testable.** The three notarisation variables stay unset until real ones exist.
 
-### `[P1 · XS · Sonnet5-Low]` The system Python interpreter carries this project's signature, not its own *(filed 2026-09-06)*
-
-`/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11` was re-signed in place by the first signed build, replacing `Developer ID Application: Ned Deily (DJ3H93M7VJ)` with `DEVOID`. Cause and permanent fix are in `docs/DEVLOG.md`; the file still runs and the framework's notarised `Python` dylib and `Python.app` are untouched, so nothing is broken — but the binary no longer matches the notarised original it claims to be.
-
-**Concrete next action:** run `~/Downloads/python-3.11.3-macos11.pkg`, already downloaded and verified 2026-09-06 17:29 EDT as *signed by Developer ID Installer: Ned Deily (DJ3H93M7VJ), notarised, trusted timestamp 2023-04-05*. It replaces the framework in place; `.venv` points at the framework path rather than a copy, so it keeps working. ⚠️ **This is a local-machine state, not a repo defect** — a fresh clone on another Mac has nothing to fix.
-
 ### `[P2 · S · Opus5-Med]` The contact sheet has never been seen with a real batch *(filed 2026-09-05)*
 
 `docs/PRODUCT.md`'s claim is that "one, twelve and two hundred are the same layout". Cards grew to 228px during the redesign, which looks right against the corpus's eight assets and **may be waste at twenty**. Nobody has made that judgement with a real batch, and the void ground makes a sparse sheet read as atmosphere rather than as emptiness — which is flattering in exactly the wrong direction.

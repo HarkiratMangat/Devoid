@@ -19,6 +19,17 @@ Heading shape, matching the engine repo's archive:
 
 ## Closed items
 
+## ✅ The system Python interpreter carries this project's signature, not its own — CLOSED 2026-09-06 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: restored by the user, verified 2026-09-06 18:37 EDT.** `codesign -dv` on `/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11` now reports `Authority=Developer ID Application: Ned Deily (DJ3H93M7VJ)`, the full Apple chain, and `TeamIdentifier=DJ3H93M7VJ`; `codesign --verify --strict` exits **0**. The project venv still imports `starlette` on 3.11.3, so reinstalling the framework in place cost nothing. `build/afterPack.js` is what stops it recurring, and its guard throws rather than warns.
+
+### `[P1 · XS · Sonnet5-Low]` The system Python interpreter carries this project's signature, not its own *(filed 2026-09-06)*
+
+`/Library/Frameworks/Python.framework/Versions/3.11/bin/python3.11` was re-signed in place by the first signed build, replacing `Developer ID Application: Ned Deily (DJ3H93M7VJ)` with `DEVOID`. Cause and permanent fix are in `docs/DEVLOG.md`; the file still runs and the framework's notarised `Python` dylib and `Python.app` are untouched, so nothing is broken — but the binary no longer matches the notarised original it claims to be.
+
+**Concrete next action:** run `~/Downloads/python-3.11.3-macos11.pkg`, already downloaded and verified 2026-09-06 17:29 EDT as *signed by Developer ID Installer: Ned Deily (DJ3H93M7VJ), notarised, trusted timestamp 2023-04-05*. It replaces the framework in place; `.venv` points at the framework path rather than a copy, so it keeps working. ⚠️ **This is a local-machine state, not a repo defect** — a fresh clone on another Mac has nothing to fix.
+
+
 ## ✅ Signing and notarisation are configured and have never run — CLOSED 2026-09-06 (branch `feat/devoid-v1`, unreleased in v1.0.0)
 
 **Outcome: half closed, and the half that closed answered the question the item was actually about.** A self-signed `DEVOID` Code Signing certificate made in Keychain Access is enough to exercise `hardenedRuntime` and `build/entitlements.mac.plist` without an Apple Developer account. The signed build launches, spawns Python and serves on port 8732 in 6s — **the entitlements are correct**, which had never been tested. `codesign --verify --deep --strict` returns exit 0, `valid on disk`, `satisfies its Designated Requirement`. Notarisation is genuinely untouched and is refiled as its own item; the ⛔ never-fabricate rule was not bent — the certificate is real, it is just not Apple-issued.
