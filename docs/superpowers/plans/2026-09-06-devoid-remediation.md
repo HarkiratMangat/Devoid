@@ -4,7 +4,7 @@
 
 **Goal:** Connect the four built-but-unwired systems that carry this app's meaning, stop the interface making claims that are false, then give it a real type and surface system and a layout that lets the artwork lead.
 
-**Architecture:** Four stages, ordered so each makes the next judgeable. Stage 1 connects — no taste involved, and it changes the UI gate first, because the existing gate certified every defect it was built to catch. Stage 2 removes statements the app makes that are not true. Stage 3 is the token and type system. Stage 4 is the layout, last because it is the largest change and benefits from the other three being true.
+**Architecture:** Five stages, ordered so each makes the next judgeable. Stage 1 connects — no taste involved, and it changes the UI gate first, because the existing gate certified every defect it was built to catch. Stage 2 removes statements the app makes that are not true. Stage 3 is the token and type system. Stage 4 is the layout, the largest change, which benefits from the other three being true. **Stage 5 was added 2026-09-06 17:38 EDT** and is the only stage that adds rather than repairs: three signature components adapted from a void/black-hole reference the user supplied, taken as ideas rather than as code. It runs last because a loader, a status pip and a stage vignette are all judged against a layout that has stopped moving.
 
 **Tech Stack:** Electron 44 main process · vanilla ES2020 in `web/` (no framework, no bundler) · Starlette/uvicorn in `server/` · pytest · `node --test` · a real-window Electron gate at `scripts/capture-window.mjs`.
 
@@ -713,11 +713,46 @@ At 56×28 with no border, the control is effectively invisible on `--bench: #FFF
 
 Add a 10px mono label beside it reading `void` / `lit`, swapping with the state. ⚠️ Keep the `aria-label` a full sentence — *"Switch to emitting light"* — since nobody maps "emitting" to "light mode" from two letters either.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Give the collapse some weight**
+
+Added 2026-09-06 17:38 EDT from the reference file, adapted rather than copied — the reference's own toggle is a sliding orb, which is the *iOS rocker* and the *circle with a ring* `DEVLOG.md` already records as rejected. What is worth taking is the **choreography**, which is separable from the shape and applies to a seam just as well as to an orb.
+
+Three changes, all on `.lamp` in `web/app.css`, none of which touches the seam concept:
+
+```css
+/* the ground moves, not only the rim. Collapsed is the void's own black;
+   emitting is the horizon's warm light. Today only the rim sweeps, so the
+   control reads as a slider rather than as a change of world. */
+.lamp{background:linear-gradient(90deg,var(--horizon),var(--raise));
+      transition:background var(--dur-lamp,.5s) var(--ease)}
+:root[data-light="collapsed"] .lamp{background:linear-gradient(90deg,var(--singularity),var(--void))}
+
+/* the cut collapses: a squircle becomes a circle. One property, and it is
+   gravitational collapse rendered as a shape. */
+.lamp .sg-cut{border-radius:var(--r);transition:border-radius .45s var(--ease-collapse),
+                                                 transform .45s var(--ease-collapse)}
+:root[data-light="collapsed"] .lamp .sg-cut{border-radius:50%}
+
+/* ring of light on collapse — the same treatment as the accretion core in
+   Task 24, so the two read as one idea in two places. */
+:root[data-light="collapsed"] .lamp .sg-cut{box-shadow:0 0 0 1.5px var(--star),0 0 10px var(--cyan)}
+```
+
+And one token, because nothing in this app currently has weight:
+
+```css
+:root{--ease-collapse:cubic-bezier(.34,1.56,.64,1)}   /* overshoot; --ease never does */
+```
+
+⚠️ **`prefers-reduced-motion` must neutralise `--ease-collapse`, not just shorten it.** An overshoot curve is movement past the target and back — exactly what the query exists to suppress. Set it to `var(--ease)` inside the existing reduced-motion block rather than adding a second one.
+
+- [ ] **Step 4: Verify, then commit**
+
+Run: `npx electron scripts/capture-window.mjs` — both lighting states must still capture as byte-distinct images. Then the detector, which must still return exactly one finding: a two-stop `linear-gradient` is not `repeating-stripes-gradient`, but the contract is a count, so it gets re-measured rather than reasoned about.
 
 ```bash
 git add web/app.css web/index.html
-git commit -m "feat(lamp): an edge on white, and a word for each state"
+git commit -m "feat(lamp): an edge, a word for each state, and weight on the collapse"
 ```
 
 ### Task 19: Make the greyscale check actually pass
@@ -838,6 +873,204 @@ Extend the gate: desaturate and blur `01-contact-sheet.png`, assert the needs-yo
 ```bash
 git add web/app.css web/app.js scripts/capture-window.mjs
 git commit -m "feat(sheet): let state set the hierarchy, not the source art"
+```
+
+---
+
+## Stage 5 — THE SIGNATURE
+
+*Added 2026-09-06 17:38 EDT. The only stage that adds rather than repairs.*
+
+**Provenance.** The user supplied `~/Downloads/void_black_hole_design_system.html` — a Tailwind-CDN showcase of gravitational loaders and theme switches — and said explicitly: *"you dont need to implement them exact as they are. you can take their ideas, their reference, or parts of them and manipulate/craft their design to our situation."* So these tasks take techniques, not markup, and every value below is restated in Devoid's own tokens.
+
+**Two of the reference's five headline pieces were rejected outright and must not be revived here:**
+
+| rejected | why |
+|---|---|
+| The tiled 1px grid background, `linear-gradient(...1px,transparent 1px)` at `28px` | It is the exact shape of `repeating-stripes-gradient`, and this project's contract is **exactly one** finding of that rule. It is also a workbench motif, which is the world `DEVLOG.md` records as deliberately replaced |
+| `bg-clip-text` + `text-transparent` on the wordmark | Devoid's wordmark is a supplied PNG, so there is nothing to clip; and transparent-filled text is unmeasurable by the contrast audit that currently reports zero failures at worst 5.12:1 |
+
+### Task 24: The accretion core — a loading state that means something
+
+`devoid-deferred-list.md` carries *"200 assets decoding at once, and the loading state does not mean anything yet."* Today a loading tile gets `el('span', 'devbar')` (`web/app.js:238`) — a bar whose own comment reads *"opacity, not movement — survives reduced motion."* That is a correct constraint and a placeholder component. This task replaces it with the app's signature.
+
+**The idea, restated in this app's terms:** a black hole is an *absence* ringed by light, which is what this app makes. The reference draws it with a `conic-gradient` disc laid flat by `rotateX`, a blurred halo, and a pure-black core with a hairline white ring. Devoid already owns both of that disc's colours — `--ruby` is *this goes*, `--cyan` is *this stays* — so the loader is the product's two ideas orbiting the thing being removed.
+
+**Files:**
+- Modify: `web/app.css` (new `.core` block near the existing `.devbar` rules)
+- Modify: `web/app.js:238` (the `loading` branch) · `web/app.js:864` (`Reading the log…`)
+- Modify: `scripts/capture-window.mjs`
+
+**Interfaces:**
+- Produces: a `.core` element, sized by `--core-size` so one component serves the 28px tile, the 64px drawer and a 128px boot state.
+
+- [ ] **Step 1: Add the failing gate assertion**
+
+```js
+  const core = await probe(`return {
+    n: document.querySelectorAll('.core').length,
+    ring: !!document.querySelector('.core .core-ring')
+  }`);
+  check('a loading tile draws the accretion core', core.n > 0, `${core.n} .core nodes`);
+```
+
+Run: `npx electron scripts/capture-window.mjs` Expected: **FAIL**, `0 .core nodes`.
+
+- [ ] **Step 2: Write the component**
+
+```css
+/* ⚠️ NOT on the stage. DEVLOG.md: "lensing is banned from the stage, because
+   the stage is where you judge an edge." This is for tiles, the drawer and the
+   boot state — never over artwork being judged. */
+.core{--core-size:28px;position:relative;width:var(--core-size);height:var(--core-size);
+      display:grid;place-items:center;perspective:calc(var(--core-size) * 5)}
+.core-disk{position:absolute;inset:0;border-radius:50%;
+           transform:rotateX(74deg);
+           background:conic-gradient(from 0deg,var(--star),var(--ruby) 28%,
+                      transparent 52%,var(--cyan) 78%,var(--star));
+           filter:blur(1px);
+           animation:core-spin 1.8s linear infinite}
+.core-ring{position:absolute;width:64%;height:64%;border-radius:50%;
+           background:var(--singularity);
+           box-shadow:0 0 0 1.5px var(--score-2),0 0 8px var(--ruby)}
+@keyframes core-spin{to{transform:rotateX(74deg) rotate(360deg)}}
+```
+
+⚠️ **`rotate` must stay inside the same `transform` as `rotateX`.** Animating `rotate` alone silently drops the `rotateX` and the disc stands upright — the one mistake the reference's own first keyframe block makes and its second one fixes.
+
+- [ ] **Step 3: Preserve the reduced-motion contract**
+
+The bar it replaces was explicitly chosen to survive `prefers-reduced-motion`. The core must not regress that:
+
+```css
+@media (prefers-reduced-motion: reduce){
+  .core-disk{animation:none;opacity:.55}
+  .core-ring{box-shadow:0 0 0 1.5px var(--score-2)}
+}
+```
+
+A still disc with a ringed core still reads as "working"; nothing moves.
+
+- [ ] **Step 4: Wire it to the three places that need it**
+
+`web/app.js:238` — replace the `devbar` append in the `loading` branch. `web/app.js:864` — the history drawer's `Reading the log…` refusal gets a `.core` at `--core-size:20px` beside the text. Keep both strings; the component is added, not substituted for the words.
+
+- [ ] **Step 5: Run the gate and the detector**
+
+Run: `npx electron scripts/capture-window.mjs` Expected: PASS. Then `node ~/.claude/skills/impeccable/scripts/detect.mjs --json web/index.html web/app.css web/app.js` — **exactly one finding, and not DEGRADED.** A `conic-gradient` is not a repeating stripe, but this is the project's one measured design contract and it gets measured.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add web/app.css web/app.js scripts/capture-window.mjs
+git commit -m "feat(loading): an accretion core, so waiting means something"
+```
+
+### Task 25: A state pip that is always telling the truth
+
+`devoid-deferred-list.md` carries *"The history drawer can sit on 'Reading the log…' while analyses run."* The drawer lies while you are not looking at it. A header pip cannot, because it is never not on screen.
+
+**The idea:** the reference puts a pulsing white dot inside a black disc in its header. It is decoration there — hardcoded, wired to nothing. Here it is driven by real state, which is the whole difference.
+
+**Files:**
+- Modify: `web/index.html` (`<header class="chrome">`, after `#crumb`)
+- Modify: `web/app.css` · `web/app.js` (`renderPrimary`, which already computes `busy`)
+- Modify: `scripts/capture-window.mjs`
+
+**Interfaces:**
+- Consumes: `targets()` and `stateOf()`, already in `app.js`; the banner's `data-state`.
+- Produces: `#pip` carrying `data-pip` of `idle` · `working` · `blocked`.
+
+- [ ] **Step 1: Add the failing gate assertion**
+
+```js
+  const pip = await probe(`const p = document.getElementById('pip');
+    return { present: !!p, state: p && p.dataset.pip, label: p && p.getAttribute('aria-label') }`);
+  check('the header pip reports engine state', pip.present && !!pip.state, JSON.stringify(pip));
+```
+
+Run: `npx electron scripts/capture-window.mjs` Expected: **FAIL**, `{"present":false}`.
+
+- [ ] **Step 2: Markup**
+
+```html
+    <span class="pip" id="pip" data-pip="idle" role="status" aria-label="Engine idle"></span>
+```
+
+- [ ] **Step 3: Style it as the same object as the loader, at 8px**
+
+```css
+.pip{position:relative;width:10px;height:10px;border-radius:50%;
+     background:var(--singularity);box-shadow:0 0 0 1px var(--score-2)}
+.pip::after{content:"";position:absolute;inset:2px;border-radius:50%;background:var(--graphite-3)}
+.pip[data-pip="working"]::after{background:var(--cyan);animation:pip-ping 1.6s var(--ease) infinite}
+.pip[data-pip="blocked"]::after{background:var(--ruby)}
+@keyframes pip-ping{0%{opacity:.35}50%{opacity:1}100%{opacity:.35}}
+@media (prefers-reduced-motion: reduce){.pip[data-pip="working"]::after{animation:none;opacity:1}}
+```
+
+⚠️ **Opacity, not scale.** A scaling ping is movement; this app's reduced-motion rule already forced that choice once for `.devbar` and the same reasoning applies. ⚠️ **Not colour alone** — `DESIGN.md`'s greyscale rule. `blocked` is the only state that is also announced by the banner, and `working` is the only one that moves; the `aria-label` carries the word in every case.
+
+- [ ] **Step 4: Drive it from state**
+
+In `renderPrimary` (`web/app.js:1244`, which already computes `busy`):
+
+```js
+  const pip = $('#pip');
+  if (pip) {
+    const blocked = targets().some(x => stateOf(x) === 'blocked' || stateOf(x) === 'failed');
+    const s = blocked ? 'blocked' : busy.length ? 'working' : 'idle';
+    pip.dataset.pip = s;
+    pip.setAttribute('aria-label',
+      s === 'working' ? `Engine working on ${busy.length}` :
+      s === 'blocked' ? 'Engine blocked' : 'Engine idle');
+  }
+```
+
+⚠️ `renderPrimary` runs on every render and on the poll tick (`web/app.js:1087`), which is exactly the cadence the pip needs. Do not add a second timer.
+
+- [ ] **Step 5: Gate, then commit**
+
+Run: `npx electron scripts/capture-window.mjs` Expected: PASS.
+
+```bash
+git add web/index.html web/app.css web/app.js scripts/capture-window.mjs
+git commit -m "feat(chrome): a pip that reports engine state without opening the drawer"
+```
+
+### Task 26: A gravitational well behind the stage
+
+**Files:** `web/app.css:169` (`.stage`) · `scripts/capture-window.mjs`
+
+The reference layers two things behind its display: a tiled grid, and a radial vignette. **The grid is rejected above.** The vignette is the one to take — it is light falling into a well, which is on-metaphor, has no repeat, and does what the grid was reaching for: it makes the stage read as a bounded volume rather than a flat panel.
+
+⚠️ **This runs after Stage 4.** Tasks 21–23 move the chrome to the long axis and re-proportion the stage; a vignette tuned to the old geometry would have to be redone.
+
+- [ ] **Step 1: Add the failing gate assertion**
+
+```js
+  const well = await probe(`const st = getComputedStyle(document.getElementById('stage'));
+    return { bg: st.backgroundImage }`);
+  check('the stage sits in a gravitational well', /radial-gradient/.test(well.bg), well.bg.slice(0, 90));
+```
+
+Expected: **FAIL** — `none`.
+
+- [ ] **Step 2: Write it in the app's own nebula tokens**
+
+```css
+/* light falling inward. Uses the nebula tokens rather than a black wash, so it
+   darkens in collapsed and lightens in emitting without a second rule. */
+.stage{background-image:radial-gradient(ellipse at center,transparent 38%,var(--neb-violet) 92%)}
+```
+
+⚠️ **The centre must stay fully transparent well past the artwork's bounds.** The stage is where an edge is judged; a tint that reaches the artwork is the lensing the world rules ban. `38%` is a starting value — confirm against `local/window-shots/` that the artwork sits entirely inside the transparent core at the narrowest supported window, and raise it if not.
+
+- [ ] **Step 3: Gate, detector, commit**
+
+```bash
+git add web/app.css scripts/capture-window.mjs
+git commit -m "feat(stage): a gravitational well, so the stage reads as a volume"
 ```
 
 ---
