@@ -21,6 +21,26 @@ The project-local tracker for open work, real TODOs, and reminders specific to t
 
 *Ordered by priority, P1 first.*
 
+### `[P1 · S · Sonnet5-High]` The design detector ran DEGRADED with no banner, and its deps live in `/tmp` *(filed 2026-09-06)*
+
+`CLAUDE.md` makes the detector a gate: *exactly one finding, `repeating-stripes-gradient`, and an empty result only counts when the header does not say DEGRADED.* Found 2026-09-06: `htmlparser2`, `css-select`, `css-tree` and `domutils` were **missing** from `~/.claude/skills/impeccable/node_modules`, and on a **CSS-only** invocation the tool printed a bare `[]` with **no DEGRADED banner at all** — the banner appears only once HTML is in the argument list. So the documented safeguard does not cover the most common invocation shape.
+
+⚠️ **Every detector result quoted before that install is unverified**, including several in this session's own reports. Deps were installed into the skill directory (outside this repo), which is not durable: the skill has no `package.json` listing them, and `node_modules` there has been observed as a symlink into `/tmp`.
+
+**Concrete next action:** do not trust a bare `[]`. Either pin the four packages in the skill's own `package.json`, or add a wrapper in `scripts/` that runs the detector over a file **known** to contain a finding and fails loudly if that returns empty. This project's own rule — prove the instrument can report presence before trusting an absence.
+
+### `[P1 · XS · Sonnet5-Med]` `scripts/fetch-fonts.py` silently reverts the font fix *(filed 2026-09-06)*
+
+`web/fonts.css` was corrected so the declared axes match what the `.woff2` files carry (Archivo `wght 100 900`, Spline Sans Mono one variable face at `300 700`). `scripts/fetch-fonts.py` regenerates that file wholesale from a Google Fonts query still pinned to `wdth,wght@62..125,400..700` and `wght@400;500` — **exactly the clamped ranges that were removed.** Running it undoes the fix without a word.
+
+**Concrete next action:** widen the query string in the script. `scripts/check_font_axes.py` catches the regression today, so this is a footgun rather than a silent loss — but a gate that catches a self-inflicted revert is worse than a script that does not cause one.
+
+### `[P3 · XS · Sonnet5-Low]` An exact-key-set assertion made a contract addition a test failure *(filed 2026-09-06)*
+
+`tests/test_api.py::test_end_to_end_register_then_analyze` asserted `set(created[0]) == {"id","path","ext","state"}`. Publishing `url` from `Asset.public()` — a deliberate, documented contract addition — turned that into a red suite. The assertion was widened in the same change.
+
+**Worth keeping because the shape recurs:** an exact-key-set assertion on a public payload converts every additive change into a failure, which trains people to edit the test rather than read it. **Assert the keys you depend on, not the absence of keys you do not.** Sweep `tests/` for other exact-shape assertions before the next contract change.
+
 ### `[P2 · S · Opus5-Med]` With a question open, the artwork is 321px in a 1750px stage *(filed 2026-09-05)*
 
 Measured in the real window at 1280x860 with `megaphone.src.gif` open: `#wipe` is **321x321**, centred in a work area about 1750px wide. `.wipe` is `height:100%` with `aspect-ratio:1`, so it is height-constrained — and the questions panel, the ledger and the film strip take the height, while the width beside it goes unused.

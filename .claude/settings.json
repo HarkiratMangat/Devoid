@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/Applications/Claude Code/Diors-Builds/docs/**)",
+      "Read(/Applications/Claude Code/Diors-Builds/scripts/**)",
+      "Read(/Applications/Claude Code/Diors-Builds/.claude/rules/**)",
+      "Read(/Applications/Claude Code/Diors-Builds/CLAUDE.md)",
+      "Read(/Applications/Claude Code/Gif-Background-Remover/**)"
+    ]
+  }
+}
