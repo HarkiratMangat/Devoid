@@ -83,6 +83,8 @@ const S = {
   overrides: {},         // dest → explicit value. ONLY these are sent. Absent === auto.
   adviceDismissed: new Set(),   // suggestion keys the person waved away; they do not come back
   editing: new Set(),    // dests opened for editing but NOT yet committed to overrides
+  answerUndo: [],        // snapshots of S.answers, newest last — ⌘Z pops one
+  pending: new Set(),    // blocked by a question and waiting to go the moment it is answered
   goal: { format: null, target_kb: null, min_dim: null },   // ⚠️ target_kb starts EMPTY
   qerror: null,          // the server's validation message, shown where it happened
   frame: 0,
@@ -654,7 +656,7 @@ function renderQuestions(a) {
     q.append(answerPair(a, [
       ['Keep it', 'protect', ans.byColour[g.hex] === 'protect'],
       ['Cut it',  'remove',  ans.byColour[g.hex] === 'remove'],
-    ], v => { ans.byColour[g.hex] = v; S.blocked.delete(a.id); S.qerror = null; render(); }));
+    ], v => { noteAnswer(a, g.hex, v); ans.byColour[g.hex] = v; S.blocked.delete(a.id); S.qerror = null; render(); }));
     box.append(q);
   }
 
@@ -664,9 +666,11 @@ function renderQuestions(a) {
     q.append(el('h3', null, `The fade in ${f.color}`));
     q.append(el('p', 'qwhere', `${f.faint_px} faint px on frame ${f.frame_index}`));
     q.append(answerPair(a, [
-      ['It is artwork',  'artwork',     ans.fade === 'artwork'],
-      ['It is not',      'not-artwork', ans.fade === 'not-artwork'],
-    ], v => { ans.fade = v; S.blocked.delete(a.id); S.qerror = null; render(); }));
+      /* ⚠️ F16. `It is artwork` / `It is not` was a fifth wording for one
+         binary. Same verbs as every other answer in the app. */
+      ['Keep the fade',  'artwork',     ans.fade === 'artwork'],
+      ['Cut the fade',   'not-artwork', ans.fade === 'not-artwork'],
+    ], v => { noteAnswer(a, 'fade', v); ans.fade = v; S.blocked.delete(a.id); S.qerror = null; render(); }));
     /* ⚠️ Answering "it is artwork" forces an 8-bit-alpha container. Say so
        BEFORE the person picks a format, rather than discovering it later. */
     if (ans.fade === 'artwork' && S.goal.format === 'gif') {
@@ -724,8 +728,42 @@ async function submitAnswers(a) {
   }
   S.qerror = null;
   S.blocked.delete(a.id);
-  patch(a.id, { state: (r.body && r.body.state) || 'ready', questions: null });
+  /* ⚠️ F13. This used to null `questions`, after which NOTHING could re-open
+     the decision — no re-read, no re-render, no route. The most consequential
+     choice in the app shipped without a way back, in a repo whose own rule is
+     that advice ships with an undo. The questions stay; `outstanding()` is
+     already empty once every group is answered, so the state still moves to
+     `ready`, and `renderQuestions` already marks the chosen side. */
+  patch(a.id, { state: (r.body && r.body.state) || 'ready' });
+  /* ⚠️ F15. `answer it and it will go` was a promise nothing kept: the banner
+     said the asset would go, and submitAnswers never called cut(). Either the
+     copy was false or the product was worse than its own description. The
+     queue is the better product, so the copy stays and the queue drains. */
+  if (S.pending.has(a.id)) { S.pending.delete(a.id); startCut(a); }
   render();
+}
+
+/* Every answer is snapshotted before it changes, so ⌘Z can put back exactly
+   what was there. ⚠️ This reverts the LOCAL choice. If the answer already went
+   to the server the asset is `ready`, and taking the choice back re-opens the
+   question — pressing the answer button again is what re-submits. */
+function noteAnswer(a, key, next) {
+  const cur = S.answers[a.id] || { byColour: {}, fade: null };
+  /* ⚠️ Re-picking the side that is already chosen changes nothing, and an undo
+     stack that records no-ops makes ⌘Z look broken: the first press appears to
+     do nothing because it restores the state you are already in. */
+  if (key === 'fade' ? cur.fade === next : cur.byColour[key] === next) return;
+  S.answerUndo.push({ id: a.id, prev: { byColour: { ...cur.byColour }, fade: cur.fade } });
+  if (S.answerUndo.length > 50) S.answerUndo.shift();
+}
+function undoAnswer() {
+  const step = S.answerUndo.pop();
+  if (!step) return false;
+  S.answers[step.id] = step.prev;
+  S.blocked.delete(step.id);
+  S.qerror = null;
+  render();
+  return true;
 }
 
 /* ── the wipe ─────────────────────────────────────────────────────────────
@@ -893,7 +931,7 @@ function renderFilm(a) {
    to get it. `report:` rows are read-only findings, not controls. */
 const DRAWERS = {
   'what to keep': [
-    ['Kept region',   'flag:protect_region'],
+    ['Keep region',   'flag:protect_region'],
     ['Cut region',    'flag:remove_region'],
     ['Follow it',     'flag:remove_region_track'],
   ],
@@ -1038,7 +1076,7 @@ function refusalRows() {
   } else if (a && outstanding(a).length) {
     rows.push(el('p', 'refusal', `${outstanding(a).length} question${outstanding(a).length > 1 ? 's' : ''} waiting on you, below the picture`));
   } else {
-    rows.push(el('p', 'refusal', 'Nothing refused'));
+    rows.push(el('p', 'refusal', 'It did not refuse anything here'));   // ⚠️ F17: was a fragment
   }
   return rows;
 }
@@ -1152,7 +1190,8 @@ async function loadHistoryLine(line) {
   setBanner('not-checked',
     `Loaded ${restored.join(' and ')} from that run` +
     (answers ? '. Its answers were not restored — this copy has not been analysed yet' : '') +
-    '. Nothing is cut until you press save',
+    /* ⚠️ F17. Named a button that does not exist. */
+    '. Nothing is cut until you press Cut',
     null);
 }
 
@@ -1217,9 +1256,15 @@ function editor(f, value, set) {
   return inp;
 }
 
+/* ⚠️ F17. Three casings coexisted: `Select all` and `Keep it` in sentence case,
+   the tab rail and every drawer heading in lowercase, `load these settings`
+   lowercase again. DESIGN.md specifies sentence case. The DRAWERS keys stay
+   lowercase — they are identifiers used for lookup and comparison — and only
+   the rendered label is cased, so nothing downstream has to change. */
+const sentence = t => t.charAt(0).toUpperCase() + t.slice(1);
 function renderTabs() {
   $('#tabs').replaceChildren(...Object.keys(DRAWERS).map(name => {
-    const b = el('button', null, name);
+    const b = el('button', null, sentence(name));
     b.setAttribute('aria-expanded', String(S.drawer === name));
     b.addEventListener('click', () => { S.drawer = S.drawer === name ? null : name; render(); });
     return b;
@@ -1227,7 +1272,7 @@ function renderTabs() {
   const d = $('#drawer');
   d.hidden = !S.drawer;
   if (!S.drawer) return;
-  d.replaceChildren(el('h2', null, S.drawer));
+  d.replaceChildren(el('h2', null, sentence(S.drawer)));
 
   /* the drawers act on the SELECTION, and they say so -- except the history,
      which is the whole log and would be lying if it claimed a scope. */
@@ -1300,7 +1345,7 @@ async function cut(confirmed) {
      eighteen. The blocked two keep their mark, their word and their banner. */
   const waiting = list.filter(a => outstanding(a).length);
   const going = list.filter(a => !outstanding(a).length);
-  for (const a of waiting) S.blocked.add(a.id);
+  for (const a of waiting) { S.blocked.add(a.id); S.pending.add(a.id); }   // F15: they go when answered
   if (waiting.length) {
     setBanner('blocked',
       (waiting.length === 1
@@ -1407,7 +1452,7 @@ function settle(a) {
   const j = S.jobs[a.id] || {};
   const st = stateOf(a);
   if (st === 'failed') {
-    setBanner('failed', `${base(a.path)} — ${j.error || 'it stopped without saying why'}`,
+    setBanner('failed', `${base(a.path)} — ${j.error || 'it stopped without saying why. Try again, and if it stops again the engine log is in the console'}`,
       { label: 'Try again', run: () => { setBanner(null); startCut(a); } });
   } else if (st === 'conflict') {
     /* ── THE CONFLICT POLICY, decided here (PLAN.md 2.6b) ────────────────
@@ -1509,7 +1554,7 @@ function render() {
     const s = S.sel.size;
     const bits = [`${S.assets.length} on the table`];
     if (s) bits.push(`${s} selected`);
-    if (q) bits.push(`${q} need you`);
+    if (q) bits.push(`${q} ${q === 1 ? 'needs' : 'need'} you`);   // ⚠️ F17: was `1 need you`
     crumb.append(el('span', null, bits.join(' · ')));
   }
 
@@ -1731,6 +1776,13 @@ $('#primary').addEventListener('click', () => {
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && S.open) closeAsset();
+  /* ⚠️ F13. CLAUDE.md: "Advice always ships with an undo of exactly what it
+     changed." The answer is the app's most consequential decision and it had
+     none. ⌘Z restores the previous snapshot, not a guessed prior state. */
+  if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey &&
+      !/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)) {
+    if (undoAnswer()) e.preventDefault();
+  }
   if ((e.metaKey || e.ctrlKey) && e.key === 'a' && !S.open &&
       !/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)) {
     e.preventDefault(); $('#selectall').click();

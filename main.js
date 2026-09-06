@@ -404,7 +404,10 @@ function buildMenu() {
       { role: 'undo' },
       { role: 'redo' },
       { type: 'separator' },
-      { role: 'cut' },
+      /* ⚠️ F16. `{ role: 'cut' }` — the platform's clipboard Cut, ⌘X — is
+         removed deliberately. In an app whose product verb IS "cut", an Edit
+         menu item called Cut that does something entirely different is the
+         worst available collision. Copy and Paste stay: neither is overloaded. */
       { role: 'copy' },
       { role: 'paste' },
       { role: 'selectAll' },

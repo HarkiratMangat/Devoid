@@ -718,8 +718,11 @@
     var px = region && region.frames_enclosed != null && region.frames_checked
       ? ' It is enclosed on ' + region.frames_enclosed + ' of ' + region.frames_checked + ' frames.'
       : '';
-    return 'The hatched area is the same colour as the background.' + px +
-      ' Is it part of the picture, or is it background showing through?';
+    /* ⚠️ F17. This was 30 words and it was verbatim the analyst's question
+       PRODUCT.md says the app exists to replace. The region is drawn on the
+       artwork now (F2), so the sentence does not have to describe it. */
+    return 'This bit is the same colour as the background.' + px +
+      ' Keep it, or cut it?';
   }
 
   /**

@@ -28,7 +28,9 @@
       <span class="sg-void"></span><span class="sg-lit"></span>
       <span class="sg-rim"></span><span class="sg-cut"></span>
     </button>
-    <button class="btn go" id="primary">Save 6</button>
+    <!-- ⚠️ F17. This shipped as `Save 6` — first paint, an invented count, and
+         "Save" appears nowhere else in the app. The verb is Cut. -->
+    <button class="btn go" id="primary">Cut</button>
   </header>
 
   <!-- state banners: loading, refused, failed, conflict, blocked, cancelled.
@@ -74,8 +76,11 @@
             <img id="before" src="assets/megaphone.src.gif" alt="">
             <img id="after" class="after" src="assets/megaphone.gif" alt="">
             <span class="seam" id="seam" aria-hidden="true"></span>
-            <span class="wipetag l">as it came</span>
-            <span class="wipetag r">cut</span>
+            <!-- ⚠️ F16. app.js overwrites both of these on every render, so these
+                 literals only ever showed at first paint — and they showed a sixth
+                 wording nothing else used. They now match what the seam says. -->
+            <span class="wipetag l">keep it</span>
+            <span class="wipetag r">cut it</span>
           </div>
           <!-- the question card: the wipe's fallback below the seam's visible-
                difference threshold (PLAN.md 3.0b). Stage 3 owns show/hide + content. -->
@@ -83,8 +88,11 @@
             <div class="qcard-frame" id="qcardframe"></div>
             <p id="qcardtext"></p>
             <div class="qcard-actions">
-              <button class="btn" id="qcardno">Background</button>
-              <button class="btn go" id="qcardyes">Artwork</button>
+              <!-- ⚠️ F16. These read `Background` / `Artwork` while #questions read
+                   `Keep it` / `Cut it` for the SAME binary — five vocabularies for
+                   one decision across the app. One verb pair, everywhere. -->
+              <button class="btn" id="qcardno">Cut it</button>
+              <button class="btn go" id="qcardyes">Keep it</button>
             </div>
           </div>
           <!-- Stage 4: the region-drawing canvas, overlaid on the open asset.
@@ -118,8 +126,12 @@
       <div class="empty chk" id="empty" hidden>
         <div>
           <div class="horizon" aria-hidden="true"><span class="ring"></span><span class="disc"></span></div>
+          <!-- ⚠️ F17 asked for one line here; D2 (2026-09-06) puts the empty
+               state's GEOMETRY off limits, and removing a line is a geometry
+               change. The copy defect was that neither line named what to drop,
+               and that is fixed without touching the shape. -->
           <p class="big">Nothing on the table</p>
-          <p>Drop something in</p>
+          <p>Drop a GIF, WebP, AVIF, APNG or PNG here</p>
         </div>
       </div>
     </main>

@@ -89,8 +89,8 @@ const REGION_KINDS = [
   { type: 'protect',      label: 'Keep',           hint: 'this part stays, even where it matches the background', keeps: true },
   { type: 'remove',       label: 'Cut',            hint: 'take this out',                                          keeps: false },
   { type: 'remove-track', label: 'Cut and follow', hint: 'take this out, and follow it as it moves',               keeps: false, tracked: true },
-  { type: 'unprotect',    label: 'Cut anyway',     hint: 'let this go even though it looks worth keeping',         keeps: false },
-  { type: 'translucent',  label: 'Half there',     hint: 'this part is meant to be see-through',                   keeps: true },
+  { type: 'unprotect',    label: 'Cut it after all', hint: 'let this go even though it looks worth keeping',       keeps: false },
+  { type: 'translucent',  label: 'Make it see-through', hint: 'this part is meant to be see-through',              keeps: true },
   { type: 'fade-protect', label: 'Keep the fade',  hint: 'a glow or sparkle here — keep it fading, not flattened', keeps: true },
 ];
 

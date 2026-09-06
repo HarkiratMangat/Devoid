@@ -517,6 +517,50 @@ app.whenReady().then(async () => {
   check('no banner headline is a raw system enum', rawEnum.length === 0,
         rawEnum.length ? rawEnum.map(r => r.join('=')).join(', ') : words.out.map(r => r[1]).join(' · '));
 
+  // ⚠️ F16/F17. One vocabulary for one binary, one casing, and no button named
+  // for a verb the app does not use. Each of these was a real shipped string.
+  const copy = await probe(`
+    const t = id => { const e = document.getElementById(id); return e ? e.textContent.trim() : null; };
+    S.drawer = Object.keys(DRAWERS)[0]; render();
+    const tabs = [...document.querySelectorAll('#tabs button')].map(b => b.textContent);
+    const h2 = document.querySelector('#drawer h2');
+    S.drawer = null; render();
+    return { yes: t('qcardyes'), no: t('qcardno'), primary: t('primary'),
+             tabs, h2: h2 ? h2.textContent : null,
+             body: document.body.textContent };
+  `);
+  check('the question card uses the app\'s one vocabulary',
+        copy.yes === 'Keep it' && copy.no === 'Cut it', `${copy.no} / ${copy.yes}`);
+  check('no control is named for a verb the app does not use',
+        !/\bSave\b/.test(copy.primary || '') && !/press save/i.test(copy.body),
+        `primary="${copy.primary}"`);
+  check('the tab rail and the drawer heading are sentence case',
+        copy.tabs.length > 0 && copy.tabs.every(t => /^[A-Z]/.test(t)) && /^[A-Z]/.test(copy.h2 || ''),
+        `${copy.tabs.join(' | ')} — h2 "${copy.h2}"`);
+
+  // ⚠️ F13. Answering used to null `questions`, so nothing could re-open the
+  // app's most consequential decision. Answer, then take it back with ⌘Z.
+  await win.webContents.executeJavaScript(`openAsset(${JSON.stringify(megaId)})`);
+  await wait(900);
+  const undo = await probe(`
+    /* an earlier check in this run already answered this asset, so start from a
+       clean slate or the "undo" restores the value it just re-picked */
+    S.answers[S.open] = { byColour: {}, fade: null };
+    S.answerUndo.length = 0;
+    render();
+    const b = document.querySelector('#questions button');
+    if (!b) return { skipped: true };
+    b.click();
+    const answered = JSON.stringify(S.answers[S.open] || {});
+    const stillThere = !!document.querySelector('#questions button');
+    undoAnswer();
+    return { skipped: false, answered, stillThere,
+             reverted: JSON.stringify(S.answers[S.open] || {}) };
+  `);
+  check('an answer can be taken back, and the question survives answering',
+        !undo.skipped && undo.stillThere && undo.answered !== undo.reverted,
+        `answered=${undo.answered} reverted=${undo.reverted} questionStillRendered=${undo.stillThere}`);
+
   const rm = await probe(`return { reduce: matchMedia('(prefers-reduced-motion: reduce)').matches }`);
   check('prefers-reduced-motion was actually emulated', rm.reduce === true, rm.reduce);
 
