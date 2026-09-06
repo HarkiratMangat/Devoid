@@ -144,7 +144,7 @@ The question that ended it: *what object in **this** app already has two states?
 
 **The lesson is the sequence, not the answer.** Three defaults were tried before the product itself was consulted.
 
-### The starfield is generated, never tiled
+### The starfield is generated, never tiled — ⚠️ RETRACTED 2026-09-06
 
 The first version tiled an SVG. It was called out immediately and correctly: **a repeating star pattern is the one thing a sky never does**, and the eye catches a repeated constellation instantly. It is now drawn once to fit, into a canvas:
 
@@ -157,9 +157,17 @@ alpha = (emitting ? 0.34 : 0.92) * (0.30 + m * 0.7)
 
 The `2.4` exponent is what makes it read as a sky rather than as noise: a uniform distribution gives an even field of same-sized dots, which is exactly what a tile looks like.
 
+⚠️ **RETRACTED 2026-09-06 — the heading and the sentences above are wrong, and are kept because the correction is the useful part.** Only the *full-screen* field was rebuilt as a canvas. The tiles kept the repeating SVG. `--stars-a` is still **referenced**, not merely defined, at `web/app.css:106` — applied to every `.chk-s` surface, which is the contact-sheet tile (`web/app.js:229`), the matte swatch (`web/index.html:63`) and the wipe's cut side (`#aftbg`, `web/index.html:73`) — and a second time at `web/app.css:464` for `.lamp .sg-void`. `--stars-b` is defined in both lighting blocks and referenced **zero** times: a dead token. `web/app.js:233` randomises `background-position` per tile off a hash of the asset id, which hides the repeat rather than removing it — a mitigation, not a removal.
+
+So Harkirat's own rejection — *"your star pattern is literally a copy paste. Stars are never a copy paste pattern."* — is still shipping on every tile, while this entry claimed it had been fixed. Removing `--stars-a` from `.chk-s` and deleting `--stars-b` is **Task 16 of `docs/superpowers/plans/2026-09-06-devoid-remediation.md`**; the finding is F24 in the matching design spec.
+
 ### Skills were run as background reading, and then as procedures
 
 The design skills were first read for direction and then not *executed*. Run properly as procedures at the end, `interface-design`'s four checks (swap · squint · signature · token) immediately found **a variable-font width axis doing nothing** — 92/96/108% is invisible; the tiers are now 80/88/116% — and **a light mode that dissolved under blur**, which is `devoid-deferred-list.md` item 7. Neither was findable by reading the skill.
+
+⚠️ **RETRACTED 2026-09-06 — the width-axis fix was values-deep only, and the sentence above overstates it.** The tiers did move from 92/96/108% to 80/88/116%, but nobody checked whether the elements named in the rule can render a width axis at all. `web/app.css:589` applies `font-stretch:80%` to ten selectors — `.st, .crumb, .bword, .rt-lab, .qhint, .nm, .ledger, .filmhead, .tabs button, .ctl .lab` — and **eight of them are `"Spline Sans Mono"`**: `.st`, `.crumb`, `.bword`, `.qhint`, `.nm`, `.ledger`, `.filmhead` (all in `web/app.css`) and `.rt-lab` (`web/canvas.css:43`). Its two self-hosted `.woff2` files carry a `wght` axis and **no `wdth` axis** (fontTools `fvar`, both files). Browsers do not synthesise width, so the declaration is **inert on eight of ten**. Only `.tabs button` and `.ctl .lab` inherit Archivo — the one family that has `wdth` — and so only those two ever render the instrument tier.
+
+**The same bug class, one level deeper.** The first pass corrected the *values* and never asked whether the named elements could render them, which is the identical mistake as shipping three tiers 8% apart: a declaration that looks deliberate and changes nothing. Filed as F20 in `docs/superpowers/specs/2026-09-06-devoid-remediation-design.md`. ⚠️ That spec's evidence line swaps two selectors — it lists `.ctl .lab` as mono and `.rt-lab` as renderable; the code has it the other way round. The count of eight is right.
 
 ### The wipe refuses to claim an uncut source is cut
 

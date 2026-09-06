@@ -21,6 +21,8 @@ Base scale `--s1:6 --s2:10 --s3:16 --s4:26 --s5:38`. Multiples only. A raw px va
 
 The variable font was self-hosted for the axis; using it at three values 8% apart was invisible, proven by swapping it out and seeing nothing change.
 
+⚠️ **RETRACTED 2026-09-06 — the table below records intent, not what renders.** `web/app.css:589` sets the instrument tier on ten selectors and **eight of them are mono**, where the axis does not exist: `.st`, `.crumb`, `.bword`, `.qhint`, `.nm`, `.ledger`, `.filmhead` and `.rt-lab`. Only `.tabs button` and `.ctl .lab` inherit Archivo and actually render 80%. The 2026-09-05 fix corrected the tier *values* and never checked whether the named elements could render them. Tracked as F20; the values in the table stay because they are the target, not because they are shipping.
+
 | Tier | Width | Used for |
 |---|---|---|
 | Instrument | **80%** | state words, crumb, filenames, ledger, drawer labels, tab labels — anything that annotates rather than speaks |
@@ -29,7 +31,14 @@ The variable font was self-hosted for the axis; using it at three values 8% apar
 | Display | **116%** | headings, the open asset's name |
 | Wordmark | — | **drawn artwork, not type** (`web/assets/wordmark*.png`), so it carries no width axis. Two files, swapped on the lighting state; `scripts/make_wordmark.py` rebuilds both from the master |
 
-Mono is Spline Sans Mono for every number, hex, filename and flag name. It has no width axis; do not fake one.
+**Which family carries the width axis, measured with fontTools `fvar` on the self-hosted files in `web/fonts/`:**
+
+| Family | Axes | Width axis? |
+|---|---|---|
+| **Archivo** (body, headings, buttons, tab labels) | `wght`, `wdth` | **yes** — this is the only family `font-stretch` does anything to |
+| **Spline Sans Mono** (numbers, hex, filenames, flag names, state words) | `wght` | **no** |
+
+Mono is Spline Sans Mono for every number, hex, filename and flag name. **It has no `wdth` axis, browsers do not synthesise width, and `font-stretch` on it is silently inert — never apply `font-stretch` to a mono selector.** A rule that condenses type must name Archivo elements only; if an instrument-tier element needs to be condensed, it has to be Archivo, not mono.
 
 ## Colour
 
@@ -48,6 +57,8 @@ Void `#06050D` is violet-tinted, not neutral black: real deep-sky is, and it kee
 | `.swatch` (matte) | 16px specimen inside a 24px target via a 4px transparent border — WCAG 2.2 AA 2.5.8 |
 | `.frame` (contact tile) | `--r2` radius · `--s2` pad · hairline in dark, shadow in light |
 | Starfield | canvas, drawn once to fit, density `area/3300`, radius `0.42 + m*1.18` where `m = random^2.4`. **Never tile it** |
+
+⚠️ **RETRACTED 2026-09-06 — "never tile it" is the rule, and the shipped code breaks it.** The canvas replaced only the full-screen field. Every `.chk-s` surface still paints the tiled SVG `--stars-a` (`web/app.css:106` — contact-sheet tile, matte swatch, the wipe's cut side), as does `.lamp .sg-void` (`web/app.css:464`); `--stars-b` is defined in both lighting blocks and referenced zero times. `web/app.js:233` randomises each tile's `background-position`, which hides the repeat rather than removing it. Removing it is **Task 16 of `docs/superpowers/plans/2026-09-06-devoid-remediation.md`** (finding F24).
 
 ## Motion
 
