@@ -25,6 +25,14 @@ Do not invent separate conventions for this repo.
 - **Timestamps** in docs and comments are `YYYY-MM-DD HH:MM TZ`, never a bare date.
 - **Markdown is soft-wrapped** — one physical line per paragraph or list item. Check with `node "/Applications/Claude Code/Diors-Builds/scripts/reflow-prose.mjs" --check <files>`.
 
+## Asking
+
+**Every question goes in a popup — `AskUserQuestion` — never in prose.** Including "want me to also…". A question set in a paragraph under a report gets read as commentary and answered by silence.
+
+This is a standing preference, stated at the top of the first session here (*"Ask questions as popups, not in prose"*), restated as a correction (*"Any questions for me should always be askuserquesuton popups, you always know that…"*), and written into the silent output style. **It is recorded here because it kept being broken while living only in session instructions** — three times, most recently by putting four open design decisions in a prose list at the end of a long report.
+
+**Ask before dispatching any subagent**, every time. Approval for one dispatch never carries to the next. ⚠️ A skill that forks — `/code-review`, `impeccable critique` — is a subagent dispatch; flag it before invoking, not after.
+
 ## The rules that are specific to this project
 
 **Never add a control that maps 1:1 onto one of the skill's 63 flags.** The point is that the person using it does not learn them. New surface belongs in a preset (a goal) or in a question the app asks — never as a passthrough.

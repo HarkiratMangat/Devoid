@@ -22,6 +22,8 @@
 - **No state by colour alone** — every state carries a shape or a word. The greyscale render is a runnable check.
 - **Two load-bearing colours only.** Rubylith = *this goes*; cyan = *this stays*. No third accent.
 - **Do not touch:** the strip-is-the-app architecture, the palette, the corpus assets in `web/assets/`, the alpha checkerboard, the no-lensing-on-stage rule.
+- **The empty state is off-limits** (D2, answered 2026-09-06 00:58 EDT). Do not cap `.big`, do not shrink the horizon. Raise the question's hierarchy in Stage 3 instead.
+- **All four stages are in scope** (D4, answered 2026-09-06 00:58 EDT), including the layout.
 - **Gates that must be green before any commit:** `.venv/bin/python -m pytest -q` (93) · `npm run test:coords` · `npm run test:wipe` · `npm run test:versions` · `npm run gate:ui` · the detector · reflow on any `.md` touched.
 
 ---
@@ -426,9 +428,46 @@ git add web/app.js web/index.html
 git commit -m "fix(film): make the strip seek, and stop claiming features it lacks"
 ```
 
-### Task 8: Resolve `advice.js` — **BLOCKED ON D1**
+### Task 8: Wire the advice rail
 
-F7. 172 lines, zero callers, and `CLAUDE.md` makes *"advice always ships with an undo"* non-negotiable. Wire it, delete it, or file it. **Do not decide this in code.**
+**D1 answered 2026-09-06 00:58 EDT: wire it.** The rule stands and the app will honour it.
+
+**Files:**
+- Modify: `web/app.js` (call sites), `web/advice.js` (no changes expected — it is complete)
+
+**Interfaces:**
+- Consumes: `window.Devoid.suggest({ text, apply, undo })` — throws if `undo` is omitted.
+
+- [ ] **Step 1: Read the module before calling it**
+
+F7. `web/advice.js` is 172 lines, complete, and has never run. Read it end to end first: it owns the rail's construction, the apply/undo pairing, and a `TypeError` guard for a missing undo that has never fired.
+
+- [ ] **Step 2: Give it its two natural call sites**
+
+Every suggestion must carry an undo of **exactly what it changed** — that is the rule, and the module enforces it.
+
+1. **After an analyze returns a recommendation.** `--recommend`'s JSON is already on `S.assets[].questions`. Where it names a flag the drawers expose, offer it: apply sets `S.overrides[dest]`, undo deletes that one key. Nothing else.
+2. **When a fade answer collides with a stated GIF goal.** `PRODUCT.md`: answering "it is artwork" forces an 8-bit-alpha container, *"which collides with a stated GIF goal — the app resolves that, it does not discover it."* Offer the format change; undo restores the previous `S.goal.format`.
+
+⚠️ **Do not invent a third.** An unearned suggestion is a measured failure mode in this project's history, and the rule exists because of it.
+
+- [ ] **Step 3: Assert it in the gate**
+
+```js
+  const adv = await probe(`
+    return { rail: !!document.querySelector('.advice'),
+             undoable: document.querySelectorAll('.advice [data-undo]').length };`);
+  check('a suggestion carries its undo', !adv.rail || adv.undoable > 0,
+        `${adv.undoable} undo controls for a visible rail`);
+```
+
+- [ ] **Step 4: Commit**
+
+```bash
+npx electron scripts/capture-window.mjs
+git add web/app.js scripts/capture-window.mjs
+git commit -m "feat(advice): give the advice rail its call sites"
+```
 
 ---
 
@@ -660,7 +699,28 @@ git add web/app.css web/index.html web/app.js .interface-design/system.md script
 git commit -m "fix(matte): a visible selected state, a real checkerboard, and arrow keys"
 ```
 
-### Task 18: Make the greyscale check actually pass
+### Task 18: Give the lighting toggle an edge and a name
+
+**D3 answered 2026-09-06 00:58 EDT: keep the seam concept, add identity.** Not a fourth rebuild — `DEVLOG.md` records three rejected attempts before this one, and the concept is right: it teaches the seam gesture before you open anything.
+
+**Files:** `web/app.css` (`.lamp`) · `web/index.html:24-27`
+
+- [ ] **Step 1: Give it an edge that survives a white header**
+
+At 56×28 with no border, the control is effectively invisible on `--bench: #FFFFFF` in emitting, and reads as a corrupted thumbnail between two labelled buttons in collapsed. Take it to **64×32** with a persistent `1px solid var(--score-2)` in **both** lighting states. This also clears SC 2.5.8 on both axes.
+
+- [ ] **Step 2: Name the states**
+
+Add a 10px mono label beside it reading `void` / `lit`, swapping with the state. ⚠️ Keep the `aria-label` a full sentence — *"Switch to emitting light"* — since nobody maps "emitting" to "light mode" from two letters either.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add web/app.css web/index.html
+git commit -m "feat(lamp): an edge on white, and a word for each state"
+```
+
+### Task 19: Make the greyscale check actually pass
 
 **Files:** `web/app.css:196, 286, 292, 519-520, 487` · `web/app.js` (`#openstate`)
 
@@ -689,7 +749,7 @@ git add web/app.css web/app.js scripts/check_greyscale.py scripts/capture-window
 git commit -m "fix(greyscale): make the state legible without colour, and check it"
 ```
 
-### Task 19: Both halves of the comparison on the same ground
+### Task 20: Both halves of the comparison on the same ground
 
 **Files:** `web/index.html:73` · `web/app.css:180, 496-498`
 
@@ -706,11 +766,11 @@ git commit -m "fix(wipe): both answers sit on the same ground"
 
 ---
 
-## Stage 4 — THE LAYOUT — **BLOCKED ON D4**
+## Stage 4 — THE LAYOUT
 
 *The only genuinely drastic part, and last on purpose: it is the largest change and benefits from Stages 1-3 being true first.*
 
-### Task 20: Put the chrome on the long axis
+### Task 21: Put the chrome on the long axis
 
 **Files:** `web/app.css` (`.open`, `.stage`, `.wipe`, `.questions`, `.ledger`, `.film`) · `web/index.html` (the open view's structure)
 
@@ -738,7 +798,7 @@ git add web/index.html web/app.css scripts/capture-window.mjs
 git commit -m "feat(layout): put the chrome beside the artwork, not under it"
 ```
 
-### Task 21: De-rotate the rail, overlay the drawer
+### Task 22: De-rotate the rail, overlay the drawer
 
 **Files:** `web/app.css` (`.tabs`, `.drawer`) · `web/app.js` (`renderTabs`)
 
@@ -757,7 +817,7 @@ git add web/app.css web/app.js
 git commit -m "feat(nav): tabs you can read, and a drawer that does not resize the work"
 ```
 
-### Task 22: The contact sheet earns its space
+### Task 23: The contact sheet earns its space
 
 **Files:** `web/app.css` (`.sheet`, `.frame`) · `web/app.js:216-251` (`renderSheet`, `tile`)
 

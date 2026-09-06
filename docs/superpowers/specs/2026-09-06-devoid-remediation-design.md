@@ -468,6 +468,17 @@ Under blur, `secure.src.gif` and `megaphone.src.gif` read as bright white slabs 
 - The honesty rules: never infer a size target; never report a verification the run did not earn; `not-checked` is first-class.
 - The empty state, unless D2 says otherwise.
 
+## Decisions — answered by Harkirat, 2026-09-06 00:58 EDT
+
+| id | question | answer |
+|---|---|---|
+| **D1** | `advice.js` — 172 lines, zero callers | **Wire it in Stage 1.** The rule stands and the app will honour it |
+| **D2** | Is the empty state off-limits? | **Off-limits.** Raise the question's hierarchy instead of cutting the best screen down to meet it |
+| **D3** | `.lamp` — unidentifiable on white | **Keep the seam concept, add identity** — 64×32, a persistent border in both states, a `void`/`lit` label. Not a fourth rebuild |
+| **D4** | Scope | **All four stages**, including the layout |
+
+*(Recorded as asked. The original framing, and the options weighed, follow.)*
+
 ## Open decisions
 
 | id | question | options |
