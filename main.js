@@ -99,7 +99,13 @@ function systemPython() {
   for (const cand of ['/usr/bin/python3', '/opt/homebrew/bin/python3', '/usr/local/bin/python3']) {
     if (!fs.existsSync(cand)) continue;
     const p = probePython(cand);
-    if (!p.dead && p.version && p.version[0] === 3 && p.version[1] >= 10) return { python: cand, probe: p };
+    /* ⚠️ 3.11, NOT 3.10 (corrected 2026-09-07). This read `>= 10` while
+       `pyproject.toml` declares `requires-python = ">=3.11"` and the failure
+       dialog below says "Devoid needs Python 3.11". A 3.10 interpreter passed
+       this probe and then met a project that refuses it, with the dialog that
+       would have explained why already skipped. Found by auditing the README
+       against the code rather than by anything failing. */
+    if (!p.dead && p.version && p.version[0] === 3 && p.version[1] >= 11) return { python: cand, probe: p };
   }
   return null;
 }
@@ -474,8 +480,10 @@ async function checkForUpdates() {
     type: 'info',
     message: `Devoid ${latest.replace(/^v/, '')} is available`,
     detail: `You are running ${current}.\n\n` +
-      'Devoid cannot install its own updates — it is not code-signed, and macOS ' +
-      'refuses an unsigned update. Opening the release page downloads the new ' +
+      'Devoid cannot install its own updates: the build is signed with a ' +
+      'self-signed certificate rather than an Apple Developer ID, and the macOS ' +
+      'updater only accepts a signature the destination machine already trusts. ' +
+      'Opening the release page downloads the new ' +
       'disk image, which you drag into Applications the same way as the first one.',
     buttons: ['Open the release page', 'Later'],
     defaultId: 0,

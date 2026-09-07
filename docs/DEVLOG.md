@@ -21,6 +21,14 @@ The **story** behind the app: the traps, the reasoning behind decisions, the thi
 
 ## ⚠️ Traps — each of these cost real time, and none is obvious
 
+### `asar extract-file` wrote the archive's copy OVER the source (2026-09-07 16:33 EDT)
+
+`npx asar extract-file dist/mac-arm64/Devoid.app/Contents/Resources/app.asar package.json /tmp/shipped-pkg.json` printed `ok`, created nothing at the destination, and wrote the archive's **stripped** `package.json` into the repository root instead — over the real one. 26 lines gone: every `scripts` entry, `devDependencies`, `keywords`. The command was a one-line check of whether the built app carried the new `license` field.
+
+Two things made it survivable and one made it visible. It was survivable because `package.json` is tracked, so `git checkout -- package.json` restored it exactly. It was visible because the very next command grepped the file and the field it had just added was missing — the check that was meant to inspect the artifact caught the damage to the source instead, by accident.
+
+⚠️ **A read-only-sounding command is not read-only.** `extract-file` names a destination and does not honour it the way the name implies; run it from a scratch directory, or extract the whole archive with `asar extract` into a temp path. And the general form: **before running an unfamiliar tool inside the repository root, ask what it writes** — the answer here was "a file with the same name as one of yours".
+
 ### A slice that stops at `^### ` walks past a `## ` heading — SECOND time (2026-09-07 14:22 EDT)
 
 Closing three tracker items with a script that finds each heading and cuts to the next `\n### ` removed the `## ✅ Considered and NOT fixed` heading with the last one, because that heading sits BETWEEN the item and the next `###`. Six standing decisions — **including the three Harkirat retired permanently** — were reparented under "Open". ⚠️ **The size assert passed**: the extra content is one line, well under the limit. This exact trap is already in this file's history from 2026-09-07 (a 13-line slice where 9 were meant); the fix that time was `^#{2,3} `, and it was applied to that script and not learned as a rule. **A deletion asserts what SURVIVES, not only what goes** — the assert that would have caught it is `assert '## ✅ Considered' in t` after the write, not a line count.

@@ -4,8 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "devoid"
-version = "0.1.0"
+version = "1.0.0"
 requires-python = ">=3.11"
+license = "GPL-3.0-or-later"
 dependencies = [
   "starlette", "uvicorn",
   # ⚠️ THE ENGINE'S OWN STACK. Omitting these produces a server that cannot

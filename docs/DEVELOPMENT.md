@@ -12,12 +12,13 @@ Everything a contributor needs that a user does not. For what the app is and how
 | `server/` | the Starlette app. `app.py` holds the routes, `engine.py` resolves and calls the skill, `cli.py` builds argv, `render.py` runs jobs, `preview.py` builds the seam pair |
 | `web/` | the front end. No framework, no build step for the app itself: `index.html`, `app.css`, `app.js`, plus `wipe.js` and `advice.js` |
 | `scripts/` | the gates and the measurement tools, one file per question |
-| `tests/` | pytest for the server, `node --test` for the browser-side maths |
+| `tests/` | pytest for the server, `node --test` for the browser-side maths. ⚠️ `tests/port-probe.test.js` is wired to nothing — five cases that `npm test` has never run. Filed `[P2 · XS]` |
 | `docs/` | the brief, the visual system, the API contract, the changelog and the devlog |
 
 ## Running from source
 
 ```sh
+brew install gifsicle pngquant webp        # server/engine.py's REQUIRED_BINARIES
 git clone https://github.com/HarkiratMangat/Devoid.git
 cd Devoid
 npm install
@@ -26,7 +27,9 @@ python3.11 -m venv .venv
 npm start
 ```
 
-`npm start` launches Electron, which spawns the Python server and opens the window. Dependencies are declared in `pyproject.toml`; there is no `requirements.txt`.
+`npm start` launches Electron, which spawns the Python server and opens the window. Python dependencies are declared in `pyproject.toml`; there is no `requirements.txt`.
+
+⚠️ **`gifsicle`, `pngquant` and `webpmux` are hard prerequisites and were undocumented until 2026-09-07 16:28 EDT.** `server/engine.py` names them in `REQUIRED_BINARIES` and `status()` reports each missing one, so an install that follows only the Python steps produces an engine that reports itself degraded with nothing explaining why.
 
 ⚠️ **To check anything visual, use the real window.** `npm run gate:ui` captures every state through Electron itself. A browser pane reports `visibilityState: hidden` and fires no `requestAnimationFrame`, which makes rAF-driven UI look broken when it is not.
 
@@ -55,7 +58,7 @@ Configuration lives in `electron-builder.yml` rather than `package.json`, becaus
 
 **The bundle runs outside this repository.** Verified by copying `Devoid.app` to `/tmp` and launching it there: it served its own `index.html`, `app.css`, `app.js` and assets, resolved the engine, and wrote its journal to `~/Library/Application Support/Devoid/` rather than inside itself.
 
-Three things make that work, and each was a real failure first:
+Three things make that work, and each was a failure before it was a design:
 
 | piece | why |
 |---|---|
@@ -63,19 +66,21 @@ Three things make that work, and each was a real failure first:
 | `.venv` ships as **`pyvenv`** in Resources | The old build spawned `.venv/bin/python` relative to its own directory, which exists only in this checkout |
 | The log and the crash journal follow `$DEVOID_DATA_DIR` | `main.js` points it at `~/Library/Application Support/Devoid` when packaged. Writing inside the bundle breaks under signing and is wiped by the next install |
 
-⚠️ **The bundle is not portable to an arbitrary Mac**, for two reasons worth knowing. `pyvenv` is a *virtualenv*, so it still needs its base interpreter — Python 3.11 from the python.org framework. And the engine is resolved at runtime rather than bundled, because the skill is the source of truth for every algorithm and a bundled fork would drift silently. Both failures are dialogs that name the fix, not a window that never opens.
+⚠️ **The bundle is not portable to an arbitrary Mac.** `pyvenv` is a *virtualenv*, so it still needs the python.org 3.11 framework build, and the engine is resolved at runtime rather than bundled — see the README's Requirements table, which is the canonical statement of both.
+
+⚠️ **Only the Python failure is a dialog. The engine failure is not** (corrected 2026-09-07 16:28 EDT). `EngineUnavailable` names all three lookup paths, `main.js` prints it to stdout, and `web/app.js` reads `/api/engine/status` for `engine_version` alone — so a missing engine is a normal-looking window and a 503 the first time a file is added. Both this file and the README claimed a dialog for it. Filed `[P1 · S]`.
 
 The venv is pruned in `electron-builder.yml`: scipy (99 MB), numpy (36) and Pillow (14) ship; roughly 36 MB of build and test machinery the app never imports at runtime does not. **Pruning does not make the app portable** — it only makes the image smaller. Portability is the first-run check in `main.js`.
 
 ## Signing
 
-`electron-builder.yml` sets `mac.identity: DEVOID`, a **self-signed Code Signing certificate** created in Keychain Access. It produces a real, verifiable seal on the machine that holds it, and its actual purpose is that it is the only way to exercise `hardenedRuntime` and `build/entitlements.mac.plist` without an Apple Developer account.
+`electron-builder.yml` sets `mac.identity: DEVOID`, a **self-signed Code Signing certificate** created in Keychain Access. It produces a verifiable seal on the machine that holds it, and its actual purpose is that it is the only way to exercise `hardenedRuntime` and `build/entitlements.mac.plist` without an Apple Developer account.
 
 Those entitlements matter. A signed app cannot spawn the unsigned Python interpreter without them, and a build missing them launches and then dies at the spawn, which looks like a server bug and is not one.
 
-⛔ **It is not Apple-issued.** It does not satisfy Gatekeeper on any other Mac, it can never be notarised, and it does not unblock **Check for Updates…** — Squirrel.Mac needs a signature the destination machine trusts, and the repository being private is a second, independent blocker.
+⛔ **It is not Apple-issued.** It does not satisfy Gatekeeper on any other Mac — which blocks the default double-click, not the app: **right-click → Open** still works anywhere. It can never be notarised, and it does not unblock **Check for Updates…**: Squirrel.Mac needs a signature the destination machine trusts, and the repository being private is a second, independent blocker. The README states both blockers too, in one line; the mechanism lives here.
 
-To sign for distribution instead, set `CSC_LINK` and `CSC_KEY_PASSWORD`; they override `identity`. To notarise as well, set `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD` and `APPLE_TEAM_ID` and flip `mac.notarize` to `true`.
+**With a real Developer ID instead of `DEVOID`**, both paths open: set `CSC_LINK` and `CSC_KEY_PASSWORD` to sign (they override `identity`), and add `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD` and `APPLE_TEAM_ID` with `mac.notarize: true` to notarise. The paragraph above is about the certificate in use today, which can do neither.
 
 ⚠️ **Neither path has been exercised.** No certificate and no Apple ID were available, so the signed and notarised builds are configured but unverified. **Never set those three variables to placeholder values to make the path look testable.**
 
@@ -87,7 +92,7 @@ To sign for distribution instead, set `CSC_LINK` and `CSC_KEY_PASSWORD`; they ov
 npm test
 ```
 
-Eleven gates, in dependency order. **The order is load-bearing and cannot be alphabetised:** `gate:ui` writes the captures and the `.boxes.json` sidecars that `check:greyscale` then measures, and `check:tracker` runs last because it is about the branch rather than the code.
+**Twelve commands, eleven gates** — `test:wipe` and `test:coords` share a row below. **The order is load-bearing and cannot be alphabetised:** `gate:ui` writes the captures and the `.boxes.json` sidecars that `check:greyscale` then measures, and `check:tracker` runs last because it is about the branch rather than the code.
 
 | gate | asks |
 |---|---|
@@ -96,7 +101,7 @@ Eleven gates, in dependency order. **The order is load-bearing and cannot be alp
 | `test:versions` | version comparison for the update check |
 | `test:hooks` | that each routing hook can both fire and stay silent |
 | `check:contrast` | text and UI contrast ratios |
-| `check_font_axes` | every declared font axis range matches the shipped file |
+| `python3 scripts/check_font_axes.py --check` | every declared font axis range matches the shipped file. ⚠️ The only entry with no npm script of its own; it runs inline in the chain |
 | `check:detector` | the design detector reports **presence** against a deliberately defective fixture, so an empty result means something |
 | `check:design` | asks git what changed, then runs the detector over it; fails on drift or on a degraded run |
 | `gate:ui` | every UI state, captured through the real Electron window, with assertions on each |
@@ -119,5 +124,9 @@ Two worked examples of what that catches, both from this repository's own gates:
 | [`CHANGELOG.md`](CHANGELOG.md) | what shipped, `vMAJOR.MODERATE.MINOR`, one version per merged PR |
 
 Conventions — Conventional Commits, the branch and PR flow, the versioning bars and how to decide a tier — are in [`../CLAUDE.md`](../CLAUDE.md).
+
+## Licences
+
+The app is **GPL-3.0-or-later** (`LICENSE`). The engine is licensed separately in its own repository. The fonts under `web/fonts/` are **SIL OFL 1.1**, and their licence has to travel with the `.woff2` files that ship inside the disk image — `web/fonts/OFL.txt` and `web/fonts/README.md` are that obligation, not a courtesy.
 
 **Anything measured belongs in the docs with its numbers.** This project's history is that unmeasured design claims are wrong about a third of the time.

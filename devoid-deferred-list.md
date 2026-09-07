@@ -19,6 +19,37 @@ The project-local tracker for open work, real TODOs, and reminders specific to t
 
 ## 🐞 Open — real TODOs with an available fix, not yet done
 
+### `[P1 · S · Sonnet5-High]` A missing engine is a 503 on the first render, and two documents claimed it was a dialog *(filed 2026-09-07 16:26 EDT)*
+
+`README.md` and `docs/DEVELOPMENT.md` both said a missing engine surfaces as a launch dialog naming the three places Devoid looked. **No such dialog exists.** Every `dialog.*` call in `main.js` is the Python path, Check for Updates, port exhaustion or a server restart; none mentions the engine.
+
+What actually happens: `server/engine.py:86` raises `EngineUnavailable` with a message that does name all three paths, `main.js:347` prints it to **stdout**, and `web/app.js:1320` reads `/api/engine/status` for `engine_version` alone and never renders the `missing` array. The user gets a normal-looking window and a 503 banner the first time they add a file.
+
+Both documents were corrected to describe what happens rather than what was intended. **Concrete next action:** probe `/api/engine/status` at startup and show the same dialog shape the Python check already uses, with the three paths in the detail. The message text exists; only the surface is missing.
+
+### `[P1 · S · Opus5-High]` A packaged app cannot be pointed at a different engine *(filed 2026-09-07 16:26 EDT)*
+
+Both documented overrides fail once the app is a `.app` rather than a checkout. **`$DEVOID_SKILL` never reaches an app launched from Finder or the Dock** — a GUI process does not inherit a shell environment. And `devoid.config.json` is looked up at `REPO_ROOT`, which `main.js:21` points at `process.resourcesPath` when packaged: **inside the bundle**, where writing breaks the signature and the next install wipes it.
+
+So a packaged Devoid can only ever find the engine at the hardcoded fallback. The README documents `launchctl setenv DEVOID_SKILL <path>` as the workaround, which works, and is not something a user should have to know.
+
+**Concrete next action:** look for `devoid.config.json` in `~/Library/Application Support/Devoid/` before the bundle-relative path — the directory the app already owns and already writes to. One `or` in `resolve_skill()`, plus the same lookup in the dialog's detail text so the message names a path the user can actually create.
+
+### `[P2 · XS · Sonnet5-Med]` `tests/port-probe.test.js` is wired to nothing *(filed 2026-09-07 16:26 EDT)*
+
+Five cases, 3.2 KB, referenced by no npm script and by no other file. `npm test` chains twelve commands and this is not one of them, so the port probe's own tests have never run in the suite that certifies a release. ⚠️ **A test nobody runs is worse than no test** — it reads as coverage in a directory listing.
+
+**Concrete next action:** add it to `test:coords`'s neighbours as its own script and into the `test` chain, then confirm it actually passes before assuming it does; it may have rotted.
+
+### `[P2 · S · Sonnet5-Med]` The engine repo needs its LGPLv3 licence *(filed 2026-09-07 16:26 EDT)*
+
+Harkirat's call, 2026-09-07 16:26 EDT: **the app is GPLv3 and the engine is LGPLv3**, so the engine can be used by anything while improvements to the engine itself come back. Devoid's `LICENSE` is in place. The engine repo has none, and adding one there is a change in that repository with its own branch, PR and version — a *minor* bump by its own bars, since nothing about what the tool does changes.
+
+⚠️ **The engine is already tagged v6.4.0 without a licence**, so the licence lands on a later tag rather than retroactively.
+
+**Concrete next action:** branch in `/Applications/Claude Code/Gif-Background-Remover`, add `LICENSE` (LGPL-3.0-or-later needs BOTH `COPYING` and `COPYING.LESSER` by the FSF's own instructions, since LGPLv3 is a set of additional permissions on top of GPLv3), and say so in `SKILL.md` and `README.md`. Push and merge are asked separately, there as here.
+
+
 **Empty as of 2026-09-07 14:21 EDT.** The last three closed together on `feat/devoid-v1`: the second full analysis per render (measured at **2** engine `analyze()` calls, not one, and now **0**), the density rule's three unseen edges, and the engine repo's stale pointer at this repo's label log. All three are in `devoid-resolved-list.md` with their outcomes. ⚠️ **An empty section is not a finished project** — the ✅ and 🔔 sections below carry standing decisions and cross-repo watches that are still live.
 
 ## ✅ Considered and NOT fixed — a real decision, not an oversight

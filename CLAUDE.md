@@ -2,7 +2,7 @@
 
 A local desktop app for removing backgrounds from animated images. It is a front end for the `gif-background-remover` skill at `/Applications/Claude Code/Gif-Background-Remover`, which stays the engine and the source of truth for every algorithm. Devoid reimplements no image processing.
 
-**Read `docs/HANDOFF.md` first** — it says where the work stands and what was already rejected. Then `docs/PLAN.md` for the build order, `docs/PRODUCT.md` for the brief, `docs/DESIGN.md` for the visual system. They carry the constraints, the measurements behind them, and the visual system. This file is only what a session needs to work here.
+**Read `docs/HANDOFF.md` first** — it says where the work stands and what was already rejected. Then `docs/PLAN.md` for the build order, `docs/PRODUCT.md` for the brief, `docs/DESIGN.md` for the visual system. `README.md` is the user-facing front door and `docs/DEVELOPMENT.md` is the contributor's — **a fact belongs in exactly one of them**, and the two were split apart on 2026-09-07 precisely because one file doing both jobs had drifted from the code in three places. They carry the constraints, the measurements behind them, and the visual system. This file is only what a session needs to work here.
 
 **Where things are written down.** ⚠️ `docs/HANDOFF.md` is **ephemeral by design** — it gets renamed `<date>-handoff.superseded.md` and rewritten. Nothing durable may live only there. Four files are appended to rather than replaced, and they are where work belongs:
 

@@ -30,6 +30,30 @@ The app shows the question the engine cannot answer. `--auto` refuses **12.8%** 
 
 **Sections below are the work that landed after 11:13 EDT on 2026-09-07.** Everything above that time is in the entries that follow.
 
+### Four audits of the launch documents, and what they found in the code — 2026-09-07 16:28 EDT
+
+Two fresh readers and two auditors were run over the README, `docs/DEVELOPMENT.md` and the release note with no context beyond the files themselves. They found real defects, most of them in the code rather than the prose.
+
+**Fixed in this release:**
+
+| | |
+|---|---|
+| `main.js` accepted a **system Python 3.10** while `pyproject.toml` declares `>=3.11` and the failure dialog says 3.11 | floor raised to 3.11, so the three sources agree |
+| The update dialog told the user the app **"is not code-signed"** | it is signed, just not by an authority another Mac trusts. Message corrected |
+| `gifsicle`, `pngquant` and `webpmux` are in `engine.py`'s `REQUIRED_BINARIES` and were **documented nowhere** | `brew install gifsicle pngquant webp` is now in both install paths |
+| `$DEVOID_PYTHON` is named in the app's own dialog and was undocumented | in the README's Settings |
+| `pyproject.toml` read `0.1.0` | `1.0.0` |
+| The fonts shipped inside the disk image with **no licence anywhere in the repository** — OFL 1.1 requires it to travel with them | `web/fonts/OFL.txt` and `web/fonts/README.md` |
+| Both documents claimed a missing engine raises a **dialog naming the three paths it looked at**. No such dialog exists | both corrected to describe the 503 that actually happens; the dialog is filed `[P1 · S]` |
+
+**Filed rather than fixed:** a packaged app cannot be pointed at a different engine (`$DEVOID_SKILL` does not reach a Finder-launched app and `devoid.config.json` resolves inside the bundle), and `tests/port-probe.test.js` is wired to nothing.
+
+⚠️ **The README was also telling every reader to do something it had just said would not work** — download the disk image, under a note explaining that Gatekeeper refuses it everywhere but the build machine. Building from source is now the primary path, and the Gatekeeper claim is corrected: it blocks the double-click, and right-click → Open still works.
+
+### Licensed — 2026-09-07 16:28 EDT
+
+**GPL-3.0-or-later**, Harkirat's call. Anyone may clone, change and ship it; a distributed version stays under the same licence with its source available. The engine is to be **LGPL-3.0-or-later** in its own repository so it can be used by anything while improvements to it come back — filed there, since the engine was already tagged v6.4.0 without one.
+
 ### The analysis is handed to the render instead of recomputed — 2026-09-07 15:55 EDT
 
 A render called the engine's `analyze()` **twice** — `--auto`'s pass 1 and its pass-3 verify — on top of the analysis `/analyze` had already paid for. Measured on `galaxy.gif` (743 KB, 8 frames) by wrapping the real function and counting: **2.80s + 2.93s of a 10.15s run**.
