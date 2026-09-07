@@ -1,0 +1,44 @@
+{
+  "name": "devoid",
+  "version": "1.0.0",
+  "description": "A local desktop app for removing the background from animated images \u2014 GIF, WebP, AVIF, APNG, and static PNG/JPEG \u2014 and fitting the result to a size or format target.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "dist:dir": "electron-builder --dir",
+    "vendor:gifuct": "esbuild node_modules/gifuct-js/src/index.js --bundle --format=iife --global-name=gifuct --minify --outfile=web/vendor/gifuct.js",
+    "test:wipe": "node --test tests/test_wipe_sync.mjs",
+    "gate:ui": "electron scripts/capture-window.mjs",
+    "test:coords": "node --test tests/test_canvas_coords.mjs",
+    "test:versions": "node --test tests/test_versions.mjs",
+    "check:contrast": "python3 scripts/check_contrast.py --check",
+    "check:greyscale": ".venv/bin/python scripts/check_greyscale.py --check",
+    "refresh:index": "bash scripts/refresh-index.sh",
+    "test:hooks": "bash .claude/hooks/hooks.test.sh",
+    "check:detector": "node scripts/check_detector.mjs",
+    "check:design": "node scripts/check_design.mjs",
+    "check:tracker": "python3 scripts/audit_tracker.py --diff main",
+    "test": ".venv/bin/python -m pytest -q && npm run test:wipe && npm run test:coords && npm run test:versions && npm run test:hooks && npm run check:contrast && python3 scripts/check_font_axes.py --check && npm run check:detector && npm run check:design && npm run gate:ui && npm run check:greyscale && npm run check:tracker"
+  },
+  "author": "Harkirat Mangat",
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HarkiratMangat/Devoid.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/HarkiratMangat/Devoid/issues"
+  },
+  "homepage": "https://github.com/HarkiratMangat/Devoid#readme",
+  "devDependencies": {
+    "electron": "^44.2.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2"
+  },
+  "dependencies": {
+    "gifuct-js": "^2.1.2"
+  }
+}

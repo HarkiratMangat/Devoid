@@ -2,6 +2,14 @@
 
 *Written 2026-09-03 21:15 EDT, revised 2026-09-04. The durable brief. What this is, who it serves, and the constraints that are not negotiable. **Read `HANDOFF.md` first** for where the work stands; visual decisions live in `DESIGN.md`; the build order is `PLAN.md`.*
 
+<!-- impeccable:product-schema 1 -->
+
+## Platform
+
+web
+
+⚠️ **Electron is a desktop shell over web technologies, so the design language is `web`.** `init`'s own rule: a native wrapper around a website does not make it native. `live` and the bundled `detect.mjs` both apply here; the `ios`/`android` references do not.
+
 ## What it is
 
 A desktop app for removing the background from animated images — GIF, WebP, AVIF, APNG, and static PNG/JPEG — and fitting the result to a size or format target.
@@ -73,7 +81,9 @@ These are not preferences. Each was measured, and each has already cost somethin
 
 ## The shape: there is no mode
 
-**The strip is the app.** Nothing selected and it fills the space as a contact sheet; select one and it opens while the rest stay along the edge; panels are drawers summoned at the edge and opened beside what they affect. **Selection is the only state**, which is what makes density need no policy — one asset, twelve and two hundred are the same layout.
+**The strip is the app.** Nothing selected and it fills the space as a contact sheet; select one and it opens while the rest stay along the edge; panels are drawers summoned at the edge and opened beside what they affect. **Selection is the only state**, which is what makes density need no *structural* policy — one asset, twelve and two hundred are the same LAYOUT. ⚠️ **SIZE is a separate question with its own policy**, and it now has two axes (2026-09-07 14:25 EDT): three tile buckets by count (**365 / 282 / 154px** measured), and, in a crowd, whether the demanding tiles span two columns at all — they do only while they are a minority (`2 × demanding < settled`), because a landmark every tile carries is not a landmark and doubles the scroll.
+
+⚠️ **It does need a SIZING policy, and this sentence used to deny it (2026-09-07 12:02 EDT).** Measured: the tile was **262px at 8, 20, 60 and 200 assets**. Harkirat's reframe was the correction — *"the question isn't 'does it look right', the question is 'how can it be improved to work in all situations regardless of sheet size?'"* Three buckets now (365 / 282 / 147px) and, past forty, the demanding states keep two columns so the one that needs you is findable by shape. The structure is unchanged; only the scale responds.
 
 This replaced a two-lane Board/Bench design that had already been approved. It failed a simple test: the coin-flip refusal fires on 10.2% of assets and the fade on 2.6%, so a dedicated lane served about one item per batch, while review — which every asset needs, every time — had no home of its own.
 
@@ -91,11 +101,13 @@ It generalises to every flag with a visible consequence — erosion, feather ban
 
 These are animated images. The defect classes this project actually records — dither crawl on every edge, flicker localised to specific rotation phases — are **only visible in motion**. An interface for animated images built out of still frames cannot show its own subject's bugs. Contact-sheet frames play, the open asset plays, both sides of the seam play.
 
-## It is also a labelling instrument, and that may be its strongest justification
+## It was also a labelling instrument, and that idea is retired
 
-Every answer is a labelled data point for the question the engine refuses: outline colour, enclosure ratio, frame counts, bbox, content type, verdict. The repo holds **981 classified labels** for `edge_hardness` — 1,038 entries, 57 of them prose notes — and **zero** for the protection decision, while the project's stated end goal is full autonomy. ⚠️ The skill repo's own docs still cite 714; it is stale by 267.
+⚠️ **Removed 2026-09-07 10:56 EDT, on Harkirat's call:** *"drop the labels from the app. it's just adding friction and the repo has its own corpus that i supply it anyway."*
 
-Capturing them costs one appended line. **Retrofitting discards every answer given before it existed, so it is designed in from the start.** After fifty real jobs it is a dataset for the exact decision that currently blocks autonomy — and if it turns out not to be learnable, that is the first evidence rather than an assumption.
+The argument was that every answer is a labelled data point for the question the engine refuses, captured for the cost of one appended line, and that the engine repo holds **981** classified labels for `edge_hardness` and **zero** for the protection decision.
+
+**What the argument missed is whose problem it was.** Devoid never read the log; the engine repo did. Labelled data there is supplied deliberately, and a corpus accumulated as a byproduct of a flow designed to be quick is friction charged to the wrong person. The file and its history stay in the repo — `labels/README.md` — and the engine repo's pointer to it needs correcting.
 
 ## Measured facts that shape the build
 
@@ -124,6 +136,54 @@ Capturing them costs one appended line. **Retrofitting discards every answer giv
 **Hybrid engine boundary.** Rendering runs as a **subprocess**, because the work is long and a crash in scipy should cost one job rather than the app. Analysis runs **in-process**, because the reuse win is largest there — the result is computed once and passed forward instead of `--recommend`, `--auto` and `--verify` each re-deriving it.
 
 **The flag surface is generated, not transcribed.** A `build_parser()` factory added to the skill lets Devoid introspect argparse for every option's type, choices, default and help text. This is the one change to the skill the project asks for, and it converts a 63-item hand-maintained UI into one that cannot drift when a flag is added or renamed.
+
+## Operating Context
+
+*Captured by `impeccable init` 2026-09-06 20:42 EDT. Three real scenes, confirmed; a fourth was offered and declined.*
+
+**One asset, mid-task.** Something else is the actual work — a server, a bot, a page — and an asset needs its background gone. Devoid is an interruption to be ended quickly, not a place to sit. ⚠️ This is the scene that makes the open view's time-to-answer the metric, and it is the one a batch-oriented design would quietly punish.
+
+**A deliberate batch, in one sitting.** Assets are collected and processed together as their own task. The contact sheet is the primary surface here and throughput outranks any single decision.
+
+**Testing the engine's own changes.** The seam and the ledger are a diff viewer for `gif-background-remover`: change the skill, run an asset through, see what moved. Devoid is a development instrument, not only a utility — which is why the ledger's two-sided figures and the answer-pair preview are load-bearing rather than decorative.
+
+⚠️ **Labelling is NOT an ongoing workflow.** It was offered as a fourth scene and declined. `labels/protection.jsonl` remains real evidence and the autonomy goal below still stands, but the log is a **byproduct of answering**, not a task anyone sits down to do. Nothing may be designed around a labelling session that does not happen.
+
+## Brand Commitments
+
+*Captured 2026-09-06 20:42 EDT.*
+
+**Binding — no later command may replace these:** the name **DEVOID**; the supplied wordmark artwork (`web/assets/wordmark.png` and `wordmark-emitting.png`, the O drawn as an accretion disk, built by `scripts/make_wordmark.py`); and the **void world** `docs/DESIGN.md` records. Refinement inside that world is welcome; replacement is not.
+
+⚠️ **Everything else is explicitly open to challenge.** Asked what was binding, the answer selected the three above *and* "argue with all of it". The two are recorded as given rather than reconciled into one: the world is fenced, and the two-colour rule, the copy stance and every other convention are fair game for the evaluation tier to attack — with the ordinary requirement that a proposal is approved before it lands. ⚠️ **`CLAUDE.md`'s project rules still bind the CODE** regardless; this section governs what a design command may *propose*, not what may be merged without review.
+
+## Evidence on Hand
+
+Real, and measured — every number here has a script or a corpus behind it.
+
+| evidence | where |
+|---|---|
+| 304 real assets behind the refusal rates (12.8% interrupt, 10.2% protection-only, 2.6% fade-only) | the engine repo's harness |
+| 8 real processed corpus assets, deliberately not synthetic icons | `web/assets/` |
+| 981 classified `edge_hardness` labels; **zero** protection labels | the engine repo; `labels/protection.jsonl` here |
+| Contrast, greyscale, coordinate, frame-timing and preview-fidelity measurements | `scripts/check_contrast.py`, `check_greyscale.py`, `measure_ledger.py`, `measure_preview_fidelity.py`, `dump_frame_timing.py` |
+| Ten captured states of the real window | `local/window-shots/`, written by `scripts/capture-window.mjs` |
+
+⚠️ **Absences future work must not fabricate.** There are **no users other than Harkirat**, no testimonials, no customers, no pricing, no benchmarks against competing tools, and no telemetry. The app has never been run by anyone else. Any claim of adoption, satisfaction or comparative performance would be invented.
+
+## Product Principles
+
+1. **The question is visual; delivering it as text is the failure.** A hex string and a bbox array is precisely what this product exists to abolish.
+2. **Never report a verification the run did not earn.** `not-checked` is a first-class state with the same visual weight as done and failed.
+3. **Every control is tri-state, so `--auto` keeps thinking.** A UI that sends all 63 flags turns the engine's own reasoning off; absent means auto, and only a deliberate takeover is sent.
+4. **Every number is cited from a measurement, or it does not ship.** A plausible-sounding default is the exact failure this project was built against.
+5. **Advice ships with an undo of exactly what it changed** — including the answer itself, which is the most consequential decision in the app.
+
+## Accessibility & Inclusion
+
+**No external requirement, and none claimed.** Contrast in both lighting states, visible focus, 24px+ hit targets, a greyscale rule that no state may break, keyboard reach on every control and a `prefers-reduced-motion` path are **self-imposed rigour** — a quality commitment, recorded here so a later command knows it is a standard that was chosen and may not be quietly dropped, not a need it may claim to serve.
+
+⚠️ Two of these are runnable and wired: `npm run check:contrast` and `npm run check:greyscale`.
 
 ## What this is not
 

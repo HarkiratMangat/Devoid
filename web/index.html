@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Devoid</title>
+<script>try{
+  if(localStorage.getItem('devoid-lamp')==='light')document.documentElement.classList.add('emitting');
+  var m=localStorage.getItem('devoid-matte'); if(m&&m!=='checker')document.documentElement.dataset.matte=m;
+}catch(e){}</script>
+<link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="canvas.css">
+</head>
+<body>
+
+<div class="app">
+  <header class="chrome">
+    <!-- The mark is artwork, not type: one element with a background-image so
+         the lighting swap is pure CSS and never flashes. role+aria-label keep
+         the accessible name the old <span> had. -->
+    <span class="wordmark" role="img" aria-label="Devoid"></span>
+    <!-- ⚠️ Driven by real engine state, which is the whole difference from the
+         reference this was adapted from, where the same dot is hardcoded. -->
+    <span class="pip" id="pip" data-pip="idle" role="status" aria-label="Engine idle"></span>
+    <span class="crumb" id="crumb"></span>
+    <span class="grow"></span>
+    <button class="btn" id="selectall">Select all</button>
+    <button class="btn" id="add">Add files</button>
+    <button class="lamp" id="lamp" aria-label="Switch to emitting light">
+      <span class="sg-void"></span><span class="sg-lit"></span>
+      <span class="sg-rim"></span><span class="sg-cut"></span>
+    </button>
+    <!-- ⚠️ Nobody maps "emitting" to "light mode" from a control alone, and
+         nobody maps it from two letters either — which is why the aria-label
+         stays a full sentence while the visible word is short. -->
+    <span class="lamp-word" id="lampword" aria-hidden="true">void</span>
+    <!-- ⚠️ F17. This shipped as `Save 6` — first paint, an invented count, and
+         "Save" appears nowhere else in the app. The verb is Cut. -->
+    <button class="btn go" id="primary">Cut</button>
+  </header>
+
+  <!-- state banners: loading, refused, failed, conflict, blocked, cancelled.
+       Stage 2 owns showing/hiding this and filling #bannertext/#bannerbtn;
+       never colour-only — DESIGN.md's greyscale rule. -->
+  <div class="banner" id="banner" hidden role="status">
+    <span class="bmark" id="bannermark" aria-hidden="true"></span>
+    <b class="bword" id="bannerword"></b>
+    <span id="bannertext"></span>
+    <button class="btn" id="bannerbtn" hidden></button>
+  </div>
+
+  <div class="table">
+    <!-- the field. Drawn once to fit, never tiled: a repeating star pattern
+         is the one thing a sky never does, and the eye catches a repeated
+         constellation instantly. -->
+    <canvas id="starfield" aria-hidden="true" role="presentation"></canvas>
+    <!-- the queue, only while something is open -->
+    <nav class="edge" id="edge" aria-label="Everything else" hidden></nav>
+
+    <main class="work" id="work">
+      <!-- nothing selected: the strip fills the space -->
+      <div class="sheet" id="sheet"></div>
+
+      <!-- one open -->
+      <div class="open" id="open" hidden>
+        <div class="openhead"><h1 id="openname"></h1><p id="openstate"></p>
+          <!-- the ground you judge the edge against. DESIGN.md calls this a
+               verification requirement, not a preference, so it lives beside
+               the artwork rather than in the app bar. -->
+          <div class="matte" id="matte" role="radiogroup" aria-label="Preview ground">
+            <button class="swatch chk-s" role="radio" data-matte="checker" aria-checked="true" tabindex="0" aria-label="Checkerboard ground"></button>
+            <button class="swatch sw-white" role="radio" data-matte="white" aria-checked="false" tabindex="-1" aria-label="White ground"></button>
+            <button class="swatch sw-black" role="radio" data-matte="black" aria-checked="false" tabindex="-1" aria-label="Black ground"></button>
+            <button class="swatch sw-chroma" role="radio" data-matte="chroma" aria-checked="false" tabindex="-1" aria-label="Chroma-key ground"></button>
+          </div></div>
+        <!-- ⚠️ F32. Measured at 1280x796: #wipe was 289x289 with a question open
+             and 553x553 without — 359px of chrome appeared exactly when judging
+             mattered most, because the question, the ledger and the film strip
+             all stacked UNDER a square focal element in a 1.55:1 window. A
+             square wants its companions BESIDE it. The stage keeps the long
+             axis; the decision moves into a column of its own. -->
+        <div class="openbody">
+        <div class="stagecol">
+        <div class="stage" id="stage">
+          <!-- Stage 3: wipe.js replaces #before/#after (looping <img>) with two
+               synced <canvas> elements decoding shared frame timing (PLAN.md 3.3),
+               and swaps the pair for answer-A vs answer-B (PLAN.md 3.1). -->
+          <div class="wipe chk" id="wipe">
+            <div class="aftbg" id="aftbg" hidden></div>
+            <img id="before" src="assets/megaphone.src.gif" alt="">
+            <img id="after" class="after" src="assets/megaphone.gif" alt="">
+            <span class="seam" id="seam" aria-hidden="true"></span>
+            <!-- ⚠️ F16. app.js overwrites both of these on every render, so these
+                 literals only ever showed at first paint — and they showed a sixth
+                 wording nothing else used. They now match what the seam says. -->
+            <span class="wipetag l">keep it</span>
+            <span class="wipetag r">cut it</span>
+          </div>
+          <!-- the question card: the wipe's fallback below the seam's visible-
+               difference threshold (PLAN.md 3.0b). Stage 3 owns show/hide + content. -->
+          <div class="qcard" id="qcard" hidden>
+            <div class="qcard-frame" id="qcardframe"></div>
+            <p id="qcardtext"></p>
+            <div class="qcard-actions">
+              <!-- ⚠️ F16. These read `Background` / `Artwork` while #questions read
+                   `Keep it` / `Cut it` for the SAME binary — five vocabularies for
+                   one decision across the app. One verb pair, everywhere. -->
+              <button class="btn" id="qcardno">Cut it</button>
+              <button class="btn go" id="qcardyes">Keep it</button>
+            </div>
+          </div>
+          <!-- Stage 4: the region-drawing canvas, overlaid on the open asset.
+               Coordinate round-trip (display px -> source px) is PLAN.md 4.1's
+               falsifier-first task. Hidden until a drawing tool is active. -->
+          <canvas id="regioncanvas" aria-label="Regions drawn on the artwork" hidden></canvas>
+        </div>
+        <!-- ⚠️ The two answers sit under their own half of the seam, so the
+             choice and the evidence for it are ONE object. The seam shows
+             exactly one disputed pair at a time (maybeLoadSeamPair loads the
+             first unanswered group), so this bar answers that pair and the
+             decision column carries the rest. Never both for one group. -->
+        <div class="answerbar" id="answerbar" hidden></div>
+        <!-- Stage 4's toolbar: six region tools (protect, remove, remove-track,
+             unprotect, translucent, fade-protect) plus the eyedropper. -->
+        <div class="regiontools" id="regiontools" hidden></div>
+        <div class="film">
+          <!-- ⚠️ F14. `<span id="onion">onion skin · 2 frames</span>` lived here and
+               was referenced by NOTHING — no JS, no CSS, no server field. There
+               is no onion skin in this app. It was a hardcoded string that read
+               as a working feature for anyone looking at the strip. -->
+          <div class="filmhead"><span id="fcount"></span></div>
+          <div class="frames" id="frames"></div>
+        </div>
+        </div><!-- /.stagecol -->
+        <aside class="decide" id="decide" aria-label="The decision">
+          <div class="questions" id="questions" hidden></div>
+          <!-- ⚠️ THE LEDGER SITS DIRECTLY UNDER THE QUESTION, 2026-09-07 01:12 EDT.
+               The filing asked for it under the answer pair in the stage
+               column, and that was MEASURED AND REJECTED: `.wipe` is
+               height-constrained there, so the artwork fell 1037 -> 455px, and
+               compacting the ledger to 92px then 56px only reached 517 and 531
+               against `gate:ui`'s 550 floor. Buying the numbers with the focal
+               element is the trade the artwork item was closed to prevent.
+               Moving them to the TOP of this column fixes the actual complaint
+               — they were ~600px below the heading, under the advice host —
+               and costs the artwork nothing. -->
+          <div class="ledger" id="ledger"></div>
+          <div id="advice-host"></div>
+        </aside>
+        </div><!-- /.openbody -->
+      </div>
+
+      <!-- the empty table. emptiness is the subject, so no illustration. -->
+      <div class="empty chk" id="empty" hidden>
+        <div>
+          <div class="horizon" aria-hidden="true"><span class="ring"></span><span class="disc"></span></div>
+          <!-- ⚠️ F17 asked for one line here; D2 (2026-09-06) puts the empty
+               state's GEOMETRY off limits, and removing a line is a geometry
+               change. The copy defect was that neither line named what to drop,
+               and that is fixed without touching the shape. -->
+          <p class="big">Nothing on the table</p>
+          <p>Drop a GIF, WebP, AVIF, APNG or PNG here</p>
+        </div>
+      </div>
+    </main>
+
+    <aside class="drawer" id="drawer" hidden></aside>
+    <nav class="tabs" id="tabs" aria-label="Panels"></nav>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script src="advice.js" defer></script>
+<script src="wipe.js" defer></script>
+<script src="canvas.js" defer></script>
+</body>
+</html>

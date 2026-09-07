@@ -1,0 +1,99 @@
+/* Devoid — the plotter's own styles.
+ *
+ * Kept out of app.css deliberately: the region canvas is one stage's worth of
+ * surface and app.css is the shared design system. Everything here uses that
+ * system's tokens and reuses .btn rather than inventing a second button — which
+ * is also what keeps the spacing on the scale instead of on invented values. */
+
+/* The canvas covers the .wipe box exactly, positioned inside .stage (which is
+ * already position:relative). It sits ABOVE the wipe so a region is drawn on the
+ * artwork rather than under it — and it is pointer-events:none until a tool is
+ * picked up, so the seam drag, which is the product's thesis as a gesture, keeps
+ * working untouched. canvas.js manages that property; the value here is the
+ * inert default, so a script that fails to load cannot leave the seam dead. */
+#regioncanvas {
+  position: absolute;
+  pointer-events: none;
+  z-index: 2;
+  border-radius: var(--r2);
+  touch-action: none;
+}
+
+/* The toolbar reads as a caption under the stage, not as a second chrome bar:
+ * the plotter is a thing you pick up, not a mode you enter. Its rhythm is the
+ * point — tools sit tight against each other, the groups sit well apart, and the
+ * whole thing keeps the stage's own generous side margin. */
+#regiontools {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s2) var(--s4) var(--s3);
+}
+
+#regiontools:empty { display: none; }
+
+.rt-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  flex-wrap: wrap;
+}
+
+.rt-lab {
+  font-family: "Spline Sans Mono", monospace;
+  font-size: 11px;
+  color: var(--graphite-3);
+  margin-right: var(--s2);
+}
+
+/* .btn already owns the padding. Only the type scale shifts, so a tool reads as
+ * subordinate to the header's buttons without becoming a different control. */
+.rt-tool, .rt-shape { font-size: 11.5px; }
+
+/* Armed reads as cyan — the same colour that means "the path you are drawing"
+ * everywhere else in this app. There is no third accent. */
+.rt-tool[aria-pressed="true"],
+.rt-shape[aria-pressed="true"] {
+  background: var(--cyan-bg);
+  border-color: var(--cyan);
+  color: var(--cyan-ink);
+  font-weight: 600;
+}
+
+.rt-chip {
+  width: var(--s3);
+  height: var(--s3);
+  border-radius: var(--r);
+  border: 1px solid var(--score-2);
+  display: inline-block;
+}
+
+.rt-hex {
+  font-family: "Spline Sans Mono", monospace;
+  font-size: 11.5px;
+  color: var(--graphite-2);
+}
+
+
+/* The verdict a tool carries, as a 2px edge in the app's own two colours:
+   rubylith takes it away, cyan keeps it. Move and Take a colour make no
+   claim about the artwork, so they stay unmarked. Armed, the edge floods. */
+/* ⚠️ THE MARK CARRIES THE VERDICT IN GREYSCALE, 2026-09-07 01:08 EDT — the
+   colour is the second channel, not the only one. Solid block = it stays;
+   hatch = it goes, which is the same notation the disputed region uses. */
+.rt-mark{display:inline-block;margin-right:6px;font-size:12px;line-height:1;
+  transform:translateY(.5px)}
+.rt-tool[data-keeps="true"] .rt-mark{color:var(--cyan)}
+.rt-tool[data-keeps="false"] .rt-mark{color:var(--ruby)}
+/* the divider IS the group boundary — a rule, not a row break, so the toolbar
+   stays one row and the artwork keeps its height */
+.rt-grp{display:flex;align-items:center;gap:var(--s1);
+  padding-left:var(--s2);margin-left:var(--s1);
+  border-left:1px solid var(--score)}
+.rt-tool[data-keeps="false"]{border-left:2px solid var(--ruby)}
+.rt-tool[data-keeps="true"]{border-left:2px solid var(--cyan)}
+.rt-tool[data-keeps="false"][aria-pressed="true"]{background:var(--ruby-bg);border-color:var(--ruby);
+  color:var(--ruby-ink)}
+.rt-tool[data-keeps="true"][aria-pressed="true"]{background:var(--cyan-bg);border-color:var(--cyan);
+  color:var(--cyan-ink)}

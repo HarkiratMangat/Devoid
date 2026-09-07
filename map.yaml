@@ -1,0 +1,409 @@
+# Devoid — product map. How value reaches the person using it.
+#
+# The desired-state source of truth, git-tracked and reviewable.
+# `linksee-memory map reconcile` runs each node's `reality` checks against the
+# real code and overlays a verdict that OVERRIDES the hand-declared status —
+# so a node cannot claim to be working while the code says otherwise.
+#
+# ⚠️ `map where <file>` resolves a file ONLY through `reality.path`. A node
+# without one is invisible to it.
+# ⚠️ Schema read from dist/lib/map-import.js and map-reconcile.js, not guessed:
+#   layer      surface | implementation
+#   status     active | experiment | commitment | planned | paused | suspect | future_thesis
+#   edge type  realizes | supports | must-stay-consistent-with | should-align-with | mentions | reflux
+#   strength   hard | soft | watch
+#   reality.kind  signal_present | signal_absent | file_present | file_absent | external
+# ⚠️ ONE SIGNAL PER `signal_present`, AND ONLY FORMS LIVE CODE CAN CONTAIN.
+# `map-reconcile.js:171` is `const found = hit != null` over the FIRST match in
+# the list, so a `signal_present` with N strings passes on ANY ONE of them --
+# every extra string makes it WEAKER. `signal_absent` is the reverse: each
+# extra string forbids one more thing, so there a list is a strengthening.
+# ⚠️ And a signal matches COMMENTS: "seamToGroup" passed against prose on
+# web/app.js:74 while the function sat at 1579. Prefer `function foo`, `def
+# foo`, `const foo`, a full selector or a template expression over a bare
+# identifier. Sixteen lists were narrowed on 2026-09-07 00:57 EDT; before that
+# every one of them asserted only its easiest term.
+project: devoid
+product_status: pre-release, one user, never pushed
+job: >-
+  Remove the background from an animated image without learning 63 flags, by
+  answering the two or three questions the engine cannot answer itself.
+audience:
+  primary: Harkirat, usually mid-task on something else and wanting to be finished
+  secondary: the same person doing a deliberate batch, or testing the engine's own changes
+  explicitly_not: labelling sessions — offered as a scene and declined
+
+stages:
+  - id: discover
+    label: It launches and finds its engine
+  - id: understand
+    label: It says what it wants
+  - id: try
+    label: An asset goes on the table
+  - id: adopt
+    label: The question gets shown, and answered
+  - id: retain
+    label: The work is remembered
+  - id: expand
+    label: It runs outside the checkout
+
+nodes:
+  # ── the value chain ───────────────────────────────────────────────────────
+  - id: launch
+    layer: surface
+    stage: discover
+    status: active
+    statement: The app launches, spawns its server, and resolves the engine at runtime.
+    note: >-
+      The engine is never bundled — it is the source of truth and must not be
+      forked into a copy that silently drifts.
+    reality:
+      checks:
+        - claim: the app resolves an interpreter rather than assuming one
+          kind: signal_present
+          path: main.js
+          signal: ["function resolvePython"]
+        - claim: it checks that interpreter can actually run the engine, before the server
+          kind: signal_present
+          path: main.js
+          signal: ["function probePython"]
+          # ⚠️ ADDED 2026-09-07 12:02 EDT. Resolving a PATH and running an
+          # INTERPRETER are different claims, and the node asserted only the
+          # first. On another Mac the bundled venv's base Python is absent, so
+          # the path resolves and the interpreter is dead.
+        - claim: it never offers a --user install into a virtualenv
+          kind: signal_absent
+          path: main.js
+          signal: ["'--user',"]
+
+  - id: empty-table
+    layer: surface
+    stage: understand
+    status: active
+    statement: An empty table names what to drop, and nothing else.
+    note: >-
+      Emptiness is the subject, so it gets no illustration. D2 puts its GEOMETRY
+      off-limits; the copy may change, the shape may not.
+    reality:
+      kind: signal_present
+      path: web/index.html
+      signal: ["Drop a GIF, WebP, AVIF, APNG or PNG here"]
+
+  - id: contact-sheet
+    layer: surface
+    stage: try
+    status: active
+    statement: Assets arrive and STATE sets the hierarchy, not the source art's own colours.
+    note: >-
+      Sorted by state, and the field dims so the tile that needs you wins a
+      desaturated blur. Asserted at 8/255 by check:greyscale; measured at 73.0.
+    reality:
+      checks:
+        - claim: the sheet renders from state, not from arrival order
+          kind: signal_present
+          path: web/app.js
+          signal: ["const renderSheet"]
+        - claim: the sheet responds to how much is on it
+          kind: signal_present
+          path: web/app.js
+          signal: ["dataset.density"]
+          # ⚠️ ADDED 2026-09-07 12:02 EDT. The node was `signal_present` on
+          # `const renderSheet` alone, so the sheet could regress to ONE tile
+          # size for every batch — the exact defect closed today — and the map
+          # would still report this node verified. "17/17 verified" was being
+          # quoted as coverage when it was coverage of what the nodes happened
+          # to name.
+        - claim: in a crowd the demanding states keep their size
+          kind: signal_present
+          path: web/app.css
+          signal: ["grid-column:span 2"]
+        - claim: the crowd's span is drawn only while it is a minority
+          kind: signal_present
+          path: web/app.css
+          signal: ['[data-demand="minority"] .frame[data-state="needs-you"]']
+          # ⚠️ ADDED 2026-09-07 14:25 EDT. ONE signal, and a full selector rather
+          # than a word, because signal_present is ANY-of and a bare "data-demand"
+          # matches the prose above it. The rule this guards: a landmark every tile
+          # carries is not a landmark, and 200 spanning tiles double the scroll.
+        - claim: the bucket does not flip while a drop is still arriving
+          kind: signal_present
+          path: web/app.js
+          signal: ["settleTimer = setTimeout"]
+
+  - id: question
+    layer: surface
+    stage: adopt
+    status: active
+    anchor: 10
+    statement: The coin-flip question is SHOWN on the artwork, never described in hex and coordinates.
+    note: >-
+      THE NORTH STAR'S LOAD-BEARING NODE. PRODUCT.md line 31: nobody can answer
+      "is the region at bbox [230,135,406,359] outlined in 002864 design or
+      background?" by reading it. They have to see it.
+    reality:
+      checks:
+        - claim: the question panel renders
+          kind: signal_present
+          path: web/app.js
+          signal: ["function renderQuestions"]
+        - claim: the abolished string is not RENDERED
+          kind: signal_absent
+          path: web/app.js
+          signal: ["The place outlined in ${g.hex}", "bbox_xyxy || []).join"]
+          # ⚠️ The template expression, not the prose. The first version matched
+          # "The place outlined in" and fired on the COMMENT that records what
+          # the string used to be — a true positive for the checker and a false
+          # one for the product. A signal_absent check must name something only
+          # live code can contain.
+
+  - id: region-mark
+    layer: surface
+    stage: adopt
+    status: active
+    statement: The disputed region is lit on the picture, sized from the decoded canvas.
+    note: >-
+      It read #before.naturalWidth, and wipe.js strips that element's src — so
+      the mark and the seam were mutually exclusive BY CONSTRUCTION and it had
+      never once drawn in the state it exists for.
+    reality:
+      kind: signal_present
+      path: web/app.js
+      signal: ["function renderQuestionRegions"]
+
+  - id: seam
+    layer: surface
+    stage: adopt
+    status: active
+    statement: Two answers on one clock, compared by dragging the cut line between them.
+    note: >-
+      ⚠️ SUSPECT. The first version of this node checked only that wipe.js's
+      functions exist — and the reconciler duly REFUTED the suspect status and
+      declared convergence, laundering a P0 into a green tick. Existence was
+      never the question: `.qregion` carries no clip-path, so the hatch paints
+      identically on both halves and the comparison cannot differ inside the one
+      rectangle it exists to reveal. The checks below encode THAT.
+    reality:
+      checks:
+        - claim: the pair mounts through one decode path
+          kind: signal_present
+          path: web/wipe.js
+          signal: ["function mountPair"]
+        - claim: the region overlay is clipped by the seam, so the two halves can differ
+          kind: signal_present
+          path: web/app.css
+          signal: ["clip-path:inset(0 0 0 var(--qseam"]
+          # ⚠️ SIGNAL CHANGED 2026-09-07 00:28 EDT, AND THE CLAIM DELIBERATELY WAS NOT.
+          # It read ".qregion{position:absolute;clip-path" — clip-path on the
+          # ELEMENT — which cannot be built: `b` is positioned outside the box
+          # (app.css, bottom:calc(100% + var(--s1))) and clipping .qregion
+          # deletes the tag. The old string encoded one implementation, and the
+          # only one it named was the wrong one. Editing a check to match a fix
+          # is how this very node laundered a P0 once already, so: the sentence
+          # above is byte-identical, and the new strings can only be true of an
+          # overlay whose fill is actually clipped.
+        - claim: the clip follows the seam as it is dragged, in each region's own basis
+          kind: signal_present
+          path: web/app.js
+          signal: ["function syncRegionSeams"]
+          # ⚠️ ONE STRING, NOT SEVERAL — `signal_present` is ANY, not ALL.
+          # map-reconcile.js:171 is `const found = hit != null` over the FIRST
+          # match in the list, so every extra string makes a signal_present
+          # check WEAKER. (`signal_absent` is the opposite: more strings, more
+          # forbidden.) Read off the source 2026-09-07 00:31 EDT, after
+          # "seamToGroup" passed by matching a COMMENT on app.js:74 while the
+          # function itself sat at 1579.
+          # A percentage in clip-path resolves against the clipped element's own
+          # box, so --seam cannot be reused: it would cut every region at ITS
+          # midpoint. A static clip would satisfy the check above and still be
+          # the P0. This one asserts the conversion exists.
+        - claim: the seam does not open at a constant unrelated to the disputed region
+          kind: signal_absent
+          path: web/app.js
+          signal: ["setSeam(50)"]
+        - claim: the seam is aimed at the disputed bbox
+          kind: signal_present
+          path: web/app.js
+          signal: ["function seamToGroup"]
+
+  - id: answer-bar
+    layer: surface
+    stage: adopt
+    status: active
+    statement: The two answers sit under their own half of the seam, and picking one IS the answer.
+    note: >-
+      The choice and the evidence for it are one object. ⚠️ The `Answer` button
+      was deleted 2026-09-07 12:02 EDT — it was the loudest control in the
+      column and a second commit step behind a decision already made. This node
+      asserted only that a bar renders, so its return would have gone unseen.
+    reality:
+      kind: signal_present
+      path: web/app.js
+      signal: ["function pickAnswer"]
+
+  - id: ledger
+    layer: surface
+    stage: adopt
+    status: active
+    statement: Both answers are priced before either is chosen.
+    note: >-
+      Converts an unanswerable question about intent into a comparison. A blank
+      ledger IS the not-checked state and says so in words.
+    reality:
+      kind: signal_present
+      path: web/wipe.js
+      signal: ["function renderLedger"]
+
+  - id: labels-log
+    layer: surface
+    stage: retain
+    status: active
+    statement: The protection log is kept and no longer written; jobs.jsonl is the one live log.
+    note: >-
+      ⚠️ RETIRED 2026-09-07 10:56 EDT. This node used to say "every answer
+      becomes a labelled data point". Harkirat removed the writer — the engine
+      repo's harness is where labelled data lives and is supplied deliberately,
+      and a byproduct corpus was friction on the one flow this app exists to
+      make quick. The FILE stays, with its history; an append-only log is not
+      deleted, it stops being appended to.
+      🔴 scripts/harness/labels/README.md in the engine repo still says Devoid
+      records every answer here. That is now false and is NOT yet corrected.
+    reality:
+      checks:
+        - claim: the log is kept, not deleted
+          kind: file_present
+          path: labels/protection.jsonl
+        - claim: nothing in the server writes to it any more
+          kind: file_absent
+          path: server/labels.py
+
+  - id: history
+    layer: surface
+    stage: retain
+    status: active
+    statement: A past run can be reloaded and re-run with a tweak.
+    note: Two append-only logs, two schemas, one writer each. Never merged.
+    reality:
+      kind: signal_present
+      path: server/jobs.py
+      signal: ["def append_job"]
+
+  - id: packaging
+    layer: surface
+    stage: expand
+    status: active
+    statement: A signed .app that runs outside the checkout.
+    note: >-
+      Self-signed only — no Gatekeeper on another Mac, no notarisation, and it
+      does NOT unblock Check for Updates.
+    reality:
+      checks:
+        - claim: the builder is configured and signs
+          kind: signal_present
+          path: electron-builder.yml
+          signal: ["identity: DEVOID"]
+        - claim: the escaping-symlink guard exists
+          kind: signal_present
+          path: build/afterPack.js
+          signal: ["dereferenced"]
+
+  # ── the machinery that keeps the chain honest ─────────────────────────────
+  - id: engine-boundary
+    layer: implementation
+    status: active
+    statement: The engine's JSON is asserted in exactly one place.
+    note: >-
+      Four call sites once sniffed the shape independently and three got it
+      wrong. This module is the only place it is validated.
+    reality:
+      kind: signal_present
+      path: server/validate.py
+      signal: ["def parse_recommend"]
+
+  - id: tri-state
+    layer: implementation
+    status: active
+    anchor: 10
+    statement: Only deliberately taken-over rows are sent, so --auto keeps applying its recommendation.
+    note: >-
+      Enforced here, not merely intended: an override equal to the parser's own
+      default is dropped before argv is built.
+    reality:
+      kind: signal_present
+      path: server/cli.py
+      signal: ["def build_argv"]
+
+  - id: preview-route
+    layer: implementation
+    status: active
+    statement: One frame per side, rendered by the real CLI, twice.
+    note: >-
+      Single-frame BY MEASUREMENT — the fidelity numbers are in the module
+      header. This is why the film strip cannot scrub while the seam is up, and
+      why the strip says so instead of moving a counter that points at nothing.
+    reality:
+      kind: signal_present
+      path: server/preview.py
+      signal: ["def _answer_argv"]
+
+  - id: render-job
+    layer: implementation
+    status: active
+    statement: A cancellable subprocess that never overwrites, and says where the file went.
+    reality:
+      kind: signal_present
+      path: server/render.py
+      signal: ["def build_render_argv"]
+
+  - id: advice
+    layer: implementation
+    status: active
+    statement: Advice ships with an undo of exactly what it changed.
+    note: >-
+      The undo receives exactly what apply() returned, so it cannot drift from
+      what was changed. Two earned call sites and deliberately not a third.
+    reality:
+      kind: signal_present
+      path: web/advice.js
+      signal: ["function suggest"]
+
+  - id: gates
+    layer: implementation
+    status: active
+    statement: Nothing claims a verification the run did not earn.
+    note: >-
+      The gate asserts CONNECTION, not presence — presence is exactly what a
+      disconnected control has. Fourteen subsystems shipped wired to nothing.
+    reality:
+      checks:
+        - claim: the window gate drives real input
+          kind: signal_present
+          path: scripts/capture-window.mjs
+          signal: ["sendInputEvent"]
+        - claim: contrast is measured in both lighting states
+          kind: signal_present
+          path: scripts/check_contrast.py
+          signal: [SURFACE_MIN, lstar, RING_GROUNDS]
+        - claim: the greyscale rule is runnable
+          kind: signal_present
+          path: scripts/check_greyscale.py
+          signal: [SQUINT_MARGIN, MARK_MARGIN]
+
+edges:
+  - {from: question,       to: region-mark,     type: realizes,                   strength: hard}
+  - {from: question,       to: seam,            type: realizes,                   strength: hard}
+  - {from: question,       to: answer-bar,      type: realizes,                   strength: hard}
+  - {from: question,       to: ledger,          type: must-stay-consistent-with,  strength: hard}
+  - {from: question,       to: engine-boundary, type: supports,                   strength: hard}
+  - {from: seam,           to: preview-route,   type: must-stay-consistent-with,  strength: hard}
+  - {from: region-mark,    to: seam,            type: must-stay-consistent-with,  strength: hard}
+  - {from: ledger,         to: preview-route,   type: must-stay-consistent-with,  strength: hard}
+  - {from: labels-log,     to: question,        type: should-align-with,          strength: soft}
+  - {from: render-job,     to: tri-state,       type: must-stay-consistent-with,  strength: hard}
+  - {from: render-job,     to: question,        type: supports,                   strength: hard}
+  - {from: history,        to: render-job,      type: realizes,                   strength: soft}
+  - {from: advice,         to: tri-state,       type: should-align-with,          strength: soft}
+  - {from: gates,          to: question,        type: must-stay-consistent-with,  strength: hard}
+  - {from: gates,          to: seam,            type: must-stay-consistent-with,  strength: hard}
+  - {from: contact-sheet,  to: engine-boundary, type: supports,                   strength: soft}
+  - {from: empty-table,    to: launch,          type: supports,                   strength: watch}
+  - {from: packaging,      to: launch,          type: realizes,                   strength: watch}

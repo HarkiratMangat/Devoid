@@ -1,0 +1,1015 @@
+/* Devoid — prototype styles.
+
+   THE STRUCTURE: there is no mode. The strip IS the app.
+   Nothing selected, the strip fills the space as a contact sheet. Select one and
+   it expands while the rest stay along the edge. Panels are drawers summoned at
+   the table's edge, never a column you pay for permanently. Selection is the only
+   state, so density needs no STRUCTURAL policy — 1 asset, 12 or 200 are the
+   same LAYOUT.
+   ⚠️ SIZE IS A DIFFERENT QUESTION AND THIS SENTENCE USED TO SWALLOW IT. The tile
+   measured 262px at 8, 20, 60 and 200 assets. Three buckets now, and since
+   2026-09-07 14:25 EDT a second axis: data-demand decides whether the crowd's span
+   is drawn at all, because a landmark every tile carries is not one.
+
+   TWO load-bearing colours, and they are the two answers to the only question.
+   Rubylith = this goes. Cyan = this stays / the path / focus. Rubylith doubles as
+   the destructive colour, so there is no second red.
+
+   ⚠️ NO STATE IS COLOUR ALONE. Every state carries a mark or a word as well —
+   measured reason: over 8 real corpus assets, 31% of hurricane's artwork and 21%
+   of paper-plane's sits within RGB distance 90 of rubylith, so hue is not a
+   reliable channel over this content. Check by rendering greyscale.
+
+   DEPTH IS ONE STRATEGY: surface-colour shifts. Shadow only on things that float.
+   Numbers live here, not in DESIGN.md — a doc that restates a token rots. */
+
+:root{
+  --ruby:#E2402A; --ruby-bg:#3A150E; --ruby-ink:#FF8168;
+  --cyan:#22D3EE; --cyan-bg:#0B2C33; --cyan-ink:#5FE0F5;
+  --ok:#46C98A; --ok-bg:#12332A; --amber:#E3B04B; --amber-bg:#332608;
+
+  /* THE VOID. Deep sky is not black -- long-exposure astrophotography is
+     violet-tinted, which is both truer to the world and sidesteps the
+     near-black-plus-one-acid-accent look every generated dark UI arrives at.
+     ⚠️ Rubylith and cyan are UNCHANGED and are now justified twice over: they
+     are already the two colours of an accretion disk -- hot blue on the inner
+     edge, warm red-orange on the outer. The void did not replace this app's
+     semantics, it explained them. */
+  --void:#110E1B; --singularity:#030209; --horizon:#FFE9B8; --focus:#22D3EE;
+  --star:#FFFFFF; --star-cold:#CFDCFF;
+  /* ⚠️ A4/F23/F31: colours that are NOT text on a surface, which is why the
+     first accessibility pass could not see them. Each is measured by
+     scripts/check_contrast.py in both lighting states. */
+  --go-ink:#04212A;          /* text on a cyan fill */
+  --qregion-ink:#1F0403;     /* the disputed region's own label, ON rubylith */
+  --sw-chroma:#4C6357;       /* the chroma swatch AT REST — see F31 */
+  --sw-chroma-live:#00FF7F;  /* the real key green, on hover and when chosen */
+  --ring-inner:#FFFFFF; --ring-outer:#0B0A12;   /* a two-tone ring reads on ANY matte */
+  /* ⚠️ THE REFERENCE'S TWO HEADLINE MOVES ARE BOTH THINGS THIS PROJECT'S OWN
+     DETECTOR CALLS SLOP, and it said so the moment they landed (2026-09-06 19:20 EDT).
+     `cubic-bezier(.34,1.56,.64,1)` — the overshoot copied out of the reference
+     file — trips `bounce-easing`, and `0 0 10px var(--cyan)` trips `dark-glow`
+     twice. Both are the canonical generated-UI tells. What was actually worth
+     taking from that file is the SHAPE of the change (a squircle collapsing to
+     a circle) and the fact that the GROUND moves rather than only the knob;
+     neither needs a bounce or a glow. This curve is expo-out: it decelerates
+     hard and never travels past its target, which reads as weight without
+     reading as a bounce. */
+  --ease-collapse:cubic-bezier(.16,1,.3,1);
+  /* ⚠️ F18: there were zero type tokens and 37 raw font-size values, 31 of them
+     inside a 1.5px band between 11 and 12.5px. A scale is steps you can see. */
+  --t-micro:11px; --t-meta:12px; --t-body:14px; --t-label:14px;
+  --t-h3:18px; --t-h2:22px; --t-h1:30px; --t-figure:34px;
+  --neb-violet:rgba(104,66,186,.42); --neb-blue:rgba(42,96,178,.26);
+
+  /* ⚠️ F21, and it took the wrong instrument with it. The shipped ladder ran
+     0.85, 2.09, 0.37 and 4.26 ΔL* between adjacent planes — two of four steps
+     perceptually invisible. F21 asked for ≥1.35:1 WCAG contrast instead, and
+     the arithmetic in scripts/check_contrast.py shows that is unreachable
+     here: WCAG's +0.05 flare term dominates at the dark end, so one 1.35:1
+     step from the void lands near #252525 and five would end near #5E5E5E.
+     Meeting it literally means deleting the void. The ladder below is derived
+     for ~4 ΔL* per step along the void's own violet ray, and it is checked by
+     `python3 scripts/check_contrast.py --check`.
+     ⚠️ `--mat` is GONE. It was byte-identical to `--void` (F22) — two names for
+     one colour, which is how a ladder loses a rung without anyone noticing. */
+  --bench:#221D37; --raise:#2C2547; --well:#020204; --sprocket:#1A162A;
+  --score:rgba(255,255,255,.16); --score-2:rgba(255,255,255,.42); --mark:rgba(255,255,255,.62);
+  --graphite:#E8E9F2; --graphite-2:#A6A6BC; --graphite-3:#8E8EA8;
+  /* the checker survives UNDER the stars, barely -- it is notation ("nothing
+     is behind this"), and the docs defend it with evidence, so it is not
+     thrown away for atmosphere. It just stops shouting. */
+  --chk-a:#0C0A16; --chk-b:#08060F;
+
+  /* two star tiles at coprime sizes: the repeat period is their LCM, so the
+     field never visibly tiles. One layer each, not a dozen gradients per node. */
+  --stars-a:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Ccircle cx='23' cy='41' r='.9' fill='%23fff' opacity='.9'/%3E%3Ccircle cx='187' cy='66' r='.7' fill='%23CFDCFF' opacity='.7'/%3E%3Ccircle cx='98' cy='150' r='1.1' fill='%23fff'/%3E%3Ccircle cx='271' cy='119' r='.8' fill='%23fff' opacity='.8'/%3E%3Ccircle cx='54' cy='238' r='.7' fill='%23CFDCFF' opacity='.65'/%3E%3Ccircle cx='219' cy='271' r='.9' fill='%23fff' opacity='.85'/%3E%3Ccircle cx='146' cy='304' r='.6' fill='%23fff' opacity='.5'/%3E%3C/svg%3E");
+  --float:0 2px 8px rgba(0,0,0,.4), 0 20px 50px rgba(0,0,0,.4);
+
+  /* ⚠️ The radius scale ran 3, 4, 5, 6, 8 and 12px — five values across a 9px
+     range, which is drift wearing a scale's clothes. `design-system-radius`
+     could not say so until DESIGN.md declared a scale (2026-09-06). Two small
+     steps now, not four. */
+  --r-xs:4px; --r-sm:6px; --r:8px; --r2:12px; --ease:cubic-bezier(.23,1,.32,1);
+  /* the lamp's warm side and the emitting bloom: real, deliberate colours that
+     were living as literals inside three gradients. Named so they are checkable. */
+  --lit-1:#FFF9EC; --lit-2:#F6F2E7; --lit-3:#E7E3D8;
+  --rim-core:rgba(255,246,222,1); --rim-mid:rgba(255,214,150,.42); --rim-edge:rgba(255,190,110,0);
+  --bloom:rgba(255,252,244,.95);
+  --s1:6px; --s2:10px; --s3:16px; --s4:26px; --s5:38px;
+}
+/* EMITTING. The white hole -- the exact physical inverse: it gives back what
+   the other takes. Functionally it is still the bright ground you need to
+   check dark artwork against, so nothing is lost by the metaphor; the stars
+   invert into dark motes so both states have the same grain. */
+.emitting{
+  --void:#EFEEF6; --singularity:#D6D5E4; --horizon:#B08029; --focus:#1B1A24;
+  --star:#12111A; --star-cold:#3A3654;
+  --neb-violet:rgba(120,96,190,.13); --neb-blue:rgba(60,110,180,.10);
+
+  --bench:#FFFFFF; --raise:#F2F1FA; --well:#E2E1EE; --sprocket:#D6D5E4;
+  --score:rgba(18,17,26,.16); --score-2:rgba(18,17,26,.55); --mark:rgba(18,17,26,.70);
+  /* ⚠️ F23. `--cyan` was :root-only and carries the pressed/selected state at
+     14 sites; on this ground it measured 1.81:1 against white and 1.34:1
+     against the chroma swatch — an indicator you cannot see. Light gets its
+     own cyan, and `.btn.go`'s ink flips with it. */
+  --cyan:#0E7F96; --go-ink:#FFFFFF;
+  --qregion-ink:#1F0403; --sw-chroma:#4C6357; --sw-chroma-live:#00FF7F;
+  --ring-inner:#FFFFFF; --ring-outer:#0B0A12;
+  --graphite:#12111A; --graphite-2:#4E4C60; --graphite-3:#55536A;
+  --chk-a:#FFFFFF; --chk-b:#E8E7F2;
+  --stars-a:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Ccircle cx='23' cy='41' r='.9' fill='%2312111A' opacity='.30'/%3E%3Ccircle cx='187' cy='66' r='.7' fill='%233A3654' opacity='.26'/%3E%3Ccircle cx='98' cy='150' r='1.1' fill='%2312111A' opacity='.28'/%3E%3Ccircle cx='271' cy='119' r='.8' fill='%2312111A' opacity='.24'/%3E%3Ccircle cx='54' cy='238' r='.7' fill='%233A3654' opacity='.22'/%3E%3Ccircle cx='219' cy='271' r='.9' fill='%2312111A' opacity='.26'/%3E%3Ccircle cx='146' cy='304' r='.6' fill='%2312111A' opacity='.18'/%3E%3C/svg%3E");
+  --ok:#12734A; --ok-bg:#E1F2E9; --ruby-bg:#FBE6E2; --ruby-ink:#A82D18;
+  --amber:#7A5500; --amber-bg:#F7EEDA; --cyan-bg:#DEF3F7; --cyan-ink:#0E6B80;
+  --float:0 1px 3px rgba(20,28,27,.10), 0 16px 40px rgba(20,28,27,.14);
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;font-family:Archivo,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;
+  background:var(--void);color:var(--graphite);font-variant-numeric:tabular-nums;font-size:var(--t-body);line-height:1.5}
+button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer;font-variant-numeric:inherit}
+/* ⚠️ The ring needs 3:1 against the surface it sits on (SC 1.4.11), and cyan
+   scored 1.40-1.81 on the emitting field -- worst on the primary button, where
+   the ring was the same cyan as the fill it surrounded. Dark keeps cyan; light
+   takes an ink ring. One token, so a new surface cannot silently reintroduce it. */
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:var(--r-xs)}
+/* ⚠️ NARROWED from a blanket rule. DESIGN.md "Motion" names the blanket
+   version as wrong: `animation-duration:.01ms` on `*` kills OPACITY
+   transitions too, and opacity is the channel that carries meaning here.
+   Movement goes; opacity stays. The per-animation opt-outs live beside the
+   animations they replace, at the bottom of this file. */
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+
+/* ⚠️ A detector flags repeating gradients as decorative stripes. This one is the
+   alpha checkerboard — the standard indicator for transparency and this app's
+   ground. Justified exception; do not "fix" it. */
+/* The big void surfaces are TRANSPARENT: the one starfield behind them shows
+   through, so the sky is continuous across the whole table instead of
+   restarting at every element's edge. Only the checker rides on top, and only
+   where something transparent is actually being shown. */
+.chk{background-color:transparent;
+  background-image:repeating-conic-gradient(var(--chk-a) 0 25%,var(--chk-b) 0 50%);
+  background-size:14px 14px}
+/* A tile is a small window with its own ground, so it keeps a star layer --
+   but its background-position is randomised per tile in app.js, or every
+   frame on the sheet would show the same three stars in the same corner. */
+/* ⚠️ F24. `var(--stars-a)` was here, on EVERY tile, and app.js randomised each
+   tile's background-position to hide the repeat — a mitigation, not a removal.
+   Harkirat's rejection was "your star pattern is literally a copy paste. Stars
+   are never a copy paste pattern", DEVLOG.md recorded it as fixed, and it was
+   still shipping. The full-screen field is a canvas drawn once to fit; a tile
+   is a window onto that same sky and needs no sky of its own. */
+.chk-s{background-color:var(--void);
+  background-image:repeating-conic-gradient(var(--chk-a) 0 25%,var(--chk-b) 0 50%);
+  background-size:9px 9px}
+/* a nebula sits behind the whole table -- one soft violet bloom and one cold
+   blue, positioned off-centre so the field has a direction to it. */
+#starfield{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.table>*:not(#starfield){position:relative;z-index:1}
+.table{background-color:var(--void);background-image:
+  radial-gradient(58% 44% at 18% 86%,var(--neb-violet),transparent 72%),
+  radial-gradient(46% 38% at 82% 8%,var(--neb-blue),transparent 70%);
+  background-attachment:fixed}
+
+.app{height:100%;display:flex;flex-direction:column;background:var(--void)}
+.chrome{display:flex;align-items:center;gap:var(--s3);padding:var(--s2) var(--s4);
+  background:var(--bench);border-bottom:1px solid var(--score);flex:none}
+/* The wordmark: DEVOID with the O drawn as the accretion disk itself, which is
+   the same object the empty table's horizon and the lighting toggle are. Two
+   files rather than one, because the letterforms are white: `wordmark.png` on
+   the void, `wordmark-emitting.png` re-inked for --bench #FFFFFF. Built by
+   scripts/make_wordmark.py, which splits the recolour by MEASUREMENT — the
+   event horizon and the spiral are left exactly as drawn. Aspect 3.1136:1. */
+.wordmark{display:block;height:22px;width:calc(22px * 3.1136);flex:none;
+  background:url("assets/wordmark.png") center/contain no-repeat}
+.emitting .wordmark{background-image:url("assets/wordmark-emitting.png")}
+.crumb{font-family:"Spline Sans Mono",monospace;font-size:var(--t-meta);color:var(--graphite-3)}
+.crumb b{color:var(--graphite);font-weight:500}
+.grow{flex:1}
+.btn{border:1px solid var(--score-2);border-radius:var(--r);padding:7px 15px;font-size:var(--t-meta);
+  transition:background .15s var(--ease),transform .09s var(--ease)}
+.btn:hover{background:var(--raise)}
+.btn:active{transform:scale(.97)}
+.btn.go{background:var(--cyan);border-color:var(--cyan);color:var(--go-ink);font-weight:700}
+.table{flex:1;display:flex;min-height:0;position:relative}
+.work{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
+
+/* ── the contact sheet: the strip with nothing selected ─────────────────── */
+/* ⚠️ F37. Density responds to COUNT, and deliberately not by centring a fixed
+   grid: that breaks at n=200 and contradicts "one asset, twelve and two hundred
+   are the same layout", which is an information-architecture claim rather than
+   a sizing one. A few assets get bigger cards and a capped measure; many get
+   the dense grid. Same layout, different density. */
+.sheet{flex:1;overflow:auto;padding:var(--s4);display:grid;align-content:start;
+  grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:var(--s3)}
+/* ⚠️ THREE BUCKETS, 2026-09-07 11:05 EDT, and `data-few` became `data-density`.
+   With two buckets the tile measured 262px at 8, 20, 60 and 200 assets — the
+   sheet had no notion of how much was on it past six. app.js carries the
+   thresholds and why they are those numbers. */
+.sheet[data-density="few"]{grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  max-width:1180px;margin-inline:auto;width:100%}
+.sheet[data-density="crowd"]{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));
+  gap:var(--s2)}
+/* ⚠️ AND SIZE BECOMES A STATE CHANNEL IN A CROWD. Shrinking every tile equally
+   would make 200 assets scannable and still leave no landmark. The demanding
+   states keep two columns, so the one that needs you is findable by SHAPE —
+   at any zoom, in greyscale, without reading a word. It is the surface's own
+   rule (state sets the hierarchy, never the artwork's colours) extended from
+   appearance to geometry. */
+/* ⚠️ AND ONLY WHILE THE SPAN IS RARE (2026-09-07). `data-demand` is minority
+   exactly while spanning tiles hold under half the grid's cells (2 x demanding <
+   settled); past that every tile spanning is a uniform grid at double size, which
+   doubles the scroll and points at nothing. app.js derives the threshold. */
+.sheet[data-density="crowd"][data-demand="minority"] .frame[data-state="needs-you"],
+.sheet[data-density="crowd"][data-demand="minority"] .frame[data-state="refused"],
+.sheet[data-density="crowd"][data-demand="minority"] .frame[data-state="blocked"]{
+  grid-column:span 2}
+/* the caption is unreadable at 148px and the artwork is the point there */
+.sheet[data-density="crowd"] .frame{padding:var(--s1)}
+.sheet[data-density="crowd"] .frame .cap{padding-top:var(--s1)}
+
+/* ⚠️ F36. Hierarchy was set by the SOURCE FILE's own canvas colour — the
+   needs-you card was loud by coincidence, and six already-cut assets would
+   leave no focal point at all. State sets it now: a ring and the hatch, on a
+   ground every tile shares. */
+.frame[data-state="needs-you"],.frame[data-state="refused"],.frame[data-state="blocked"]{
+  box-shadow:inset 0 0 0 2px var(--ruby)}
+.frame[data-state="needs-you"] .win::before,.frame[data-state="refused"] .win::before,
+.frame[data-state="blocked"] .win::before{content:"";position:absolute;inset:0;
+  pointer-events:none;z-index:1;
+  background:repeating-linear-gradient(45deg,rgba(226,64,42,.26) 0 3px,transparent 3px 9px)}
+.frame .win{background:var(--well)}
+/* ⚠️ F36, and the squint test measured the first attempt failing: a ruby ring
+   and a hatch DARKEN a bright tile, so the needs-you card came out at 164.0
+   against a brighter 165.8 — it lost the squint to a tile with lighter artwork
+   in it. Adding emphasis to one card cannot win when the competition is the
+   artwork's own canvas colour. The field recedes instead.
+   ⚠️ This is the CONTACT SHEET, which is a navigation surface. Nothing dims on
+   the stage, which is where an edge is actually judged — dimming artwork you
+   are judging would be showing you something you are not going to get. */
+/* ⚠️ Written as "everything EXCEPT the demanding states", not as a list of the
+   settled ones: the first version listed done/ready/cancelled and left
+   loading, running, conflict, not-checked and failed at full brightness, so
+   the needs-you tile won the squint by 0.4/255 — a pass with no margin, which
+   is a fail wearing a tick. Enumerate the exception, never the rule. */
+.sheet .frame:not([data-state="needs-you"]):not([data-state="refused"]):not([data-state="blocked"]) .win img{
+  filter:brightness(.55) saturate(.65)}
+/* ⚠️ AND THE OPPOSITE DIRECTION IN THE LIGHT STATE, 2026-09-07 01:51 EDT. `brightness(.55)`
+   recedes on the void because darker is quieter there; on the emitting ground
+   it makes the field DENSER than the tile it is supposed to yield to, and the
+   squint measured the inversion — the needs-you tile read 219.1 against a
+   field at 227.4, losing by 8.4 where the dark state leads by 72.8. That is
+   the deferred item's "emitting loses tile separation", confirmed with a
+   number rather than an eye. On a light ground a surface recedes by washing
+   toward it. */
+.emitting .sheet .frame:not([data-state="needs-you"]):not([data-state="refused"]):not([data-state="blocked"]) .win img{
+  filter:brightness(1.16) saturate(.5) opacity(.55)}
+.sheet .frame:hover .win img{filter:none}
+.sheet .frame[data-state="needs-you"],.sheet .frame[data-state="refused"],
+.sheet .frame[data-state="blocked"]{background:var(--raise)}
+.frame{background:var(--sprocket);border-radius:var(--r2);padding:var(--s2);display:block;
+  text-align:left;box-shadow:inset 0 0 0 1px var(--score);
+  transition:background .18s var(--ease),transform .18s var(--ease),box-shadow .18s var(--ease)}
+.frame:hover{box-shadow:inset 0 0 0 1px var(--score-2)}
+.frame:hover{background:var(--raise);transform:translateY(-2px)}
+.frame .win{position:relative;border-radius:var(--r);overflow:hidden;aspect-ratio:1;
+  display:grid;place-items:center}
+.frame img{width:100%;height:100%;object-fit:contain;padding:10px;display:block}
+.frame .cap{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s1);
+  padding:var(--s2) 2px 0}
+.nm{font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);color:var(--graphite-2);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st{font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);color:var(--graphite-3);white-space:nowrap}
+.st.q{color:var(--ruby-ink)}
+
+/* grease-pencil marks, drawn ON the frame the way a contact sheet is annotated.
+   Shape carries the state; colour only reinforces it. */
+.pencil{position:absolute;inset:0;pointer-events:none}
+.pencil path,.pencil circle{fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;
+  vector-effect:non-scaling-stroke}
+
+/* ── one asset open ─────────────────────────────────────────────────────── */
+.open{flex:1;display:flex;flex-direction:column;min-height:0}
+/* ⚠️ F32. The chrome is on the SHORT axis now. A square focal element in a
+   1.55:1 window has spare width and no spare height, so the question, its
+   answers and the ledger move into a column beside the artwork instead of
+   stacking under it. The column is 340px — wide enough for the question and
+   its evidence at --t-body, narrow enough that the artwork still leads. */
+.openbody{flex:1;min-height:0;display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(300px,340px);gap:0}
+.stagecol{display:flex;flex-direction:column;min-width:0;min-height:0}
+.decide{border-left:1px solid var(--score);background:var(--bench);
+  overflow:auto;display:flex;flex-direction:column;min-height:0}
+/* below the point where a column would squeeze the artwork instead of freeing
+   it, the decision goes back under the stage */
+@media (max-width:1080px){
+  .openbody{grid-template-columns:minmax(0,1fr)}
+  .decide{border-left:none;border-top:1px solid var(--score);max-height:38%}
+}
+
+/* the answers, under their own half of the seam */
+.answerbar{flex:none;display:flex;justify-content:space-between;gap:var(--s3);
+  padding:var(--s1) var(--s4) 0}
+.answerbar .btn{min-width:132px}
+.openhead{flex:none;padding:var(--s2) var(--s4) 0;display:flex;align-items:center;gap:var(--s3)}
+.openhead h1{margin:0;font-size:var(--t-h1);font-weight:700;font-stretch:104%;letter-spacing:-.03em}
+.openhead p{margin:0;font-family:"Spline Sans Mono",monospace;font-size:var(--t-meta);color:var(--graphite-3)}
+/* ⚠️ Task 26. The reference layers a tiled 1px grid AND a radial vignette
+   behind its display. The grid is rejected — it is the exact shape of
+   `repeating-stripes-gradient`, and it is a workbench motif, which is the world
+   this app deliberately replaced. The vignette is light falling into a well,
+   which is on-metaphor and has no repeat.
+   ⚠️ The centre stays fully transparent well past the artwork's bounds: the
+   stage is where an edge is judged, and a tint that reaches the artwork is the
+   lensing the world rules ban. */
+.stage{flex:1;display:grid;place-items:center;padding:var(--s2) var(--s3);min-height:0;
+  overflow:hidden;position:relative;
+  background-image:radial-gradient(ellipse at center,transparent 42%,var(--neb-violet) 94%)}
+
+/* THE WIPE — the seam is the cut line. Drag it across a playing loop and the
+   background dissolves into transparency. One control, and it is the product's
+   thesis as a gesture. */
+.wipe{position:relative;height:100%;width:auto;max-width:100%;max-height:100%;
+  aspect-ratio:1;margin-inline:auto;
+  border-radius:var(--r2);overflow:hidden;cursor:ew-resize;touch-action:none}
+.wipe>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:var(--s3)}
+.wipe .after{clip-path:inset(0 0 0 var(--seam,50%))}
+/* ⚠️ F28. `#aftbg` put the checkerboard behind the RIGHT half only, so `keep it`
+   composited over the starfield and `cut it` over a checkerboard — and the
+   matte picker repainted one side of the comparison. For a tool that judges an
+   alpha edge, the ground changing AT the comparison line is a methodological
+   defect, not a cosmetic one. The ground is now the whole element. */
+.wipe.chk{background-size:14px 14px}
+.wipe .aftbg{display:none}
+.seam{position:absolute;top:0;bottom:0;left:var(--seam,50%);width:0;
+  border-left:1.5px dashed var(--cyan);pointer-events:none}
+.seam:after{content:"";position:absolute;top:50%;left:-9px;width:18px;height:34px;
+  transform:translateY(-50%);border-radius:var(--r-xs);background:var(--cyan);
+  box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.wipetag{position:absolute;top:var(--s2);font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);
+  padding:3px 9px;border-radius:20px;background:var(--bench);color:var(--graphite-2)}
+.wipetag.l{left:var(--s2)} .wipetag.r{right:var(--s2)}
+
+/* THE LEDGER — what this setting is about to destroy. Numbers the engine already
+   computes and currently discards. */
+/* each side of the pair is its own row, so two figures never share a line */
+.ledger .lrow{flex:0 0 100%;display:flex;align-items:baseline;gap:var(--s1);flex-wrap:wrap}
+.ledger{flex:none;display:flex;align-items:baseline;gap:var(--s2);padding:var(--s3);
+  background:transparent;border-top:1px solid var(--score);font-family:"Spline Sans Mono",monospace;
+  font-size:var(--t-meta);color:var(--graphite-2);flex-wrap:wrap;margin-top:auto}
+.ledger b{color:var(--graphite);font-weight:500}
+/* the app's first number worth looking at, at the scale's figure step. It did
+   not fit while the ledger was a thin row under the stage; Task 21 gave it a
+   column, which is what the step was waiting for. */
+.ledger .fig{font-size:var(--t-figure);font-variant-numeric:tabular-nums;
+  color:var(--graphite);font-weight:500;line-height:1}
+.ledger .loss{color:var(--ruby-ink)}
+.ledger .safe{color:var(--ok)}
+.ledger .blank{color:var(--amber)}
+
+.film{flex:none;background:var(--sprocket);border-top:1px solid var(--score);padding:var(--s1) var(--s3) var(--s2)}
+.filmhead{display:flex;justify-content:space-between;gap:var(--s3);margin-bottom:var(--s1);
+  font-family:"Spline Sans Mono",monospace;font-size:var(--t-meta);color:var(--graphite-3)}
+.frames{display:flex;gap:2px}
+/* no easing on the playhead — scrubbing must feel like dragging a physical strip */
+.frames button{flex:1;height:30px;background:var(--void);position:relative;
+  border-top:3px solid transparent;border-bottom:3px solid transparent}
+.frames button:hover{background:var(--raise)}
+.frames button.ghost{opacity:.4}
+.frames button[aria-current="true"]{background:var(--raise);border-color:var(--cyan)}
+/* flagged frames carry a NOTCH as well as the colour — see the greyscale rule */
+.frames button.flag{border-bottom-color:var(--ruby)}
+.frames button.flag:after{content:"";position:absolute;left:50%;bottom:-3px;width:5px;height:5px;
+  transform:translateX(-50%) rotate(45deg);background:var(--ruby)}
+
+/* the edge strip: the rest of the queue while one is open */
+.edge{flex:none;width:108px;background:var(--sprocket);border-right:1px solid var(--score);
+  padding:var(--s2);overflow:auto;display:flex;flex-direction:column;gap:var(--s1)}
+.edge button{padding:var(--s1);background:var(--void);border-radius:var(--r);display:block;width:100%;
+  position:relative;transition:background .18s var(--ease)}
+.edge button:hover{background:var(--raise)}
+.edge button[aria-current="true"]{background:var(--raise);box-shadow:inset 0 0 0 1.5px var(--cyan)}
+.edge .win{position:relative;border-radius:var(--r-sm);overflow:hidden;aspect-ratio:1;display:grid;place-items:center}
+.edge img{width:100%;height:100%;object-fit:contain;padding:5px}
+
+/* ── drawers: summoned, and they open beside what they affect ───────────── */
+/* ⚠️ F33. The rail was `writing-mode:vertical-rl` — six labels rotated 90°, in
+   an app you read horizontally. Rotated text is measurably slower to read and
+   it was the only rotated type in the product. The rail keeps its width (the
+   drawers-not-columns decision is measured and survives); the LABEL comes off
+   the rail and into a popover, and a mark from the app's own pencil vocabulary
+   takes its place. A rest-state inset border makes them read as tabs before
+   you click one. */
+.tabs[hidden]{display:none}
+.tabs{flex:none;width:52px;background:var(--bench);border-left:1px solid var(--score);
+  display:flex;flex-direction:column;align-items:center;gap:var(--s1);padding:var(--s2) 0}
+.tabs button{position:relative;width:40px;height:40px;border-radius:var(--r);
+  display:grid;place-items:center;color:var(--graphite-2);
+  box-shadow:inset 0 0 0 1px var(--score);
+  transition:background .15s var(--ease),box-shadow .15s var(--ease)}
+.tabs button .tmark{width:20px;height:20px;display:block}
+.tabs button .tmark path,.tabs button .tmark circle{fill:none;stroke-width:8;
+  stroke-linecap:round;stroke-linejoin:round}
+.tabs button:hover{background:var(--raise);color:var(--graphite)}
+.tabs button[aria-expanded="true"]{background:var(--raise);color:var(--graphite);
+  box-shadow:inset 0 0 0 1px var(--cyan),inset 3px 0 0 var(--cyan)}
+/* the label, on hover and on focus — never rotated */
+.tabs .tlab{position:absolute;right:calc(100% + var(--s2));top:50%;transform:translateY(-50%);
+  white-space:nowrap;font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);
+  background:var(--raise);color:var(--graphite);padding:var(--s1) var(--s2);border-radius:var(--r);
+  box-shadow:var(--float);opacity:0;pointer-events:none;transition:opacity .12s var(--ease)}
+.tabs button:hover .tlab,.tabs button:focus-visible .tlab{opacity:1}
+
+/* ⚠️ F34. `.drawer` was a flex SIBLING, so opening it shrank the artwork you
+   were judging — and the codebase already carried a ResizeObserver working
+   around the symptom. It overlays now: opening a drawer costs the work nothing. */
+/* ⚠️ `.table>*:not(#starfield){position:relative}` is (1,1,0) because the id
+   inside :not() counts, so a bare `.drawer{position:absolute}` lost to it and
+   the drawer stayed in flow — measured: the artwork went 539 -> 428px when a
+   drawer opened, exactly the defect this rule exists to remove. The id makes
+   the specificity match, and source order does the rest. */
+#drawer.drawer{position:absolute;top:0;right:52px;bottom:0;width:300px;z-index:3;
+  background:var(--bench);border-left:1px solid var(--score);
+  padding:var(--s3);overflow:auto;box-shadow:var(--float)}
+.drawer-close{position:absolute;top:var(--s2);right:var(--s2);width:var(--s5);height:var(--s5);
+  border-radius:var(--r);color:var(--graphite-2);display:grid;place-items:center;
+  font-size:var(--t-h3);line-height:1}
+.drawer-close:hover{background:var(--raise);color:var(--graphite)}
+.drawer h2{margin:0 0 var(--s2);font-size:var(--t-label);font-weight:600}
+.ctl{padding:9px 2px;display:flex;align-items:center;gap:var(--s2);border-bottom:1px dashed var(--score)}
+.ctl:last-child{border-bottom:none}
+.ctl .lab{flex:1;font-size:var(--t-meta);color:var(--graphite-2)}
+.auto{font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);padding:3px 9px;border-radius:20px;
+  background:var(--cyan-bg);color:var(--cyan-ink);font-weight:500}
+.val{font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);border:1px solid var(--score-2);
+  border-radius:var(--r);padding:3px 9px}
+
+/* ── the empty table: emptiness IS the subject, so it needs no illustration ─ */
+/* ══ THE EMPTY TABLE ═══════════════════════════════════════════════════════
+   Emptiness is the subject, so it gets no illustration and no apology -- but
+   it is not nothing, it is the VOID, and the void has one thing in it. The
+   wordmark's own O at full size: an event horizon with the
+   light that fell past it wrapped around the outside. Lensing lives here and
+   in the toggle, never on the stage -- warping artwork you are judging would
+   be showing you something you are not going to get. */
+.empty{flex:1;display:grid;place-items:center;text-align:center}
+/* ⚠️ no checker here. A checkerboard says "something transparent is on this
+   spot"; an empty table has no image on it at all, so the notation would be
+   claiming something untrue. Stars only. */
+.empty.chk{background-image:none}
+.horizon{position:relative;width:clamp(132px,17vw,196px);aspect-ratio:1;margin:0 auto var(--s5)}
+.horizon .ring{position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 202deg,
+    rgba(255,238,206,0) 0deg,rgba(255,212,148,.88) 38deg,rgba(255,248,230,1) 76deg,
+    rgba(168,196,255,.72) 128deg,rgba(122,92,222,.32) 188deg,rgba(255,238,206,0) 258deg,
+    rgba(255,238,206,0) 360deg);
+  -webkit-mask:radial-gradient(circle,transparent 60%,#000 62.5%,#000 79%,transparent 81%);
+  mask:radial-gradient(circle,transparent 60%,#000 62.5%,#000 79%,transparent 81%);
+  animation:devoid-orbit 28s linear infinite}
+.horizon .disc{position:absolute;inset:19%;border-radius:50%;background:#000;
+  box-shadow:inset 0 0 26px 8px #000}
+@keyframes devoid-orbit{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.horizon .ring{animation:none}}
+.emitting .horizon .disc{background:#0B0A12;box-shadow:inset 0 0 26px 8px #0B0A12}
+.empty p{margin:var(--s3) 0 0;font-size:var(--t-h3);color:var(--graphite-2)}
+.empty .big{font-size:clamp(28px,5vw,44px);font-weight:700;font-stretch:112%;letter-spacing:-.03em;
+  color:var(--graphite);margin:0}
+
+/* ══ Stage 2 — the surface ═══════════════════════════════════════════════
+   The eleven states, selection, the questions, the tri-state control.
+
+   ⚠️ NOTHING BELOW IS COLOUR ALONE. Every state on screen carries a
+   grease-pencil MARK (a shape, in the SVG) and a WORD (in `.st` / `.bword` /
+   `#openstate`). The colours here only reinforce marks that already read in
+   greyscale. Measured reason: 31% of hurricane's artwork and 21% of
+   paper-plane's sits inside rubylith's own colour neighbourhood. */
+
+/* ── the state words on a tile and in the open head ───────────────────── */
+.st.s-needs-you,.st.s-refused,.st.s-failed,.st.s-blocked,
+#openstate .s-needs-you,#openstate .s-refused,#openstate .s-failed,#openstate .s-blocked{color:var(--ruby-ink)}
+.st.s-not-checked,.st.s-conflict,
+#openstate .s-not-checked,#openstate .s-conflict{color:var(--amber)}
+.st.s-done,#openstate .s-done{color:var(--ok)}
+.st.s-running,.st.s-ready,#openstate .s-running,#openstate .s-ready{color:var(--cyan-ink)}
+.st.s-loading,.st.s-cancelled,#openstate .s-loading,#openstate .s-cancelled{color:var(--graphite-3)}
+#openstate b{font-weight:500}
+/* ⚠️ F29. `pencil()` is drawn on sheet tiles and on the banner and was never
+   drawn in the open view, so the primary surface failed the greyscale rule the
+   contact sheet passes. The mark needs its own size here: `.pencil` is
+   `position:absolute;inset:0` for a tile's window, which is meaningless inline.
+   Measured by scripts/check_greyscale.py, which found the first attempt at
+   3.8/255 against its surroundings — drawn, and still invisible. */
+#openstate{display:inline-flex;align-items:center;gap:var(--s2)}
+.omark{width:18px;height:18px;flex:none;display:block}
+.omark path,.omark circle{fill:none;stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── loading: the frame exists before the artwork does ─────────────────
+   Registration marks carry the state as a shape; this bar is the wait. The
+   picture may never arrive for a file the server does not also serve, and an
+   empty marked frame is the honest drawing of that. */
+.win.noart{background:var(--well)}
+/* ══ THE ACCRETION CORE — the app's loading state ═══════════════════════════
+   devoid-deferred-list.md: "the loading state does not mean anything yet". A
+   black hole is an ABSENCE ringed by light, which is what this app makes; its
+   two load-bearing colours are already an accretion disk's two colours. So the
+   loader is the product's two ideas orbiting the thing being removed.
+
+   ⚠️ NOT ON THE STAGE. DEVLOG.md: "lensing is banned from the stage, because
+   the stage is where you judge an edge." Tiles, the drawer and the boot state.
+   ⚠️ NO GLOW. The reference this was adapted from wraps the disc in
+   `drop-shadow(0 0 16px)`; that is `dark-glow`, which this project's detector
+   treats as a defect and which the contract does not have room for. The
+   geometry carries it: a conic gradient laid flat, and a hairline ring. */
+.core{--core-size:28px;position:relative;width:var(--core-size);height:var(--core-size);
+  display:grid;place-items:center;perspective:calc(var(--core-size) * 5);flex:none}
+.core-disk{position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 0deg,var(--star),var(--ruby) 28%,
+    transparent 52%,var(--cyan) 78%,var(--star));
+  filter:blur(1px);animation:core-spin 1.8s linear infinite}
+/* ⚠️ `rotate` must stay INSIDE the same transform as `rotateX`: animating
+   `rotate` alone drops the rotateX and the disc stands upright. */
+@keyframes core-spin{
+  from{transform:rotateX(74deg) rotate(0deg)}
+  to{transform:rotateX(74deg) rotate(360deg)}}
+.core-ring{position:absolute;width:64%;height:64%;border-radius:50%;
+  background:var(--singularity);box-shadow:0 0 0 1.5px var(--mark)}
+/* the bar this replaced was chosen because it survives reduced motion; a still
+   disc with a ringed core still reads as "working", and nothing moves. */
+@media (prefers-reduced-motion:reduce){
+  .core-disk{animation:none;opacity:.55}
+}
+
+/* ══ THE STATE PIP — always on screen, always true ═════════════════════════
+   devoid-deferred-list.md: "the history drawer can sit on Reading the log…
+   while analyses run". A drawer lies while you are not looking at it; a pip in
+   the chrome cannot. Same object as the core, at 10px.
+   ⚠️ Opacity, not scale: a scaling ping is movement, and this app's
+   reduced-motion rule already forced that choice once for .devbar.
+   ⚠️ Not colour alone — the aria-label carries the word in every state. */
+.pip{position:relative;width:10px;height:10px;border-radius:50%;flex:none;
+  background:var(--singularity);box-shadow:0 0 0 1px var(--score-2)}
+.pip::after{content:"";position:absolute;inset:2px;border-radius:50%;background:var(--graphite-3)}
+.pip[data-pip="working"]::after{background:var(--cyan);animation:pip-breathe 1.6s var(--ease) infinite}
+.pip[data-pip="blocked"]::after{background:var(--ruby)}
+@keyframes pip-breathe{0%{opacity:.35}50%{opacity:1}100%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.pip[data-pip="working"]::after{animation:none;opacity:1}}
+
+.devbar{position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--cyan);
+  transform-origin:left;animation:devoid-sweep 1.1s var(--ease) infinite}
+@keyframes devoid-sweep{0%{transform:scaleX(0)}70%{transform:scaleX(1)}100%{transform:scaleX(1);opacity:0}}
+@keyframes devoid-fade{from{opacity:.3}to{opacity:1}}
+@keyframes devoid-turn{to{transform:rotate(360deg)}}
+.frame[data-state="running"] .pencil,.edge button[data-state="running"] .pencil{
+  animation:devoid-turn 1.5s linear infinite}
+/* movement out, opacity in — the mark and the word already say everything */
+@media (prefers-reduced-motion:reduce){
+  .devbar{transform:none;animation:devoid-fade 1.7s ease-out infinite alternate}
+  .frame[data-state="running"] .pencil,.edge button[data-state="running"] .pencil{animation:none}
+}
+
+/* ── selection: a shape in the corner, never a coloured edge alone ────── */
+.frame[aria-pressed="true"]{background:var(--raise);box-shadow:inset 0 0 0 2px var(--cyan)}
+.frame{position:relative}
+.seltick{position:absolute;top:3px;right:3px;width:20px;height:20px;pointer-events:none;
+  background:var(--bench);border-radius:50%;border:2px solid var(--bench);box-sizing:border-box}
+.seltick path{fill:none;stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+.sheet.over,.empty.over{box-shadow:inset 0 0 0 2px var(--cyan)}
+
+/* ── the banner: refused · failed · conflict · blocked · cancelled ─────
+   Mark, then the state's own word, then the sentence. Three channels. */
+.banner{flex:none;display:flex;align-items:center;gap:var(--s2);
+  padding:var(--s2) var(--s4);background:var(--bench);
+  border-bottom:1px solid var(--score);font-size:var(--t-body)}
+.bmark{width:20px;height:20px;flex:none;display:block}
+.bpencil{width:20px;height:20px;display:block}
+.bpencil path{fill:none;stroke-width:8;stroke-linecap:round;stroke-linejoin:round}
+.bword{font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);text-transform:uppercase;
+  letter-spacing:.07em;font-weight:500;flex:none}
+#bannertext{flex:1;color:var(--graphite-2)}
+#bannerbtn{flex:none}
+.banner[data-state="refused"],.banner[data-state="failed"],
+.banner[data-state="blocked"]{background:var(--ruby-bg)}
+.banner[data-state="refused"] .bword,.banner[data-state="failed"] .bword,
+.banner[data-state="blocked"] .bword{color:var(--ruby-ink)}
+.banner[data-state="conflict"],.banner[data-state="not-checked"],
+.banner[data-state="confirm"]{background:var(--amber-bg)}
+.banner[data-state="conflict"] .bword,.banner[data-state="not-checked"] .bword,
+.banner[data-state="confirm"] .bword{color:var(--amber)}
+.banner[data-state="cancelled"] .bword,.banner[data-state="loading"] .bword{color:var(--graphite-2)}
+
+/* ── the questions the engine refused to answer ───────────────────────── */
+/* in the decision column now: no max-height, no top border, it IS the column */
+.questions{flex:none;padding:var(--s3);background:transparent;border-top:none}
+.questions .q{padding-bottom:var(--s3);margin-bottom:var(--s3);border-bottom:1px dashed var(--score)}
+.questions .q:last-of-type{border-bottom:none;margin-bottom:var(--s2)}
+.questions h3{margin:0 0 var(--s1);font-size:var(--t-h3);font-weight:600;font-stretch:104%}
+.qwhere{margin:0 0 var(--s2);display:flex;align-items:center;gap:var(--s2);
+  font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);color:var(--graphite-3)}
+/* ⚠️ F26. This was `.swatch`, the SAME class as the 28px matte button 130 lines
+   below — and it sets `background` as a SHORTHAND, which wipes the matte
+   button's checkerboard image. One name, two components, one of them broken. */
+.hexchip{width:14px;height:14px;flex:none;border-radius:var(--r-xs);background:var(--hex,var(--graphite-3));
+  box-shadow:inset 0 0 0 1px var(--score-2)}
+.qpair{display:flex;gap:var(--s2)}
+.qpair .btn.on{background:var(--cyan);border-color:var(--cyan);color:var(--go-ink);font-weight:700}
+.qwarn{margin:var(--s2) 0 0;font-size:var(--t-meta);color:var(--ruby-ink)}
+.qfoot{display:flex;align-items:center;gap:var(--s3)}
+.qhint{font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);color:var(--graphite-3)}
+/* ⚠️ NOT `opacity`, 2026-09-07 00:56 EDT. `opacity:.45` fades the WHOLE element, so
+   the disabled primary shipped as white on a washed cyan -- measured 1.82:1
+   emitting, 3.00:1 collapsed -- and `check_contrast.py` could not see it,
+   because a composited-by-opacity pair has no tokens to name. The button is
+   disabled for the entire time a question is open, which is exactly when it
+   is being read. An explicit recessed pair is measurable, and the pair below
+   is in PAIRS. Disabled controls are exempt from SC 1.4.3; PRODUCT.md commits
+   to contrast in both states anyway, and presents this gate as the proof. */
+.btn:disabled{opacity:1;cursor:not-allowed;
+  background:var(--bench);border-color:var(--score);color:var(--graphite-2)}
+
+/* ── the ledger's blank IS the not-checked state, so it gets the mark too ─ */
+.lmark{width:15px;height:15px;flex:none}
+.lmark path{fill:none;stroke-width:9;stroke-linecap:round}
+.ledger .atmost{color:var(--graphite)}
+
+/* ── the tri-state control ────────────────────────────────────────────── */
+.ctl .undo{font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);color:var(--cyan-ink);
+  padding:var(--s1);border-radius:var(--r);white-space:nowrap}
+.ctl .undo:hover{background:var(--raise)}
+.ctl .auto{border:1px dashed transparent;cursor:pointer}
+.ctl .auto:hover{border-color:var(--cyan)}
+.ctl .unit{font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);color:var(--graphite-3)}
+.ctl .missing{font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);color:var(--amber)}
+.ctl input.val,.ctl select.val{width:82px;background:var(--void);color:var(--graphite);
+  font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro)}
+.ctl select.val{width:auto}
+.drawer .scope{margin:0 0 var(--s2);font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);
+  color:var(--graphite-3)}
+.drawer .refusal{margin:0 0 var(--s2);font-size:var(--t-meta);color:var(--graphite-2)}
+.drawer .cmd{display:block;font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);
+  background:var(--well);border-radius:var(--r);padding:var(--s2);margin-bottom:var(--s2);
+  color:var(--graphite-2);word-break:break-all}
+
+/* the history drawer -- a stack of past runs. Each one is a TOOL on the bench,
+   so it takes the matte world's border-on-dark depth, not a shadow. The verdict
+   is a WORD first; colour only reinforces it (DESIGN.md's greyscale rule). */
+.hist{padding:var(--s2) 0 var(--s3);border-bottom:1px dashed var(--score)}
+.hist:last-child{border-bottom:none;padding-bottom:var(--s2)}
+.hist-head{display:flex;align-items:baseline;gap:var(--s2)}
+.hist-name{flex:1;font-size:var(--t-meta);color:var(--graphite);font-stretch:80%;   /* Archivo — the axis is real here */
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-verdict{font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);font-weight:500}
+.v-done{color:var(--ok)}
+.v-failed{color:var(--ruby-ink)}   /* A5: --ruby is 3.1:1 on bench */
+.v-cancelled{color:var(--graphite-3)}
+/* the meta line belongs to the name above it, so it sits tight against it;
+   the run below gets --s3. Rhythm, not one gap repeated. */
+.hist-meta{display:flex;gap:var(--s2);margin-top:var(--s1);
+  font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);color:var(--graphite-3)}
+/* a run cut by a different build of the engine would not necessarily repeat --
+   said plainly, because replaying it silently is the failure worth avoiding */
+.hist-stale{color:var(--amber)}
+/* ⚠️ `.undo` is scoped to `.ctl` -- outside a control row it inherits NOTHING
+   and renders as plain body text. Caught by looking at the capture: the row's
+   only action read as a sentence. It is a button; it has to look like one. */
+.hist .undo{margin-top:var(--s2);font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);
+  color:var(--cyan-ink);background:var(--well);border:1px solid var(--score-2);
+  border-radius:var(--r);padding:var(--s1) var(--s2);cursor:pointer}
+.hist .undo:hover{background:var(--raise);border-color:var(--cyan)}
+
+/* stopping a cut is not a second destructive act, so it wears no rubylith */
+.btn.stop{background:var(--raise);border-color:var(--score-2);color:var(--graphite);font-weight:600}
+
+/* ═══ STAGE 3 — the wipe's canvases, and the question card. ══════════════════
+   APPEND-ONLY SECTION, added by web/wipe.js's author. Nothing above this line
+   was edited. The two <img> sides are replaced at runtime by two <canvas>
+   elements driven by one clock (PLAN.md 3.3); `.wipe .after` and `.aftbg`
+   above are element-agnostic, so the clip-path that makes the seam work needs
+   no change — only the sizing rule below, which mirrors `.wipe>img`.
+   ⚠️ NO REPEATING GRADIENT IS ADDED HERE. DESIGN.md's diagonal hatch for
+   material about to be removed is drawn onto the card's canvas in JS instead,
+   so the detector keeps returning exactly one finding (the alpha
+   checkerboard) rather than a second one for a hatch that is not decorative
+   but would be indistinguishable from decoration to a static analyser. */
+.wipe>canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  padding:var(--s3);image-rendering:auto}
+
+/* THE QUESTION CARD — the wipe's fallback, used only below the measured
+   conspicuity threshold in wipe.js. It is a card, not a dialog: the answer is
+   part of the work, not an interruption of it. */
+.qcard{display:flex;flex-direction:column;align-items:center;gap:var(--s3);
+  max-width:420px;padding:var(--s4);border-radius:var(--r2);
+  background:var(--bench);border:1px solid var(--score);box-shadow:var(--float)}
+.qcard-frame{width:220px;height:220px;border-radius:var(--r);overflow:hidden;
+  display:flex;align-items:center;justify-content:center;background:var(--well)}
+.qcard-canvas{width:100%;height:100%;object-fit:contain}
+.qcard p{margin:0;text-align:center;color:var(--graphite-2);text-wrap:balance}
+.qcard-actions{display:flex;gap:var(--s2)}
+
+/* ══ Redesign pass — closing the gap between the hero moments and the chrome
+   around them. Found by re-auditing against this file's own rules: the lamp
+   toggle's only state signal WAS colour (a grey dot vs a gold dot), which
+   "no state is ever colour alone" (above) already forbids. The fix pattern
+   throughout this block is the same one used everywhere else in this file:
+   reuse a motif already proven in THIS app (the sprocket/film-strip world,
+   the grease-pencil mark) rather than borrowing an unrelated trope. ══════ */
+
+/* THE LAMP — a physical rocker/slider, not a colour-changing dot. The knob's
+   POSITION carries the state; the warm glow is reinforcement, not the signal. */
+/* ══ THE LIGHTING TOGGLE — a seam, 52px wide ═══════════════════════════════
+   Three circles were tried and all three were the same default wearing a
+   different hat. The app's own signature gesture is dragging a cut line
+   between two versions of an image; choosing the room's lighting is the same
+   act at a different scale, so the control is a miniature of the wipe. It
+   teaches itself: it looks like the thing you already drag all day. The
+   dashed line is the same token as the real seam.
+
+   The horizon does the work. A warm rim travels with the cut -- light
+   spilling past the edge, which is what an accretion disk's inner edge
+   actually looks like -- because the boundary is the only interesting place
+   in a black hole. No knob: a handle promises dragging, and this clicks. */
+/* ⚠️ At 56x28 with no border this was effectively invisible on `--bench:#FFFFFF`
+   in emitting, and read as a corrupted thumbnail between two labelled buttons
+   in collapsed. 64x32 also clears SC 2.5.8 on both axes. */
+.lamp{width:64px;height:32px;border-radius:var(--r-sm);padding:0;position:relative;
+  overflow:hidden;--s:72%;border:1px solid var(--score-2)}
+.lamp:hover{border-color:var(--mark)}
+.lamp-word{font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);
+  color:var(--graphite-3);letter-spacing:.06em;flex:none}
+.lamp .sg-void{position:absolute;inset:0;background-color:var(--void);
+  background-image:radial-gradient(70% 90% at 24% 76%,var(--neb-violet),transparent 72%),
+    var(--stars-a);background-size:auto,470px 470px;background-position:0 0,-180px -60px}
+.lamp .sg-lit{position:absolute;inset:0;clip-path:inset(0 0 0 var(--s));
+  background:linear-gradient(100deg,var(--lit-1) 0%,var(--lit-2) 38%,var(--lit-3) 100%);
+  transition:clip-path .42s var(--ease)}
+.lamp .sg-rim{position:absolute;top:0;bottom:0;left:var(--s);width:11px;margin-left:-5.5px;
+  background:linear-gradient(to right,var(--rim-edge) 0%,var(--rim-mid) 34%,
+    var(--rim-core) 50%,var(--rim-mid) 66%,var(--rim-edge) 100%);
+  transition:left .42s var(--ease)}
+/* ⚠️ THE COLLAPSE, adapted from the reference file rather than copied: its own
+   toggle is a sliding orb, which is the "iOS rocker" and the "circle with a
+   ring" DEVLOG.md already records as rejected. What transplants is the
+   CHOREOGRAPHY — a squircle collapsing to a circle, and a ring of light on the
+   far side of the change. It is the same treatment the accretion core carries,
+   so the two read as one idea in two places. */
+.lamp .sg-cut{position:absolute;top:0;bottom:0;left:var(--s);width:0;
+  border-left:1px dashed var(--cyan);
+  transition:left .52s var(--ease-collapse),box-shadow .52s var(--ease-collapse)}
+/* the ground moves, not only the rim: collapsed is the void's own black,
+   emitting is the horizon's warm light. Before this the control read as a
+   slider rather than as a change of world. */
+.lamp{transition:background-color .52s var(--ease-collapse),border-color .15s var(--ease)}
+.lamp .sg-lit{transition:clip-path .52s var(--ease-collapse)}
+.lamp .sg-rim{transition:left .52s var(--ease-collapse)}
+.emitting .lamp{--s:10%}
+:root:not(.emitting) .lamp .sg-cut{box-shadow:0 0 0 1.5px var(--star)}   /* a crisp ring, not a glow */
+/* ⚠️ prefers-reduced-motion must NEUTRALISE the overshoot, not shorten it: an
+   overshoot curve is movement past the target and back, which is exactly what
+   the query exists to suppress. */
+@media (prefers-reduced-motion:reduce){
+  :root{--ease-collapse:var(--ease)}
+  .lamp .sg-lit,.lamp .sg-rim,.lamp .sg-cut{transition:none}
+}
+
+/* THE MATTE TOGGLE — four real swatches (they must show the actual ground,
+   that's the point), framed as a sprocket-perforated strip rather than a
+   generic segmented control. The active one is marked by a bracket SHAPE,
+   never by a colour fill alone. */
+.matte{display:flex;align-items:center;gap:0;padding:var(--s1);border-radius:var(--r);
+  background:var(--well);border:1px solid var(--score)}
+.swatch{width:28px;height:28px;border-radius:var(--r-sm);padding:0;position:relative;
+  background-clip:content-box;border:5px solid transparent;
+  box-shadow:inset 0 0 0 1px var(--score-2)}
+.swatch.chk-s{background-size:8px 8px}
+.sw-white{background:#fff}
+.sw-black{background:#000}
+/* ⚠️ F31. `#00FF7F` at rest made a tertiary verification control the most
+   saturated, highest-attention element in the window — out-shouting the very
+   artwork whose edges it exists to help you judge, and acting as a third
+   accent in a two-accent system. The true key green is what you get when you
+   reach for it. */
+.sw-chroma{background:var(--sw-chroma)}
+.sw-chroma:hover,.sw-chroma[aria-checked="true"]{background:var(--sw-chroma-live)}
+
+/* ⚠️ F25. These rules targeted `[aria-pressed="true"]`; the markup and the JS
+   have always used `aria-checked`, because this is a `role="radio"` in a
+   radiogroup. NO SWATCH HAS EVER CARRIED aria-pressed, so the selected state
+   did not exist at all — four grounds, none of them ever shown as chosen.
+   ⚠️ And the indicator cannot be cyan: it has to read on white, on black, on
+   a checkerboard AND on chroma. A single hue cannot. A TWO-TONE ring can —
+   whichever tone the ground swallows, the other one shows. */
+.swatch[aria-checked="true"]{box-shadow:inset 0 0 0 1.5px var(--ring-inner),
+  inset 0 0 0 3px var(--ring-outer)}
+.swatch[aria-checked="true"]::before,.swatch[aria-checked="true"]::after{
+  content:"";position:absolute;top:calc(var(--s1) * -1);bottom:calc(var(--s1) * -1);width:3px;
+  border:1.5px solid var(--ring-outer);background:var(--ring-inner);background-clip:content-box}
+.swatch[aria-checked="true"]::before{left:calc(var(--s1) * -1);border-right:none}
+.swatch[aria-checked="true"]::after{right:calc(var(--s1) * -1);border-left:none}
+.swatch:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+/* the ground the matte toggle actually controls */
+:root[data-matte="white"] .chk,:root[data-matte="white"] .chk-s{background:#fff}
+:root[data-matte="black"] .chk,:root[data-matte="black"] .chk-s{background:#000}
+:root[data-matte="chroma"] .chk,:root[data-matte="chroma"] .chk-s{background:var(--sw-chroma-live)}
+
+/* THE "AUTO" MARK — a grease-pencil annotation (a dashed underline on mono
+   text), not a SaaS status chip. Reuses the mark vocabulary the frames
+   already carry instead of inventing a badge shape nothing else in the app
+   uses. */
+.auto{font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);font-weight:500;
+  padding:2px 1px 3px;background:none;border:none;border-bottom:1.5px dashed var(--cyan-ink);
+  border-radius:0;color:var(--cyan-ink)}
+.ctl .auto{border-bottom-color:transparent}
+.ctl .auto:hover{border-bottom-color:var(--cyan-ink)}
+
+/* THE LEDGER BAR — background-removed vs artwork-survived is a REAL
+   proportion (every output pixel is one or the other), so it earns an actual
+   bar. "artwork lost" stays a caption below, never plotted on this bar: it's
+   measured on a different basis (source vs cut) and plotting it here would
+   claim a precision the number doesn't have. */
+.ledger{flex-wrap:wrap;row-gap:var(--s1)}
+.ledger-bar{flex:0 0 100%;display:flex;height:6px;border-radius:var(--r-xs);overflow:hidden;
+  background:var(--well)}
+.lseg{display:block;min-width:2px}
+/* ⚠️ F30. `--ruby-bg` against `--cyan-bg` is a 1.10:1 greyscale step collapsed
+   and 1.04:1 emitting — one solid block the moment you desaturate, on a bar
+   whose whole job is a proportion. The hatch is the vocabulary this app
+   already uses for material about to be removed. */
+.lseg-bg{background:var(--ruby-bg);box-shadow:inset 0 0 0 1px rgba(226,64,42,.25);
+  background-image:repeating-linear-gradient(45deg,
+    rgba(255,129,104,.55) 0 2px,transparent 2px 5px)}
+.lseg-total{background:var(--cyan-bg);box-shadow:inset 0 0 0 1px rgba(34,211,238,.3)}
+
+/* THE ARRIVAL — the empty table's one orchestrated moment (DESIGN.md), and
+   only that: rare, staggered, never repeated once used this session. Each
+   frame "develops" (fades and settles from a slight scale) under a rubylith
+   wash that recedes as it reveals the artwork underneath — cutting away the
+   background is the whole thesis, played once as a gesture instead of stated
+   as a sentence. */
+.frame.arrive{animation:devoid-condense .72s var(--ease) backwards;
+  animation-delay:calc(var(--i,0) * 90ms)}
+/* diffuse matter pulling itself together -- it arrives OUT of the field
+   rather than fading in on top of it. Scale settles inward, never outward:
+   nothing in this world expands. */
+@keyframes devoid-condense{
+  0%{opacity:0;transform:scale(1.05);filter:blur(7px)}
+  55%{opacity:1;filter:blur(1.5px)}
+  100%{opacity:1;transform:scale(1);filter:blur(0)}}
+.frame.arrive .win::after{content:"";position:absolute;inset:0;background:var(--ruby);
+  mix-blend-mode:multiply;pointer-events:none;
+  animation:devoid-wash .7s var(--ease) backwards;animation-delay:calc(var(--i,0) * 90ms)}
+@keyframes devoid-wash{0%{opacity:.85}70%{opacity:.5}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){
+  .frame.arrive{animation:devoid-arrive-still .4s ease-out backwards;
+    animation-delay:calc(var(--i,0) * 60ms)}
+  .frame.arrive .win::after{animation:devoid-wash-only .5s ease-out backwards;
+    animation-delay:calc(var(--i,0) * 60ms)}
+}
+@keyframes devoid-wash-only{0%{opacity:.85}100%{opacity:0}}
+
+@keyframes devoid-arrive-still{from{opacity:0}to{opacity:1}}
+
+/* EMITTING is a white hole, not a white background: the field is lit FROM
+   somewhere. One soft luminance behind the work area, the inverse of the
+   nebula the collapsed state carries. */
+.emitting .table{background-image:
+  radial-gradient(64% 50% at 50% 34%,var(--bloom),transparent 70%),
+  radial-gradient(52% 42% at 16% 88%,var(--neb-violet),transparent 74%),
+  radial-gradient(44% 36% at 86% 10%,var(--neb-blue),transparent 72%)}
+
+
+/* ══ OPENING AN ASSET ══════════════════════════════════════════════════════
+   The biggest state change in the app, and it used to be a cut: the sheet
+   vanished and a stage appeared in the same frame. "Select one and it opens
+   while the rest move to the edge" is a movement, in this design's own words.
+   The rail carries the movement (it slides in from where the sheet was), the
+   stage settles in behind it. Transform and opacity only. */
+/* ⚠️ THE LIGHT STATE'S SHADOW SCALE, EXTENDED TO THE TWO COMPONENTS IT MISSED
+   (2026-09-07 10:21 EDT). A filed item said emitting "loses tile separation
+   under a squint" in the edge rail and the film strip. Measured: the current
+   rail button stood **2.6/255** off its surroundings and the current film frame
+   **1.5**, against a floor of 8.0 — while the void reads **114.3** and **45.0**.
+   Not weaker: absent.
+   The tokens are not the problem — the surface ladder passes at 3 ΔL* in both
+   states — but 3 ΔL* was set for adjacent PLANES and the neighbours here are
+   other buttons, so on a light ground the whole strip reads as one block.
+   ⚠️ SHADOW, NOT A BORDER. Two depth strategies coexist here on purpose —
+   borders on dark, shadows on light (`.interface-design/system.md`) — and
+   adding a border back on light is exactly what that split exists to avoid.
+   A raised surface on a light ground is lighter AND casts; both channels move
+   here, which is why this clears the floor rather than scraping it. */
+.emitting .frames button[aria-current="true"]{
+  background:var(--bench);box-shadow:inset 0 0 0 1.5px var(--cyan),var(--float)}
+/* ⚠️ AND THE RAIL NEEDED ITS FIELD TO RECEDE TOO (2026-09-07 10:22 EDT). The
+   shadow alone took the rail from 2.6 to 5.1 and the film strip from 1.5 to
+   16.2 — the strip's frames are thin, so the raised fill is most of what they
+   show, while a rail button is mostly its own thumbnail and the fill barely
+   registers. The neighbours wash toward the ground, exactly as the contact
+   sheet's field does in this state, and for the same reason: on a light ground
+   a surface recedes by lightening, never by darkening. */
+.emitting .edge button:not([aria-current="true"]) img{
+  filter:brightness(1.16) saturate(.5) opacity(.55)}
+
+.edge[data-anim]{animation:devoid-rail .34s cubic-bezier(.77,0,.175,1) backwards}
+@keyframes devoid-rail{from{transform:translateX(-100%);opacity:0}to{transform:none;opacity:1}}
+.open[data-anim]{animation:devoid-stage .3s var(--ease) 60ms backwards}
+@keyframes devoid-stage{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:none}}
+.sheet[data-anim]{animation:devoid-sheet .26s var(--ease) backwards}
+@keyframes devoid-sheet{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){
+  .edge[data-anim],.open[data-anim],.sheet[data-anim]{animation:devoid-sheet .2s ease-out backwards}
+}
+
+/* ══ THE WIDTH AXIS ════════════════════════════════════════════════════════
+   Archivo's variable width was self-hosted for this and then used on three
+   elements. "Nothing at a default width" (DESIGN.md) is a claim about every
+   element, so the axis carries a real tier: display expands, body sits
+   normal, and the instrument labels -- the words that annotate rather than
+   speak -- condense, which is how a gauge is lettered. */
+/* three real tiers on the width axis, not a rounding error:
+   INSTRUMENT 80% — the words that annotate rather than speak. Condensed the
+     way a gauge, a film rebate or a spec sheet is lettered.
+   BODY      100% — anything you actually read a sentence of.
+   DISPLAY   116% — headings and the open asset's name. The wordmark used to
+     sit at 125% here and no longer does: it is drawn artwork now, not type,
+     so the widest thing in the app is a heading. */
+/* ⚠️ F20. This line named ten selectors and EIGHT of them render in Spline
+   Sans Mono, whose two self-hosted .woff2 files carry a `wght` axis and no
+   `wdth` axis (fontTools fvar, both files). Browsers do not synthesise width,
+   so the declaration was inert on eight of ten — a rule that looked deliberate
+   and changed nothing, which is the same bug class as three tiers 8% apart.
+   Only Archivo has the axis, so only Archivo carries the instrument tier. */
+.tabs button,.ctl .lab{font-stretch:80%}
+.drawer h2,.questions h3,.openhead h1{font-stretch:116%}
+.empty .big{font-stretch:118%}
+.btn{font-stretch:88%}
+
+
+/* Emitting separates surfaces the way light surfaces do -- a white card
+   lifted off the field on a three-layer shadow -- because the tonal step
+   that carries the collapsed state disappears under a squint here. */
+.emitting .frame{background:#FFFFFF;
+  box-shadow:0 0 0 1px rgba(18,17,26,.07),0 1px 2px -1px rgba(18,17,26,.10),
+    0 3px 8px rgba(18,17,26,.05)}
+.emitting .frame:hover{background:#FFFFFF;
+  box-shadow:0 0 0 1px rgba(18,17,26,.12),0 2px 4px -1px rgba(18,17,26,.12),
+    0 6px 14px rgba(18,17,26,.07)}
+/* ⚠️ THIS RULE ALREADY EXISTED AND WAS ALREADY WINNING (2026-09-07 10:25 EDT).
+   The filed item says the light-mode shadow fix "did not reach" the edge rail
+   and the film strip. It reached the rail — this rule — and was simply too
+   quiet: `0 1px 3px` at 10% measured the current asset **2.6/255** off its
+   surroundings, against a floor of 8.0 and the void's **114.3**. A first
+   attempt at the fix added a stronger rule EARLIER in the file, which lost to
+   this one at equal specificity and changed the measurement by nothing at all
+   — the numbers came back identical to a tenth. Strengthen the rule that wins;
+   never add a second one and assume. */
+.emitting .edge button[aria-current="true"]{background:var(--bench);
+  box-shadow:inset 0 0 0 1.5px var(--cyan),var(--float)}
+
+/* ══ THE QUESTION, DRAWN ON THE ARTWORK ════════════════════════════════════
+   PRODUCT.md: "Nobody can answer 'is the region at bbox [230,135,406,359]
+   outlined in 002864 design or background?' by reading it. They have to see
+   it. That is the product." The question shipped as that exact string. The
+   disputed region is now lit on the picture: rubylith to say it is up for
+   removal, plus the diagonal hatch, because hue is not a reliable channel
+   over this content and hatching is how removed material is marked in a
+   technical drawing.
+   ⚠️ This is the SECOND accepted `repeating-stripes-gradient` -- DESIGN.md
+   predicted it: "expect one finding, and a second when the hatch lands." */
+.qregion{position:absolute;pointer-events:none;border:1.5px solid var(--ruby);
+  border-radius:var(--r);box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+/* ⚠️ P0, 2026-09-07 00:27 EDT. THE FILL IS CLIPPED AT THE SEAM. It was painted on
+   `.qregion` itself, so it covered the disputed rectangle IDENTICALLY on both
+   halves — the one place the comparison exists to differ was the one place it
+   structurally could not. Left of the cut is `keeping this`, so the real
+   pixels now show with nothing over them; right of the cut is `cutting this`
+   and keeps the hatch, which is how removed material is marked.
+   ⚠️ IT IS A ::before, NOT THE ELEMENT'S OWN BACKGROUND, because `b` is
+   positioned OUTSIDE the box (bottom:calc(100% + var(--s1))) and clipping
+   `.qregion` would delete the tag.
+   ⚠️ AND THE VARIABLE IS `--qseam`, NEVER `--seam`. A percentage in clip-path
+   resolves against the CLIPPED ELEMENT's own box. `--seam` is a percentage of
+   #wipe; used here it would cut every region at ITS midpoint and travel the
+   wrong way as you drag. app.js writes `--qseam` per element, in that
+   element's own basis. The 100% default leaves the fill fully clipped, so a
+   region that never gets the property paints nothing rather than covering
+   both halves again. */
+.qregion:before{content:"";position:absolute;inset:0;border-radius:inherit;
+  clip-path:inset(0 0 0 var(--qseam,100%));background:
+    repeating-linear-gradient(45deg,rgba(226,64,42,.30) 0 3px,transparent 3px 8px),
+    rgba(226,64,42,.14)}
+.qregion b{position:absolute;left:0;bottom:calc(100% + var(--s1));
+  font:500 var(--t-micro)/1 "Spline Sans Mono",monospace;
+  color:var(--qregion-ink);background:var(--ruby);   /* A4: was #fff on rubylith */
+  padding:var(--s1) var(--s2);border-radius:var(--r);white-space:nowrap}
+.qregion[data-verdict="protect"]{border-color:var(--cyan);background:rgba(34,211,238,.12)}
+/* the tint used to OVERRIDE the hatch via the same `background` property;
+   now that the hatch lives on a pseudo-element, it has to be removed. */
+.qregion[data-verdict="protect"]:before{display:none}
+.qregion[data-verdict="protect"] b{background:var(--cyan);color:var(--go-ink)}
+.qregion[data-verdict="remove"]{opacity:.55}
+
+/* the wipe with nothing to compare against yet */
+.wipe[data-single] .seam,.wipe[data-single] .wipetag.r,.wipe[data-single] .after,
+.wipe[data-single] .aftbg{display:none}
+.wipe[data-single] .wipetag.l{left:50%;transform:translateX(-50%);color:var(--amber)}

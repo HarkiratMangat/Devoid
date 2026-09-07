@@ -6,3 +6,34 @@ local/
 dist/
 out/
 .venv/
+*.egg-info/
+# The in-flight journal (PLAN.md 1.4). Machine state, not history:
+# what it holds is only meaningful to the run that wrote it.
+.devoid-journal.json
+.devoid-journal.json.lock
+.devoid-journal.json.tmp
+.claude/worktrees/
+
+# Brand source art. The eight FINALS at the top level are tracked -- the icon,
+# the two wordmarks, the three banners and the nebula are what anything else
+# gets rebuilt from. Every SUBFOLDER is ignored: the PSDs are 59 MB of the
+# 157 MB total, and the WIP renders are exploration, not source. Harkirat's
+# call 2026-09-05. The trailing `/` matches directories only, so a new WIP
+# folder is ignored the day it appears without anyone remembering to add it.
+DEVOID Logo Assets/*/
+
+# Your work history (PLAN.md 5.1). Per-machine, not shared: every real render
+# appends a row carrying local absolute paths, so tracking it dirties the tree
+# on every use and makes two branches conflict on a merge that means nothing.
+# ⚠️ labels/protection.jsonl is the OPPOSITE case and STAYS TRACKED -- that log
+# is evidence, meant to accumulate, and is pointed at from the engine repo.
+jobs.jsonl
+
+# the UI gate runs the server against a scratch data dir so it can never write
+# to labels/protection.jsonl, which is tracked evidence
+local/gate-data/
+
+# measurement scratch — real files copied under distinct names, and its own data dir
+local/scale-corpus/
+local/scale-data/
+local/scale-shots/

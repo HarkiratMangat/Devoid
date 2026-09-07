@@ -1,0 +1,44 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/Applications/Claude Code/Diors-Builds/docs/reference/**)",
+      "Read(/Applications/Claude Code/Diors-Builds/.claude/rules/**)",
+      "Read(/Applications/Claude Code/Diors-Builds/scripts/reflow-prose.mjs)",
+      "Read(/Applications/Claude Code/Diors-Builds/CLAUDE.md)"
+    ],
+    "deny": [
+      "Read(**/.env*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.p12)",
+      "Read(**/secrets/**)",
+      "Read(**/.git/**)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__plugin_context-mode_context-mode__ctx_search",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/ctx-index-refresh.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/ctx-search-nudge.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/codebase-memory-nudge.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}

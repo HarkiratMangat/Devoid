@@ -1,0 +1,285 @@
+# Devoid — changelog
+
+What shipped, when, and why. Newest first.
+
+## Versioning
+
+**Three-part `vMAJOR.MODERATE.MINOR`**, the same scheme as Dior's Builds (`docs/CHANGELOG.md` there) and the engine repo — deliberately, so a session moving between them does not have to switch models.
+
+- **MAJOR** — a major overhaul or major new functionality. Bumped **only deliberately, with the user's confirmation**.
+- **MODERATE** — a significant merged PR: a new feature, a real design change, several large bug fixes, or a bundle of adjustments. Bumping it resets MINOR to 0. It climbs past 9 indefinitely (v1.10.x, v1.11.x); double digits is **not** a reason to bump MAJOR.
+- **MINOR** — a small adjustment, fix or correction. ⚠️ **SHARPENED 2026-09-07 15:31 EDT**, against the engine repo's own bars now copied into `CLAUDE.md`: minor is defined by the **ABSENCE of a behaviour change**, not by being small. A one-line fix that changes what the app DOES is moderate; a change that touches code and alters nothing a person can observe is minor.
+
+**How to decide which tier a merge is, is in `CLAUDE.md`** — three bars and three tie-breaks, derived from the engine repo's 17 shipped tags rather than asserted. This section keeps the mechanics; that one keeps the judgement.
+
+**The unit that earns a version number is a merged PR**, not a push and not a raw commit. `main` only ever advances through a PR (`CLAUDE.md`), each merge squashes to one commit, and that commit gets one version number and one git tag.
+
+**Entry shape:** `## vX.Y.Z — YYYY-MM-DD HH:MM TZ (#PR · `sha`) — <title>`. A commit cannot contain its own hash, so the **hash is backfilled one release later** — the newest entry lacking a hash is correct, not drift. The backfill is additive (insert `` · `sha` ``, touch nothing else, never edit the timestamp) and is an ordinary commit, **never an `--amend` and never a force-push**.
+
+**Open work is not here.** `devoid-deferred-list.md` is the tracker; this file records only what merged. `docs/DEVLOG.md` carries the reasoning and the dead ends.
+
+---
+
+## v1.0.0 — 2026-09-07 15:55 EDT — the first working version
+
+**82 commits**, derived with `git rev-list --count main..HEAD` rather than typed. There is no v0.x: the first release is the first working version, matching the engine repo's and Dior's Builds' convention.
+
+The app shows the question the engine cannot answer. `--auto` refuses **12.8%** of assets (39 of 304) on questions that are visual — the enclosure question alone is **10.2%** (31 of 304), the fade question 2.6% — and delivering one of those as a hex string and a bounding box is the failure this exists to end. Answering them visually is also what keeps every other flag absent, because `--auto` applies its recommendation only where an option was left at its default.
+
+⚠️ **Requires the engine at v6.4.0 or later** for the analysis handoff below. Against an older engine the capability check returns false, no flag is sent, and every render costs a second analysis. It degrades; it does not break.
+
+**Sections below are the work that landed after 11:13 EDT on 2026-09-07.** Everything above that time is in the entries that follow.
+
+### Four audits of the launch documents, and what they found in the code — 2026-09-07 16:28 EDT
+
+Two fresh readers and two auditors were run over the README, `docs/DEVELOPMENT.md` and the release note with no context beyond the files themselves. They found real defects, most of them in the code rather than the prose.
+
+**Fixed in this release:**
+
+| | |
+|---|---|
+| `main.js` accepted a **system Python 3.10** while `pyproject.toml` declares `>=3.11` and the failure dialog says 3.11 | floor raised to 3.11, so the three sources agree |
+| The update dialog told the user the app **"is not code-signed"** | it is signed, just not by an authority another Mac trusts. Message corrected |
+| `gifsicle`, `pngquant` and `webpmux` are in `engine.py`'s `REQUIRED_BINARIES` and were **documented nowhere** | `brew install gifsicle pngquant webp` is now in both install paths |
+| `$DEVOID_PYTHON` is named in the app's own dialog and was undocumented | in the README's Settings |
+| `pyproject.toml` read `0.1.0` | `1.0.0` |
+| The fonts shipped inside the disk image with **no licence anywhere in the repository** — OFL 1.1 requires it to travel with them | `web/fonts/OFL.txt` and `web/fonts/README.md` |
+| Both documents claimed a missing engine raises a **dialog naming the three paths it looked at**. No such dialog exists | both corrected to describe the 503 that actually happens; the dialog is filed `[P1 · S]` |
+
+**Filed rather than fixed:** a packaged app cannot be pointed at a different engine (`$DEVOID_SKILL` does not reach a Finder-launched app and `devoid.config.json` resolves inside the bundle), and `tests/port-probe.test.js` is wired to nothing.
+
+⚠️ **The README was also telling every reader to do something it had just said would not work** — download the disk image, under a note explaining that Gatekeeper refuses it everywhere but the build machine. Building from source is now the primary path, and the Gatekeeper claim is corrected: it blocks the double-click, and right-click → Open still works.
+
+### Licensed — 2026-09-07 16:28 EDT
+
+**GPL-3.0-or-later**, Harkirat's call. Anyone may clone, change and ship it; a distributed version stays under the same licence with its source available. The engine is to be **LGPL-3.0-or-later** in its own repository so it can be used by anything while improvements to it come back — filed there, since the engine was already tagged v6.4.0 without one.
+
+### The analysis is handed to the render instead of recomputed — 2026-09-07 15:55 EDT
+
+A render called the engine's `analyze()` **twice** — `--auto`'s pass 1 and its pass-3 verify — on top of the analysis `/analyze` had already paid for. Measured on `galaxy.gif` (743 KB, 8 frames) by wrapping the real function and counting: **2.80s + 2.93s of a 10.15s run**.
+
+The engine now takes an analysis as an input (`--analysis-json`, and `verify(input_analysis=)`, both v6.4.0). Devoid writes the one it already holds after `/analyze` and passes the path at render time.
+
+| | `analyze()` calls | wall |
+|---|---|---|
+| before | 2 | 9.84s |
+| engine parameter only | 1 | 7.93s |
+| with Devoid's handoff | **0** | **4.28s** |
+
+Output bytes identical (`354fcb04b142`). `server/engine.py` asks the engine's own parser whether the flag exists rather than assuming it. The document lives in a per-process temp directory, and the tolerance it records is read off the engine's parser default so the two cannot drift.
+
+### The density rule's three unseen edges — 2026-09-07 15:55 EDT
+
+The rule shipped asserted only where one tile needs you. Three edges were undecided:
+
+| edge | decision | measured |
+|---|---|---|
+| a crowd where nothing needs you | no landmark, and `data-demand="none"` says so | 60 tiles, one width, 154px |
+| a crowd where everything does | the span is dropped rather than doubling the scroll. Derived, not picked: a spanning tile holds 2 cells and a settled one 1, so spans hold under half the grid exactly while `2 x demanding < settled` | 19 demanding → 325/154px · 20 → 154/154px |
+| the 40/41 flip mid-drop | the bucket waits for the drop to stop; a trickle of ≤4 restarts a 700ms window, a bulk arrival re-buckets at once | 40 → `many`, +1 → `many` held, then `crowd` |
+
+⚠️ **The gate meant to prove this was itself broken.** Its `pad()` set `state: 'needs-you'` on a cloned asset, and `stateOf()` derives that verdict from `outstanding(a)`, never from `a.state`. The existing assertion passed anyway because the clones cycle a corpus containing a genuinely demanding asset. Both probes now build from real templates.
+
+### The versioning bars are written down — 2026-09-07 15:55 EDT
+
+`CLAUDE.md` gained the engine repo's three bars and three tie-breaks, derived there from 17 shipped tags. It also settled a contradiction: this changelog defined MINOR as "a small adjustment, fix or correction", which reads a behaviour-changing one-line fix as minor. Minor is the **absence** of a behaviour change, not smallness.
+
+### The contact sheet knows how much is on it — 2026-09-07 11:13 EDT
+
+Three density buckets instead of two: **365px** at six or fewer, **282px** to forty, **154px** beyond. And in a crowd the tile that needs you keeps two columns — **325px against 154px** — so it is findable by shape rather than by reading. Asserted at three counts and falsified. ⚠️ **This entry read 147px until 2026-09-07 15:55 EDT**, when the gate re-measured it at 154. The rule did not change; the number was wrong.
+
+### The label log stops being written, and the app checks its own Python — 2026-09-07 11:00 EDT
+
+Answering no longer appends to `labels/protection.jsonl`: the engine repo's harness is where labelled data lives and is supplied deliberately. The file and its history stay. And the bundle drops ~36 MB of build machinery while `main.js` now probes for its five runtime imports before starting the server, naming what is missing and asking permission before installing anything.
+
+### The three P3s — 2026-09-07 10:34 EDT
+
+The tracker's conservation rule is a gate (`npm run check:tracker`) rather than an honour system, and it took two corrections before its own falsifier would fire. A rerun now says when the engine moved under the line it is replaying. And the exact-key-set sweep found the rule has two sides: relaxed in flow tests, kept and labelled in the two tests whose job is the frozen contract.
+
+### The light state can be looked at again — 2026-09-07 10:26 EDT
+
+The edge rail and the film strip lost their current element entirely in emitting: **2.6/255** and **1.5** against a floor of 8.0, where the void reads 114.3 and 45.0. Both now read **14.5** and **16.2**, on the light state's own shadow scale rather than a border. Three surface briefs and a label bring-back path landed with them.
+
+### Three P2s answered with numbers, and the light state's squint fixed — 2026-09-07 01:59 EDT
+
+`measure_scale.mjs` puts the contact sheet through 8, 20, 60 and 200 real assets: first paint and settle are flat, the tile is 262px at every size, RSS grows about 1.06 MB per asset. `/api/history` stays under 16ms against six concurrent analyses, so the drawer's two-second stall is not the route. And the emitting sheet lost the squint by **8.4** where the void leads by 72.8 — the field was receding by darkening on a light ground, which makes it louder; it washes out now and separates by **25.8**.
+
+### The gate stops seeding the corpus, and the design contract became a command — 2026-09-07 01:32 EDT
+
+`gate:ui` runs against a scratch data dir and asserts the tracked label log is byte-identical across the run; 24 synthetic rows it had already committed are removed. `/impeccable hooks on` is wired and verified live — and `npm run check:design` covers what its `Edit|Write` matcher cannot see, which is most of how this repo is edited.
+
+### Answering is one act now, and Keep no longer looks like Cut — 2026-09-07 01:22 EDT
+
+The `Answer` button is gone: picking a side sends the answer, and the undo that only ⌘Z reached is a visible control. The ledger moved to the top of the decision column, under the question it prices. The eight region tools are two labelled groups divided by a rule, each verdict carrying a mark as well as a colour — **Δ 19.3 in greyscale against a floor of 12.0 that a falsifier chose**, in the first control `check_greyscale.py` has ever covered.
+
+### Six P1s in one pass — 2026-09-07 01:00 EDT
+
+The disabled primary went from **1.82:1** to **6.78:1** and is measured in both lighting states instead of being invisible to the gate. `web/advice.js` lost a whole generation of `var()` fallbacks and now returns zero detector findings. `scripts/fetch-fonts.py` stopped regenerating the clamped font axes it was fixed to remove. The captures stopped photographing the same empty table four times. `npm run check:detector` proves the detector can report presence before any absence it gives is believed. And every `signal_present` in `map.yaml` was narrowed to one live-code string, then falsified by renaming a function and watching the node go red.
+
+### The seam can finally show a difference — 2026-09-07 00:37 EDT
+
+The disputed region's fill was painted over the rectangle identically on both halves, so the comparison the product exists for could not differ in the one place it was about. The fill is now clipped at the seam, in each region's own coordinate basis, and the seam opens on the disputed bbox instead of at 50%. Two assertions in `npm run gate:ui` cover it and were shown to fail on the old code.
+
+### Stages 0–6 — the whole app
+
+- **Stage 0 — the launch path.** Electron main process spawns a Starlette/uvicorn server and opens the window. Port 8732, probing upward to 8740 when taken, by real TCP connect; a dialog when all nine are busy.
+- **Stage 1 — the engine layer.** A validation boundary over the skill's JSON, in-process analyse, subprocess render with a real cancel, concurrency taken from the harness's own `default_jobs()`. Flag **metadata** is introspected from the engine's `build_parser()` — never a control per flag, which is the 63-control passthrough form the product exists to avoid.
+- **Stage 2 — the surface.** Eleven states, selection, drag-and-drop through a `FileSource` boundary, tri-state controls read live from `/api/flags`.
+- **Stage 3 — the wipe.** Two answers on one clock, decoding shared frame timing rather than looping two `<img>`s that drift — the real `growth.gif` timings used to drift 1,220ms. The question card is the honest fallback below the seam's visible-difference threshold.
+- **Stage 4 — the plotter.** Region drawing on the artwork in source pixels, with a coordinate round-trip exact to the source pixel.
+- **Stage 5 — memory.** Two append-only logs with two schemas and one writer each, a crash journal that surfaces orphans without resuming them, history with rerun, and advice that ships with an undo of exactly what it changed.
+- **Stage 6 — ship it.** Menus, the port probe, engine logging, self-hosted fonts, and `electron-builder` packaging. ⚠️ The `.app` is **not standalone** — see `devoid-deferred-list.md`.
+
+### The tooling layer became enforceable, and a critique found what it had been hiding
+
+`/impeccable init` + `document` completed the product record and merged a token frontmatter into `DESIGN.md`, which **turned on three detector rules that had never fired** — they immediately found 15 real violations. `/impeccable critique` then ran dual-agent and scored the interface **25/40**, with one P0: `.qregion` has no `clip-path`, so the seam's two halves cannot differ inside the rectangle the seam exists to reveal.
+
+The three MCP layers are set up and, for the first time, **enforced rather than described**: prose indexed as `project:devoid-docs` / `project:devoid-rules`, the code graph at 1,406 nodes with an ADR, linksee carrying a North Star anchor and a 17-node `map.yaml` whose reconciler already reports the P0 as divergence. Three PreToolUse hooks carry the conventions into the moment of the mistake; `npm run test:hooks` asserts both directions.
+
+⚠️ **Prose was measurably not enough** — `grep` 788× against `rg` 4× on a standing rule, and this session's own author broke two written context-mode rules while both were loaded.
+
+### The remediation plan is executed — 27 tasks, five stages
+
+`docs/superpowers/plans/2026-09-06-devoid-remediation.md`, finished 2026-09-06 19:46 EDT. Four systems that were built, tested, exported and wired to nothing are connected; the interface stopped making claims that are false; the token, type and surface systems are derived and checked by script; the layout puts the artwork first; and three signature components were added.
+
+| what changed | measured |
+|---|---|
+| The artwork in the open view | ~~289x289~~ → **1037x1037** with a question open |
+| The film strip | scrubs **144** frames; it could move nothing in any state before |
+| Adjacent surface planes | ~~0.85, 2.09, 0.37, 4.26~~ → **~4 ΔL\*** per step |
+| The needs-you tile under a desaturated blur | ~~loses by 1.7~~ → **wins by 73.0** |
+| Type | ~~37 raw sizes, 31 in a 1.5px band~~ → **nine tokens** |
+| Gate assertions | ~~8~~ → **~30**, testing connection rather than presence |
+
+⚠️ **The plan was wrong four times and running it proved so** — each corrected in place with the falsification recorded, never quietly dropped. F3 was specced as "closed by F2"; the hatch drew and the hex string stayed. Task 7's "click frame 12, the artwork changes" was false in every state. Task 8's call site would have switched `--auto` off for the flag it suggested. Task 8's gate assertion named selectors that do not exist and could not fail.
+
+⚠️ **Two of the design reference's five headline moves are things this project's own detector calls slop**, and it said so the day they landed: an overshoot curve is `bounce-easing` and a cyan glow is `dark-glow`. What survived is the geometry underneath.
+
+### The app is code-signed, and signing it found two defects nothing else could
+
+A self-signed `DEVOID` certificate (`mac.identity` in `electron-builder.yml`) produces a bundle that passes `codesign --verify --deep --strict` — `valid on disk`, `satisfies its Designated Requirement`. Identifier `Electron` → **`com.harkirat.devoid`**, hardened runtime on, `Sealed Resources version=2 rules=13 files=2451`, all five entitlements sealed in. **`build/entitlements.mac.plist` passed its first real test**: the signed app spawns Python and serves in 6s. ⚠️ Not Apple-issued, so no Gatekeeper anywhere else and no notarisation — and it does **not** unblock Check for Updates.
+
+| defect found | how it showed |
+|---|---|
+| The venv's absolute symlink let the signer walk out of the bundle and re-sign the **system** Python | build failed on `invalid destination for symbolic link in bundle`; fixed by `build/afterPack.js` |
+| The packaged app byte-compiled `site-packages` into its own bundle | **340** `.pyc` files, seal went to `a sealed resource is missing or invalid`; fixed by `PYTHONDONTWRITEBYTECODE` |
+
+### The visual world was replaced
+
+The "lamp over the bench" metaphor became **the void**: the ground is deep space, the tools on it stay the matte world. The palette did not change — the app's two load-bearing colours turned out to already be an accretion disk's two colours, so the new world explains them. The lighting toggle is a **miniature of the wipe's own seam**. The starfield is generated to fit, never tiled. `docs/DESIGN.md` was rewritten; measured values are in `.interface-design/system.md`.
+
+### Accessibility, after an audit that found real failures
+
+| check | outcome |
+|---|---|
+| Contrast, both lighting states, every text-on-surface pair | zero failures, worst **5.12:1** |
+| Focus ring, SC 1.4.11 | worst **9.53:1** — found failing at **1.00:1** on the primary button |
+| Hit targets, SC 2.5.8 | matte swatches ~~23.6px~~ → **28px**; every other element already passing |
+| Design detector | exactly one accepted finding, `repeating-stripes-gradient` |
+
+### A code review found 12 things; fixing them found 2 more
+
+**The seam works for the first time.** `loadPair` — the answer-pair fetch, the two synced canvases, the conspicuity gate, the question-card fallback — was built, tested, exported and **called by nothing**, so the shipped wipe was still the source-vs-output pair `server/preview.py`'s own header says cannot discriminate. Wiring it exposed two more failures that no test could see:
+
+- **`--assume-protect` / `--assume-remove` were sent without `--auto`,** which is the flag they answer. A plain render never poses the question, so the assumption was inert and **both sides rendered identically**. Measured on the corpus's one real ambiguous case: ~~0 differing alpha px~~ → **2,047**, on one frame and on the full 144-frame asset alike.
+- **`data-single` was never cleared,** so CSS kept `.seam`, `.wipetag.r` and the second canvas hidden. The pair mounted and displayed as one picture with one label.
+
+Both failed *silently and plausibly* — the card fallback showed instead, which looks exactly like the design working.
+
+**Four more subsystems were wired to nothing**, the same class as the plotter and the history routes:
+
+| was | is |
+|---|---|
+| `devoid:regions-changed` dispatched on `window`, heard on `document` | Heard where it is dispatched. Drawing a region updates the UI |
+| `devoid:asset-opened` heard by canvas.js, dispatched by nobody | `openAsset` dispatches it. **Regions no longer leak onto the next asset's render** |
+| `journal.open_job`/`close_job` never called | Called at the spawn and at every settle, so crash recovery has something to recover |
+| `Devoid.submitAnswer` called by the question card, never defined | Defined, and routed through the colour group so it cannot create the conflict the server rejects |
+
+**And six defects of judgement:**
+
+- A **cancel arriving before the spawn** killed nothing, then deleted the temp directory under a live subprocess and wrote a second `jobs.jsonl` row. The spawn now happens under the same lock as the cancel check, and a job journals at most once.
+- `stateOf()` never tested `a.state` for **`blocked` or `failed`** — a missing source file and a crashed analyze both read as **ready to cut**.
+- The ledger printed **"at most 0 artwork px lost"** for a figure `preview.py` deliberately leaves unmeasured. It says it was not measured.
+- **`conflict` was never assigned by anything**, so an escalated `_v2` write settled as an ordinary `done` and nobody was told where their file went. The UI's mark, word and banner for it all existed already.
+- **⌘W killed the server and left a dead Dock icon** with no `activate` handler.
+- The preview cache key omitted `target_format`, and a `load` listener accumulated once per render.
+
+**The gate grew a ninth state and three assertions**, including one that fails when the two answers do not differ — the check that would have caught the `--auto` bug on day one.
+
+### Check for Updates…
+
+A menu item under **Devoid**, and only a menu item: it runs when clicked and at no other time, because an app whose premise is that it talks to nothing should not ping a server on launch.
+
+It cannot install anything, deliberately. macOS auto-update goes through Squirrel.Mac, which validates the code signature of the download, so an unsigned build **cannot** install its own update — wiring `electron-updater` now would ship a path guaranteed to fail. It reports what exists and opens the release page.
+
+`compareVersions` lives in `lib/versions.js` rather than in `main.js`, for one reason: `main.js` cannot be required without booting Electron, and this is the only piece of the check that can be wrong **silently**. A string compare calls `1.9.0` newer than `1.10.0` and the app then never offers an update again. **Five tests, red-green verified** — the naive version fails four of them. `npm run test:versions`.
+
+⚠️ **A GitHub 404 is ambiguous and is not reported as one thing.** It means both "no releases published" and "private repository, anonymous caller" — and this repository is private, so the app says it cannot tell which rather than claiming the first.
+
+Verified against the live API: the 404 path on this repo, and the 200 path on a public one, where the tag parses, compares, and carries the release URL.
+
+### The wordmark is the artwork now
+
+DEVOID with the **O drawn as the accretion disk itself** — supplied by the user, and it is the same object the empty table's horizon and the lighting toggle already are, in the same cyan and ruby the palette was built from. It replaces the CSS letterform whose O was a knocked-out counter with a rubylith fill.
+
+**Two files, not one, because the letterforms are white.** `wordmark.png` on the void; `wordmark-emitting.png` re-inked for `--bench #FFFFFF`. `scripts/make_wordmark.py` builds both from the master and splits the recolour **by measurement**, because three different things in that image are near-grey and only two may move:
+
+| pixels | measured | treatment |
+|---|---|---|
+| letterforms | 976,508 px, **100% opaque** | re-inked dark |
+| drop shadow | dark, **semi-transparent** | lifted, so the relief survives on white |
+| event horizon | dark, **opaque** | untouched |
+| accretion spiral | saturated | untouched |
+
+⚠️ **The first version inverted luminance for every neutral pixel and turned the event horizon white** — the one thing in this mark that must never be light. The alpha split is what separates the shadow from the core; nothing about the colour does.
+
+Letterform contrast: **18.25:1** on the void, **17.85:1** emitting.
+
+### A `.app` you can actually drag into Applications
+
+`npm run dist` produces `Devoid-1.0.0-arm64.dmg` (171 MB) and a 411 MB bundle that **runs from anywhere on this Mac**. Verified by copying it to `/tmp` and launching it there.
+
+The previous build was described as "not standalone — it spawns `.venv/bin/python` beside itself". That undersold it: **three separate things meant it almost certainly never ran at all.**
+
+- `server/` and `web/` were inside `app.asar`. Python cannot read an asar, and Python is what imports the server *and* serves `web/` as static files. They now ship as extraResources.
+- There was no interpreter. `.venv` now ships as `pyvenv` in Resources, and the interpreter is resolved in a stated order — `$DEVOID_PYTHON`, the bundled copy, then this repo's `.venv`.
+- `waitForServer` retried **forever**, so any of that failing showed the person nothing at all: no window, no error, a bouncing icon. Both failure paths are dialogs now, and the server-start one carries Python's own stderr.
+
+The app also stopped writing inside its own bundle: `$DEVOID_DATA_DIR` sends the two logs and the crash journal to `~/Library/Application Support/Devoid` when packaged. Writing into a bundle breaks under signing and is wiped by the next install.
+
+**The icon is the one you supplied**, 1024×1024, at `build/icon.icns`.
+
+⚠️ **Still not portable to a different Mac**, and both reasons are now dialogs rather than mysteries: `pyvenv` is a virtualenv and needs Python 3.11 from the python.org framework, and the engine is resolved at runtime rather than bundled — deliberately, because the skill is the source of truth and a bundled fork would drift.
+
+### The tracker's first pass — what got fixed once it was written down
+
+Writing the open work down made it fixable, and four of the items closed the same day.
+
+| was | is |
+|---|---|
+| Two copies of the app could run, with **two writers** to the label log | `app.requestSingleInstanceLock()`. Verified red-green: ~~2 uvicorn processes~~ → **1**, and the second copy hands its files to the first and exits |
+| Stage 5's history had a server, pytest coverage, and **no caller** — `GET /api/history` and the rerun route were reachable from nothing | A **"what you did"** drawer: every past run with its verdict, its age, and a *load these settings* button. It says what it could not restore rather than restoring silently |
+| `prefers-reduced-motion` was five `@media` blocks nothing could reach | Emulated through the DevTools protocol and **asserted** on every gate run |
+| **No automated test touched `web/` at all** | `npm run gate:ui` — eight assertions against the real Electron window, red-green verified |
+
+### Three defects the new gate found while it was being built
+
+None of these were visible to anything that existed before it.
+
+- **`capturePage()` was returning stale frames.** `app.disableHardwareAcceleration()`, set for "deterministic pixels", stopped the compositor: eight captures produced **three distinct images** while the DOM changed correctly at every step. Every visual claim made through that script after the first state or two was read off an earlier state. Fixed, and the gate now hashes each capture and **fails if two states match**.
+- **Electron served a cached `app.js`** across three consecutive runs of a freshly spawned process, so the gate certified code that was no longer on disk. It now reloads ignoring the cache before asserting anything.
+- **A dispatch branch that had never executed.** Report rows are one-element specs, so `[label, ref]` left `ref` undefined and the `kind === 'report'` branch below was unreachable from the day it was written.
+
+⚠️ **The gate does not steal focus.** It runs with a hidden window — an app that pops to the front on every run is one nobody runs.
+
+### First real use, and what it found
+
+The app was run on a 2.87 MB file from outside the corpus and completed — `verdict: done`, output written. It is one asset and nobody has judged the output's edges, but the whole path ran end to end for the first time.
+
+It also dirtied the git tree, because `jobs.jsonl` — a per-machine work history carrying local absolute paths — was tracked. It is now ignored. `labels/protection.jsonl` stays tracked: that log is shared evidence, pointed at from the engine repo, and the two must not be treated alike.
+
+### Verified
+
+93 pytest (including a real render of a corpus asset through the subprocess) · 267 coordinate assertions · 14 wipe-clock tests · the port probe · every state captured through the real Electron window.
+
+⚠️ **Not verified, and stated as such:** no automated test covers the UI, `prefers-reduced-motion` was never emulated, no screen reader has run, and signing has never been exercised. All four are filed in `devoid-deferred-list.md`.

@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>wipe.js harness</title>
+<!--
+  A DOM harness for web/wipe.js. The unit test in tests/test_wipe_sync.mjs proves
+  the clock's arithmetic with no browser; this proves the half it cannot reach —
+  that two real corpus files decode to frames with their own timing, that one
+  clock drives both canvases, that the ledger renders both sides, and that the
+  question card takes over below the threshold.
+
+      cd <repo root> && python3 -m http.server 8731
+      open http://localhost:8731/tests/wipe_harness.html
+
+  ⚠️ NOT A UNIT TEST AND NOT A SERVER TEST. It stubs POST /api/…/preview with two
+  real files from web/assets/, because the real endpoint lives in server/app.py.
+  Results appear in #out and on window.__wipeHarness.
+  Add ?reduce to force prefers-reduced-motion and watch the freeze.
+
+  ⚠️ NOT PART OF THE DESIGN GATE. CLAUDE.md's detect.mjs check covers the shipped
+  front end — web/index.html, app.css, app.js, wipe.js — which returns exactly
+  one finding. This page is scaffolding with debug type sizes in it; including it
+  in that run adds four findings that mean nothing. Do not add it to the set.
+-->
+<link rel="stylesheet" href="../web/app.css">
+<style>
+  body{padding:20px}
+  #stage{position:relative;display:flex;gap:20px;align-items:flex-start}
+  #out{font-family:"Spline Sans Mono",monospace;font-size:12px;white-space:pre-wrap;margin-top:20px}
+</style>
+</head>
+<body>
+
+<!-- The same ids web/index.html carries, so wipe.js runs against the real shape. -->
+<div class="stage chk" id="stage">
+  <div class="wipe" id="wipe">
+    <div class="aftbg chk-s" id="aftbg"></div>
+    <img id="before" alt="">
+    <img id="after" class="after" alt="">
+    <span class="seam" id="seam" aria-hidden="true"></span>
+    <span class="wipetag l">as it came</span>
+    <span class="wipetag r">cut</span>
+  </div>
+  <div class="qcard" id="qcard" hidden>
+    <div class="qcard-frame" id="qcardframe"></div>
+    <p id="qcardtext"></p>
+    <div class="qcard-actions">
+      <button class="btn" id="qcardno">Background</button>
+      <button class="btn go" id="qcardyes">Artwork</button>
+    </div>
+  </div>
+</div>
+<div class="ledger" id="ledger"></div>
+<pre id="out"></pre>
+
+<script>
+/* The stub. `flag` picks which real pair stands in for the two answers. */
+const PAIRS = {
+  growth:      ['../web/assets/growth.src.gif', '../web/assets/growth.gif'],
+  megaphone:   ['../web/assets/megaphone.src.gif', '../web/assets/megaphone.gif'],
+  paperplane:  ['../web/assets/paper-plane.src.gif', '../web/assets/paper-plane.webp'],
+};
+const realFetch = window.fetch.bind(window);
+window.fetch = function (url, opts) {
+  if (String(url).includes('/preview')) {
+    const body = JSON.parse(opts.body);
+    const [a, b] = PAIRS[body.flag] || PAIRS.growth;
+    return Promise.resolve(new Response(JSON.stringify({
+      a_url: a, b_url: b,
+      ledger_a: { bg: 53899, art: 2662, total: 13701 },
+      ledger_b: { bg: 51582, art: 559, total: 16018 },
+      format_is_gif: true,
+    }), { headers: { 'content-type': 'application/json' } }));
+  }
+  return realFetch(url, opts);
+};
+/* wipe.js injects vendor/gifuct.js relative to the page; from /tests/ that would
+   miss, so it is preloaded here. On the real page (web/ mounted at /) the
+   relative path is correct. */
+window.Devoid = { getAsset: () => ({ questions: { ambiguous_protection: [] } }) };
+
+/* ?reduce forces prefers-reduced-motion so the freeze path can be observed.
+   DESIGN.md calls this out as currently broken: an <img> ignores the
+   preference entirely and CSS cannot pause it. A canvas loop can be stopped,
+   and stopping it is the honest reading — "reduce" a redraw loop is not a
+   thing, and animation-duration:.01ms would only kill the opacity transitions
+   the preference is meant to keep. */
+if (location.search.includes('reduce')) {
+  const real = window.matchMedia.bind(window);
+  window.matchMedia = (q) => (q.includes('reduced-motion')
+    ? { matches: true, addEventListener() {}, removeEventListener() {} } : real(q));
+}
+</script>
+<script src="../web/vendor/gifuct.js"></script>
+<script src="../web/wipe.js"></script>
+<script>
+const log = (...a) => { document.getElementById('out').textContent += a.join(' ') + '\n'; };
+(async function () {
+  const R = { errors: [] };
+  try {
+    /* 1. The pair that actually drifts. */
+    await window.Devoid.loadPair('growth', 'growth', true, false);
+    const s = window.Devoid.wipe.sides();
+    R.growth = {
+      aFrames: s.a.frames.length, aTotal: s.a.timeline.total, aDecoder: s.a.decoder,
+      bFrames: s.b.frames.length, bTotal: s.b.timeline.total, bDecoder: s.b.decoder,
+      aSynth: s.a.timingSynthesised, bSynth: s.b.timingSynthesised,
+    };
+    log('growth  A', R.growth.aFrames + 'f/' + R.growth.aTotal + 'ms via ' + R.growth.aDecoder,
+        ' B', R.growth.bFrames + 'f/' + R.growth.bTotal + 'ms via ' + R.growth.bDecoder);
+
+    /* 2. Both canvases mounted, both <img> retired. */
+    R.canvases = !!document.getElementById('wipe-a') && !!document.getElementById('wipe-b');
+    R.imgsHidden = document.getElementById('before').hidden && document.getElementById('after').hidden;
+    log('canvases mounted:', R.canvases, ' imgs retired:', R.imgsHidden);
+
+    /* 3. The tags name the answers, and the ledger shows both sides. */
+    R.tagL = document.querySelector('.wipetag.l').textContent;
+    R.tagR = document.querySelector('.wipetag.r').textContent;
+    R.ledger = document.getElementById('ledger').textContent;
+    log('tags:', JSON.stringify(R.tagL), JSON.stringify(R.tagR));
+    log('ledger:', R.ledger);
+
+    /* 4. THE SYNC ITSELF, observed on the live canvases: seek to a wall-clock
+          instant and read back which frame each side is showing. */
+    const C = window.Devoid.wipe.clock;
+    R.sync = [];
+    for (const t of [0, 850, 1700, 2920, 5000, 12345, 60000]) {
+      window.Devoid.wipe.seekToFrame(C.frameAtTime(s.a.timeline, t));
+      R.sync.push({ t, aShown: s.a.shown, bShown: s.b.shown,
+                    aWant: C.frameAtTime(s.a.timeline, C.timeOfFrame(s.a.timeline, C.frameAtTime(s.a.timeline, t))),
+                    bWant: C.frameAtTime(s.b.timeline, C.timeOfFrame(s.a.timeline, C.frameAtTime(s.a.timeline, t))) });
+    }
+    for (const r of R.sync) {
+      if (r.aShown !== r.aWant || r.bShown !== r.bWant) R.errors.push('sync mismatch at t=' + r.t);
+      log('t=' + r.t, 'A frame', r.aShown, '/ B frame', r.bShown);
+    }
+
+    /* 5. The WebP that HANDOFF.md says carries no timing. */
+    await window.Devoid.loadPair('pp', 'paperplane', true, false);
+    const p = window.Devoid.wipe.sides();
+    R.paperplane = { aFrames: p.a.frames.length, aTotal: p.a.timeline.total,
+                     bFrames: p.b.frames.length, bTotal: p.b.timeline.total,
+                     bSynth: p.b.timingSynthesised, bDecoder: p.b.decoder };
+    log('paper-plane  A', p.a.frames.length + 'f/' + p.a.timeline.total + 'ms',
+        ' B', p.b.frames.length + 'f/' + p.b.timeline.total + 'ms via ' + p.b.decoder,
+        ' timing synthesised:', p.b.timingSynthesised);
+
+    /* 6. The question card, forced by handing loadPair the megaphone counter's
+          real bbox as the disputed region. */
+    window.Devoid.getAsset = () => ({ questions: { ambiguous_protection: [
+      { region_id: 0, outline_color: 'f0c850', bbox_xyxy: [116, 181, 125, 191],
+        frames_enclosed: 102, frames_checked: 144 } ] } });
+    const m = await window.Devoid.loadPair('megaphone', 'megaphone', true, false);
+    R.metric = m;
+    R.cardShown = !document.getElementById('qcard').hidden;
+    R.cardHasCanvas = !!document.querySelector('#qcardframe canvas');
+    R.cardText = document.getElementById('qcardtext').textContent;
+    log('metric:', JSON.stringify(m));
+    log('card shown:', R.cardShown, ' hatched frame drawn:', R.cardHasCanvas);
+    log('card text:', R.cardText);
+  } catch (e) {
+    R.errors.push(String(e && e.stack || e));
+    log('ERROR', e && e.stack || e);
+  }
+  R.ok = R.errors.length === 0;
+  window.__wipeHarness = R;
+  log(R.ok ? 'HARNESS OK' : 'HARNESS FAILED: ' + R.errors.join(' | '));
+})();
+</script>
+</body>
+</html>

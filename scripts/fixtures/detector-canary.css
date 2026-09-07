@@ -1,0 +1,9 @@
+/* A FIXTURE THAT MUST ALWAYS PRODUCE FINDINGS. Written 2026-09-07 00:56 EDT.
+   Do not "fix" anything in this file -- every defect here is deliberate and is
+   the only thing standing between a broken detector and a green gate. */
+.canary-stripes {
+  background: repeating-linear-gradient(45deg, #FF00FF 0 4px, #7C3AED 4px 9px);
+  border-radius: 17px;
+  color: #FF00FF;
+  font-family: "Comic Sans MS", cursive;
+}
