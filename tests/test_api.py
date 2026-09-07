@@ -148,12 +148,12 @@ def test_answers_reject_a_conflicting_colour(client, monkeypatch):
     body = ok.json()
     assert body["state"] == "ready"
     assert body["colour_verdicts"] == {entry["outline_color"]: "protect"}
-    assert body["labels_written"] == 2
-
-    from server import labels
-
-    assert labels.LABELS_PATH.is_file()
-    assert len(labels.LABELS_PATH.read_text().splitlines()) == 2
+    # ⚠️ `labels_written` and the protection log left the contract 2026-09-07 10:54 EDT.
+    # Answering used to append one row per region decision; the writer was
+    # removed because the engine repo's harness is where labelled data lives
+    # and is supplied deliberately. `labels/README.md` says so and flags the
+    # cross-repo pointer that still claims otherwise.
+    assert "labels_written" not in body
 
 
 def test_answers_reject_an_unknown_region(client, fast_asset):

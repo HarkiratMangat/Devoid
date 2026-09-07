@@ -40,7 +40,7 @@ Server: `server/app.py` mounts these under `/api/*` alongside the existing stati
 
 ## Answers
 
-- `POST /api/assets/{id}/answers` body `{ambiguous_protection: {"<region_id>": "protect"|"remove"}, fade: "artwork"|"not-artwork"|null}` → stores the answer on the asset (moves `needs-you` → `ready`), and appends one line per region decision to `labels/protection.jsonl` (schema below). **Two regions sharing one `outline_color` cannot be answered differently** — reject a submit that would emit conflicting `--assume-protect`/`--assume-remove` for the same hex with `400 {"error": "conflicting_colour", "outline_color": "..."}`; the frontend must group same-colour regions into one question (PLAN.md 3.0a).
+- `POST /api/assets/{id}/answers` body `{ambiguous_protection: {"<region_id>": "protect"|"remove"}, fade: "artwork"|"not-artwork"|null}` → stores the answer on the asset (moves `needs-you` → `ready`), and **Two regions sharing one `outline_color` cannot be answered differently** — reject a submit that would emit conflicting `--assume-protect`/`--assume-remove` for the same hex with `400 {"error": "conflicting_colour", "outline_color": "..."}`; the frontend must group same-colour regions into one question (PLAN.md 3.0a).
 
 ## Render
 
@@ -61,11 +61,9 @@ Server: `server/app.py` mounts these under `/api/*` alongside the existing stati
 {"ts": "2026-09-04T21:05:00Z", "input_path": "...", "settings": {"overrides": {...}, "regions": [...], "goal": {...}, "answers": {...}}, "output_path": "...", "verdict": "done|failed|cancelled", "engine_version": "...", "state": "done"}
 ```
 
-`labels/protection.jsonl` (repo root, tracked): one line per region decision —
-```json
-{"ts": "2026-09-04T21:05:00Z", "asset_id": "...", "outline_color": "002864", "enclosure_ratio": 0.7083, "frames_enclosed": 102, "frames_checked": 144, "bbox_xyxy": [x0,y0,x1,y1], "content_type": "icon|sticker|emoji|unknown", "verdict": "protect|remove"}
-```
-Both files use `O_APPEND` line-atomic writes (never read-modify-write the whole file) so two windows writing at once cannot interleave partial JSON (PLAN.md edge-case table).
+⚠️ **`labels/protection.jsonl` IS NO LONGER WRITTEN (2026-09-07 10:56 EDT).** One line per region decision used to be appended here on every answer. The writer was removed — the engine repo's harness is where labelled data lives and is supplied deliberately — and `labels_written` left the answers response with it. **The file and its history stay in the repo**; `labels/README.md` says so and flags the engine repo's pointer, which still claims Devoid records every answer. The schema it held is in that README and in this file's git history.
+
+`jobs.jsonl` uses `O_APPEND` line-atomic writes (never read-modify-write the whole file) so two windows writing at once cannot interleave partial JSON (PLAN.md edge-case table).
 
 ## The 11 states (DESIGN.md — exact strings used in `state` fields above)
 

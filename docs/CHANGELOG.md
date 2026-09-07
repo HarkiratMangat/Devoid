@@ -24,6 +24,10 @@ What shipped, when, and why. Newest first.
 
 ⚠️ **The commit count was hard-coded here as 28 and had drifted to 67 by 2026-09-07.** Derive it — `git rev-list --count main..HEAD` — rather than reading a number out of prose, which is this repo's own standing rule.
 
+### The label log stops being written, and the app checks its own Python — 2026-09-07 11:00 EDT
+
+Answering no longer appends to `labels/protection.jsonl`: the engine repo's harness is where labelled data lives and is supplied deliberately. The file and its history stay. And the bundle drops ~36 MB of build machinery while `main.js` now probes for its five runtime imports before starting the server, naming what is missing and asking permission before installing anything.
+
 ### The three P3s — 2026-09-07 10:34 EDT
 
 The tracker's conservation rule is a gate (`npm run check:tracker`) rather than an honour system, and it took two corrections before its own falsifier would fire. A rerun now says when the engine moved under the line it is replaying. And the exact-key-set sweep found the rule has two sides: relaxed in flow tests, kept and labelled in the two tests whose job is the frozen contract.

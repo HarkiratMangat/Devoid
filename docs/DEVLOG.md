@@ -318,6 +318,18 @@ Lifting the last P3 out of the tracker, the slice ran to the next `^### ` and to
 
 ---
 
+### Work superseded by a decision made six hours after it shipped — 2026-09-07 11:00 EDT
+
+`scripts/import_labels.py` and its six tests were written at 02:15 to bring a packaged run's labels back into the tracked corpus. At 10:40 the corpus stopped being written at all, and both files were deleted.
+
+**Nothing about the work was wrong.** The append-only guarantees it asserted were real and one of its tests — that the pre-existing bytes must be a PREFIX of the file afterwards — is the kind no diff would catch. It answered a filed item correctly, and then the item's premise was removed above it.
+
+**The question it never asked was whose problem the log was.** Devoid never read it; the engine repo did, and supplies labelled data deliberately. That was knowable before the script was written, and the filing said so: *"a byproduct of answering rather than a workflow to design around."*
+
+**Read the item's own framing for who it serves before building the tool it asks for.**
+
+---
+
 ## Decisions, and what was tried first
 
 ### The world: the ground is the void, the tools stay the matte world

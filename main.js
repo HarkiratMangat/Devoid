@@ -1,5 +1,5 @@
 const { app, BrowserWindow, Menu, dialog, shell, ipcMain } = require('electron');
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const path = require('path');
 const http = require('http');
 const net = require('net');
@@ -31,6 +31,71 @@ function resolvePython() {
     if (candidate && fs.existsSync(candidate)) return { python: candidate, why };
   }
   return null;
+}
+
+/* ── can this Python actually run the engine? ──────────────────────────────
+   ⚠️ WHY THIS EXISTS (2026-09-07 10:57 EDT). The bundled `pyvenv` is a
+   VIRTUALENV, which is a set of shortcuts into
+   /Library/Frameworks/Python.framework/Versions/3.11 — a system-wide install
+   that is not part of the bundle. Copy Devoid.app to another Mac and it starts,
+   finds its interpreter shortcut, and then dies somewhere inside an import,
+   which reads as "the app is broken" rather than "this Mac is missing Python".
+   Harkirat's call was to check rather than to ship a relocatable interpreter:
+   look for what is missing, say so plainly, and offer to install it ONCE with
+   permission. Never silently. */
+const RUNTIME_IMPORTS = ['starlette', 'uvicorn', 'numpy', 'scipy', 'PIL'];
+const PIP_NAMES = { starlette: 'starlette', uvicorn: 'uvicorn', numpy: 'numpy',
+                    scipy: 'scipy', PIL: 'Pillow' };
+
+function missingImports(python) {
+  /* One probe per module, so the message can NAME what is missing rather than
+     say "an import failed". Cheap: five interpreter starts, once, at launch. */
+  const missing = [];
+  for (const mod of RUNTIME_IMPORTS) {
+    const r = spawnSync(python, ['-c', `import ${mod}`], { timeout: 20000 });
+    if (r.error || r.status !== 0) missing.push(mod);
+  }
+  return missing;
+}
+
+async function offerToInstall(python, missing) {
+  /* ⛔ ASKS FIRST, ALWAYS, and says exactly what it would run. Installing
+     packages onto someone's machine without being told to is not a convenience.
+     --user keeps it out of any system directory. */
+  const names = missing.map((m2) => PIP_NAMES[m2] || m2);
+  const cmd = `${python} -m pip install --user ${names.join(' ')}`;
+  const { response } = await dialog.showMessageBox({
+    type: 'warning',
+    buttons: ['Install them', 'Quit'],
+    defaultId: 1,
+    cancelId: 1,
+    title: 'Devoid needs a few Python packages',
+    message: `Devoid cannot run the engine without ${names.join(', ')}.`,
+    detail:
+      'The engine runs as a Python subprocess, and this Mac is missing ' +
+      `${names.length === 1 ? 'one package it needs' : `${names.length} packages it needs`}.\n\n` +
+      'Devoid can install them for you, once, into your user directory — ' +
+      'nothing system-wide, and nothing is installed unless you say so here:\n\n' +
+      `    ${cmd}\n\n` +
+      'This can take a few minutes; scipy and numpy are large.',
+  });
+  if (response !== 0) return false;
+
+  const r = spawnSync(python, ['-m', 'pip', 'install', '--user', ...names],
+    { timeout: 15 * 60 * 1000, encoding: 'utf8' });
+  if (r.status === 0 && missingImports(python).length === 0) return true;
+
+  dialog.showErrorBox(
+    'That install did not finish',
+    `Devoid ran:\n    ${cmd}\n\n` +
+      (r.status === 0
+        ? 'It reported success, but the packages still cannot be imported.\n\n'
+        : `It exited with status ${r.status === null ? 'a timeout' : r.status}.\n\n`) +
+      `${String(r.stderr || r.stdout || '').trim().split('\n').slice(-8).join('\n')}\n\n` +
+      'Install them yourself and reopen Devoid, or set DEVOID_PYTHON to a ' +
+      'Python 3.11 that already has them.'
+  );
+  return false;
 }
 
 let serverProcess = null;
@@ -492,6 +557,16 @@ app.whenReady().then(async () => {
     return;
   }
   console.log(`[devoid] python: ${found.python} (via ${found.why})`);
+
+  /* ⚠️ BEFORE the server, not after. A missing package surfaces as a server
+     that never answers, and `waitForServer` then blames the port after 40
+     seconds of nothing. Five cheap probes here turn that into a sentence. */
+  const missing = missingImports(found.python);
+  if (missing.length) {
+    console.log(`[devoid] missing: ${missing.join(', ')}`);
+    const fixed = await offerToInstall(found.python, missing);
+    if (!fixed) { app.quit(); return; }
+  }
 
   startServer(activePort, found.python);
   waitForServer(

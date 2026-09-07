@@ -19,14 +19,6 @@ The project-local tracker for open work, real TODOs, and reminders specific to t
 
 ## 🐞 Open — real TODOs with an available fix, not yet done
 
-### `[P1 · S · Opus5-Med]` `content_type` is permanently `"unknown"` in every label row *(filed 2026-09-05)*
-
-`labels/protection.jsonl` is framed in `docs/PRODUCT.md` as a training dataset for the engine's hardest decision, and its schema allows `icon|sticker|emoji|unknown`. Nothing in the flow ever classifies one: `server/labels.py:158` defaults `content_type="unknown"` and no caller overrides it. **A corpus where one column is always the same value is measurably weaker than its schema implies.**
-
-Not a bug — the value is legal, and the log's other columns are real. **It is a product decision, not a code fix:** is content type asked of the person (one more question in a flow whose whole design is asking fewer), inferred from the source path or a corpus manifest, or dropped from the schema because nothing can honestly fill it? ⚠️ Dropping a column from an **append-only** log is not free; existing rows keep it.
-
-⚠️ **This path is pointed at from the engine repo** (`scripts/harness/labels/README.md`), per `CLAUDE.md`. If the schema moves, fix that pointer.
-
 ### `[P1 · S · Sonnet5-High]` Every render pays for a second full analysis the app already ran *(filed 2026-09-05)*
 
 `server/render.py:143` builds every render argv through `cli.build_argv(..., auto=True)`, which always emits `--auto`. `--auto`'s pass 1 is `recommend()`, which is the same analysis `POST /api/assets/{id}/analyze` already ran and stored on the asset. **So the engine recomputes, per render, an answer Devoid is holding in memory** — measured in the engine repo at 39–47% of a run's cost, ~18s on a corpus asset here.
@@ -34,13 +26,6 @@ Not a bug — the value is legal, and the log's other columns are real. **It is 
 ⛔ **Do not fix this by dropping `--auto`.** `--auto` is what makes the tri-state controls mean anything — `CLAUDE.md`'s rule is that a UI which sends all 63 flags turns `--auto` into a no-op and the tool stops thinking. The saving has to come from the engine accepting a precomputed analysis, not from the app declining to ask for one.
 
 **Cross-repo:** the engine-side item is `[P1 · S · Opus5-High]` "`--auto` recomputes pass 1's analysis in pass 3" in `gif-deferred-list.md`, with a ready-to-build plan (`docs/plans/2026-09-01-analysis-cost-and-observability.md` Task 1). That fix is internal to one process; **this item is the cross-process version of it and needs its own surface** — most likely `--auto --analysis-json <path>`, symmetrical with the `--verify-json` already filed there.
-
-### `[P2 · M · Opus5-High]` The `.app` runs anywhere on THIS Mac, not on another one *(filed 2026-09-05, successor to "The `.app` is not standalone")*
-
-The bundle now carries its own Python, `server/` and `web/`, and launches from any directory. **Two dependencies remain, and both are named in a dialog rather than being a silent failure.**
-
-1. **`pyvenv` is a virtualenv**, so it needs its base interpreter: Python 3.11 at `/Library/Frameworks/Python.framework/Versions/3.11`. A truly portable build needs a relocatable interpreter (`python-build-standalone`, or PyInstaller over `server/app.py`) instead of a copied venv. ⚠️ Measure the size first — the bundle is already **411 MB** and numpy/scipy/Pillow are most of it.
-2. **The engine is resolved, never bundled** — and that is deliberate, not an oversight. `CLAUDE.md`'s first rule is that the skill stays the source of truth for every algorithm; a copy inside the app would drift silently and there would be no way to tell which one produced a given output. If this ever ships to someone else, the answer is a first-run check that *asks where the skill is*, not a fork of it.
 
 ### `[P2 · M · Opus5-High]` Devoid cannot install its own updates, and the blocker is signing *(filed 2026-09-05)*
 
@@ -60,13 +45,15 @@ The bundle now carries its own Python, `server/` and `web/`, and launches from a
 
 ⛔ **Never fabricate signing credentials to make this testable.** The three notarisation variables stay unset until real ones exist.
 
-### `[P2 · S · Opus5-Med]` The contact sheet has never been seen with a real batch *(filed 2026-09-05)*
+### `[P2 · M · Opus5-High]` The contact sheet is one fixed tile size for every batch *(reframed 2026-09-07; filed 2026-09-05 as "never been seen with a real batch")*
 
-`docs/PRODUCT.md`'s claim is that "one, twelve and two hundred are the same layout". Cards grew to 228px during the redesign, which looks right against the corpus's eight assets and **may be waste at twenty**. Nobody has made that judgement with a real batch, and the void ground makes a sparse sheet read as atmosphere rather than as emptiness — which is flattering in exactly the wrong direction.
+⚠️ **The original question was wrong and Harkirat replaced it.** It asked whether 262px *"looks right"* at twenty. His reframe: *"the question isn't 'does it look right', the question is 'how can it be improved to work in all situations/scenarios, regardless of sheet size? How can it be user friendly? How can it be intuitive and useful?'"*
 
-**Concrete next action:** capture the sheet at 8, 20 and 60 real assets through `scripts/capture-window.mjs` and look. This is a judgement call that needs an image, not a measurement.
+**The measurements are done and they are not the problem.** `npx electron scripts/measure_scale.mjs <n>` at 8, 20, 60 and 200 real assets: first paint flat at ~330ms, settle ~1.09s, RSS growing about 1.06 MB per asset — and **the tile is 262px at every single size**. Captures in `local/scale-shots/`. Nothing performs badly; the sheet simply does not respond to how much is on it.
 
-⚠️ **THE IMAGES NOW EXIST, 2026-09-07 02:10 EDT — the judgement does not.** `npx electron scripts/measure_scale.mjs <n>` writes `local/scale-shots/sheet-{008,020,060,200}.png` from the real window with real files. **The tile is 262px at every size**, so "one, twelve and two hundred are the same layout" holds as a layout claim. Whether 262px is waste at twenty is the part that needs an eye, and all four captures were sent to Harkirat on 2026-09-07. This stays open until he says.
+**What "works at any size" would mean, as questions rather than answers:** eight assets on a 1280px window leaves the sheet mostly empty and reads as atmosphere rather than as a small batch; two hundred at 262px is a scroll with no landmarks and no way to find the one that needs you except by scrolling past 199 that do not. Neither is a contrast or a performance failure — both are the same missing idea, which is that the sheet has no notion of density.
+
+**Concrete next action:** decide the density rule before writing any CSS — does the tile scale with count, with viewport, or with state (the needs-you tile staying large while settled ones shrink)? Then make `gate:ui` assert it at two counts, because a rule that holds at one size is the thing being replaced.
 
 ### `[P2 · S · Sonnet5-High]` No screen reader has ever run against this app *(filed 2026-09-05)*
 

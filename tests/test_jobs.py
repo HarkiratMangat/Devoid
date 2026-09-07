@@ -178,9 +178,17 @@ def test_default_path_is_the_tracked_repo_file():
     assert JOBS_PATH.name == "jobs.jsonl"
 
 
-def test_the_two_logs_are_not_the_same_file():
-    from server.labels import LABELS_PATH
+def test_the_jobs_log_is_not_the_protection_log():
+    """⚠️ There is ONE writer now, and the other file still exists (2026-09-07 10:55 EDT).
 
-    # "Two append-only logs, two schemas, one writer each" (CLAUDE.md). A merge
-    # of the two would be silent, so it is asserted rather than trusted.
-    assert JOBS_PATH != LABELS_PATH
+    This asserted "two append-only logs, two schemas, one writer each" when
+    both were written. The protection log's writer was removed — the engine
+    repo's harness is where labelled data lives — but the FILE stays in the
+    repo with its history, so the thing this test guards against is still
+    possible: `jobs.jsonl` must never start appending into it.
+    """
+    from pathlib import Path
+
+    protection = Path(__file__).resolve().parent.parent / "labels" / "protection.jsonl"
+    assert JOBS_PATH != protection
+    assert protection.is_file(), "the log was deleted; it was supposed to be kept"

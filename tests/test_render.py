@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from server import appendlog, labels, render
+from server import appendlog, render
 
 
 def test_never_overwrites_and_escalates(tmp_path):
@@ -26,9 +26,11 @@ def test_never_overwrites_and_escalates(tmp_path):
 
 def test_jsonl_append_is_line_atomic_and_never_read_modify_write(tmp_path):
     """Basic single-process proof; the real concurrency claim (two processes
-    appending at once cannot interleave) is proven harder in test_jobs.py and
-    test_labels.py, which this repo's O_APPEND single-write appendlog module
-    backs for both logs."""
+    appending at once cannot interleave) is proven harder in test_jobs.py.
+
+    ⚠️ This used to say "and test_labels.py ... for both logs" (2026-09-07 10:54 EDT).
+    There is one log now: the protection log's writer was removed and
+    `jobs.jsonl` is the only thing appendlog serves."""
     path = tmp_path / "log.jsonl"
     for i in range(50):
         appendlog.append_line(path, {"i": i, "note": "two windows, one log"})
@@ -36,30 +38,6 @@ def test_jsonl_append_is_line_atomic_and_never_read_modify_write(tmp_path):
     assert len(lines) == 50
     assert [json.loads(l)["i"] for l in lines] == list(range(50))
     assert path.read_bytes().endswith(b"\n")
-
-
-def test_label_schema_is_the_contract(tmp_path, monkeypatch):
-    monkeypatch.setattr(labels, "LABELS_PATH", tmp_path / "labels" / "protection.jsonl")
-    row = labels.record_verdict(
-        asset_id="abc",
-        outline_color="002864",
-        enclosure_ratio=0.708,
-        frames_enclosed=102,
-        frames_checked=144,
-        bbox_xyxy=[94, 56, 164, 145],
-        verdict="protect",
-    )
-    assert tuple(row) == labels.FIELDS
-    with pytest.raises(ValueError):
-        labels.record_verdict(
-            asset_id="abc",
-            outline_color="002864",
-            enclosure_ratio=0.7,
-            frames_enclosed=1,
-            frames_checked=2,
-            bbox_xyxy=[0, 0, 1, 1],
-            verdict="maybe",
-        )
 
 
 def test_render_and_journal(tmp_path, isolated_logs, fast_asset):

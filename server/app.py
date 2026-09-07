@@ -29,7 +29,7 @@ from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
 from . import assets as registry
-from . import cli, concurrency, engine, flags, jobs as jobs_log, journal, labels, preview, render, validate
+from . import cli, concurrency, engine, flags, jobs as jobs_log, journal, preview, render, validate
 
 log = logging.getLogger("devoid.app")
 
@@ -190,20 +190,15 @@ async def submit_answers(request: Request) -> JSONResponse:
         return _error("conflicting_colour", 400, outline_color=exc.outline_color)
 
     asset.fade_answer = fade
-    written = []
-    for region_id, verdict in verdicts.items():
-        region = known[region_id]
-        written.append(
-            labels.record_verdict(
-                asset_id=asset.id,
-                outline_color=region.outline_color,
-                enclosure_ratio=region.enclosure_ratio,
-                frames_enclosed=region.frames_enclosed,
-                frames_checked=region.frames_checked,
-                bbox_xyxy=region.bbox_xyxy,
-                verdict=verdict,
-            )
-        )
+    # ⚠️ THE LABEL LOG IS NO LONGER WRITTEN (2026-09-07 10:54 EDT). Answering used
+    # to append one row per region decision to `labels/protection.jsonl`.
+    # Harkirat's call: *"drop the labels from the app. it's just adding friction
+    # and the repo has its own corpus that i supply it anyway."* The engine
+    # repo's harness is where labelled data lives and is supplied deliberately;
+    # a byproduct corpus that nobody asked for is friction on the one flow this
+    # app exists to make quick. The FILE and its history stay — see
+    # `labels/README.md` — because an append-only log is not deleted, it stops
+    # being appended to.
 
     answered_all = set(known) <= set(asset.region_answers)
     fade_answered = asset.result.nameable_fade is None or fade is not None
@@ -213,7 +208,6 @@ async def submit_answers(request: Request) -> JSONResponse:
         {
             "state": asset.state,
             "colour_verdicts": colours,
-            "labels_written": len(written),
             "answers": {
                 "ambiguous_protection": dict(asset.region_answers),
                 "fade": asset.fade_answer,

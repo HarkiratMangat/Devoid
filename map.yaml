@@ -211,14 +211,24 @@ nodes:
     layer: surface
     stage: retain
     status: active
-    statement: Every answer becomes a labelled data point for the decision the engine refuses.
+    statement: The protection log is kept and no longer written; jobs.jsonl is the one live log.
     note: >-
-      Tracked evidence, pointed at from the engine repo. A BYPRODUCT of
-      answering — not a workflow anyone sits down to do.
-      ⚠️ If this path moves, fix scripts/harness/labels/README.md in the engine repo.
+      ⚠️ RETIRED 2026-09-07 10:56 EDT. This node used to say "every answer
+      becomes a labelled data point". Harkirat removed the writer — the engine
+      repo's harness is where labelled data lives and is supplied deliberately,
+      and a byproduct corpus was friction on the one flow this app exists to
+      make quick. The FILE stays, with its history; an append-only log is not
+      deleted, it stops being appended to.
+      🔴 scripts/harness/labels/README.md in the engine repo still says Devoid
+      records every answer here. That is now false and is NOT yet corrected.
     reality:
-      kind: file_present
-      path: labels/protection.jsonl
+      checks:
+        - claim: the log is kept, not deleted
+          kind: file_present
+          path: labels/protection.jsonl
+        - claim: nothing in the server writes to it any more
+          kind: file_absent
+          path: server/labels.py
 
   - id: history
     layer: surface

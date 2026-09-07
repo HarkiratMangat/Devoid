@@ -45,9 +45,11 @@ This is a standing preference, stated at the top of the first session here (*"As
 
 **Advice always ships with an undo** of exactly what it changed. A suggestion without one does not ship.
 
-**Two append-only logs, two schemas, one writer each.** `labels/protection.jsonl` records the engine's hardest decision and may be analysed on its own; `jobs.jsonl` records your work. They look alike and must not be merged. No database until a lookup is measurably slow, and if one arrives it is a SQLite index **rebuilt from the log**, so the log stays the truth and a schema change never needs a migration.
+**One append-only log with one writer — `jobs.jsonl`, which records your work.** No database until a lookup is measurably slow, and if one arrives it is a SQLite index **rebuilt from the log**, so the log stays the truth and a schema change never needs a migration.
 
-⚠️ **`labels/protection.jsonl` is pointed at from the skill repo** (`scripts/harness/labels/README.md`) because nothing there would otherwise surface it. **If this path moves, fix that pointer.**
+⚠️ **This said "two append-only logs, two schemas, one writer each" until 2026-09-07 10:56 EDT.** `labels/protection.jsonl` recorded the engine's hardest decision as a byproduct of answering. Harkirat removed it — *"drop the labels from the app. it's just adding friction and the repo has its own corpus that i supply it anyway."* **The FILE and its history stay** (`labels/README.md`), so the rule that survives is that `jobs.jsonl` must never start appending into it; `tests/test_jobs.py` asserts both the separation and the file's continued existence.
+
+🔴 **THE ENGINE REPO'S POINTER IS NOW WRONG AND HAS NOT BEEN CORRECTED.** `scripts/harness/labels/README.md` in `/Applications/Claude Code/Gif-Background-Remover` says Devoid *"records every answer as a labelled row"* at this path. **It does not, as of 2026-09-07 10:56 EDT.** Correcting it is a change to a different repo with its own branch and PR conventions, so it is flagged here rather than made silently. Until it is corrected, a session working on the autonomy goal will read that sentence and believe it.
 
 ## Tool routing — the three memory and search layers
 

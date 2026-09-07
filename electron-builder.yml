@@ -80,6 +80,17 @@ extraResources:
       - '!lib/**/setuptools/**'
       - '!**/tests/**'
       - '!**/test/**'
+      # ⚠️ MEASURED, 2026-09-07 10:57 EDT. The venv is 199 MB and scipy (99),
+      # numpy (36) and Pillow (14) are 149 of it — those ship. What follows is
+      # ~36 MB of build and test machinery the app never imports at runtime.
+      # Pruning does NOT make the app portable; it only makes the bundle
+      # smaller. Portability is the first-run check in main.js.
+      - '!lib/**/_pytest/**'
+      - '!lib/**/pytest/**'
+      - '!lib/**/pygments/**'
+      - '!lib/**/pkg_resources/**'
+      - '!lib/**/iniconfig/**'
+      - '!lib/**/pluggy/**'
 
 mac:
   icon: build/icon.icns

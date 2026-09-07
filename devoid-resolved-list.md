@@ -19,6 +19,46 @@ Heading shape, matching the engine repo's archive:
 
 ## Closed items
 
+## ✅ `content_type` is permanently "unknown" in every label row — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: closed by removing the log's writer, which is a bigger answer than the column.** Harkirat, 2026-09-07: *"drop the labels from the app. it's just adding friction and the repo has its own corpus that i supply it anyway."*
+
+**The evidence that made it the right call:** Devoid never READ the log. The engine repo did, and its harness — where labelled data is supplied deliberately — holds **981** labels for `edge_hardness` and zero for the protection decision. A corpus accumulated as a byproduct of a flow designed to be quick is friction charged to the wrong person.
+
+**What went:** `server/labels.py`, `tests/test_labels.py`, the write loop in `submit_answers`, `labels_written` from the answers response, the schema from `docs/API-CONTRACT.md`, and the two-logs rule in `CLAUDE.md`. ⚠️ **Also `scripts/import_labels.py` and its six tests, written hours earlier the same day** to bring a packaged run's labels back — superseded by the decision that removed the thing that produced them.
+
+**What stayed:** `labels/protection.jsonl` with its history and 0 rows, plus a `labels/README.md` saying why. An append-only log is not deleted; it stops being appended to. `tests/test_jobs.py` still asserts `jobs.jsonl` is not that file **and** that the file still exists.
+
+🔴 **NOT DONE, and it is in another repo:** `scripts/harness/labels/README.md` in the engine repo still says Devoid *"records every answer as a labelled row"* at this path. That is now false. Flagged in `CLAUDE.md` in red rather than corrected silently.
+
+### `[P1 · S · Opus5-Med]` `content_type` is permanently `"unknown"` in every label row *(filed 2026-09-05)*
+
+`labels/protection.jsonl` is framed in `docs/PRODUCT.md` as a training dataset for the engine's hardest decision, and its schema allows `icon|sticker|emoji|unknown`. Nothing in the flow ever classifies one: `server/labels.py:158` defaults `content_type="unknown"` and no caller overrides it. **A corpus where one column is always the same value is measurably weaker than its schema implies.**
+
+Not a bug — the value is legal, and the log's other columns are real. **It is a product decision, not a code fix:** is content type asked of the person (one more question in a flow whose whole design is asking fewer), inferred from the source path or a corpus manifest, or dropped from the schema because nothing can honestly fill it? ⚠️ Dropping a column from an **append-only** log is not free; existing rows keep it.
+
+⚠️ **This path is pointed at from the engine repo** (`scripts/harness/labels/README.md`), per `CLAUDE.md`. If the schema moves, fix that pointer.
+
+## ✅ The `.app` runs anywhere on THIS Mac, not on another one — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: answered the way Harkirat chose, which is neither of the two options the filing offered.** His call: prune what is not needed, skip the relocatable interpreter, and *"implement a method where the app checks if python exists on the running machine … and if its missing packages, it then installs them once by asking the user for permission and stating that it needs them to run the engine."*
+
+**The prune, measured.** The venv is **199 MB**: scipy **99**, numpy **36**, Pillow **14** — 149 MB that ships. `_pytest`, `pytest`, `pygments`, `pkg_resources`, `iniconfig` and `pluggy` are **~36 MB** the app never imports at runtime, now excluded in `electron-builder.yml` alongside pip and setuptools. ⚠️ **Pruning does not make the app portable.** It makes the bundle smaller. Saying otherwise would be the same category error the filing warned about.
+
+**The check.** `main.js` probes each of `starlette`, `uvicorn`, `numpy`, `scipy` and `PIL` in the resolved interpreter **before** starting the server — one probe each, so the message can NAME what is missing rather than say an import failed. Missing ones produce a dialog that states exactly what would be run (`python -m pip install --user …`), why, and that scipy and numpy are large. ⛔ **Two buttons: Install them, or Quit.** Nothing is installed unless the person says so, and `--user` keeps it out of any system directory.
+
+**Before the server, deliberately:** a missing package otherwise surfaces as a server that never answers, and `waitForServer` blames the port after 40 seconds of nothing.
+
+**Verified:** the probe reports `ok` for all five real modules and `MISSING` for a bogus one, on a real interpreter. ⚠️ **The DIALOG itself is not covered by any gate** — it needs a Mac without those packages, which is the situation the whole item is about. The detection half is falsified; the install half is not.
+
+### `[P2 · M · Opus5-High]` The `.app` runs anywhere on THIS Mac, not on another one *(filed 2026-09-05, successor to "The `.app` is not standalone")*
+
+The bundle now carries its own Python, `server/` and `web/`, and launches from any directory. **Two dependencies remain, and both are named in a dialog rather than being a silent failure.**
+
+1. **`pyvenv` is a virtualenv**, so it needs its base interpreter: Python 3.11 at `/Library/Frameworks/Python.framework/Versions/3.11`. A truly portable build needs a relocatable interpreter (`python-build-standalone`, or PyInstaller over `server/app.py`) instead of a copied venv. ⚠️ Measure the size first — the bundle is already **411 MB** and numpy/scipy/Pillow are most of it.
+2. **The engine is resolved, never bundled** — and that is deliberate, not an oversight. `CLAUDE.md`'s first rule is that the skill stays the source of truth for every algorithm; a copy inside the app would drift silently and there would be no way to tell which one produced a given output. If this ever ships to someone else, the answer is a first-run check that *asks where the skill is*, not a fork of it.
+
+
 ## ✅ An exact-key-set assertion made a contract addition a test failure — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
 
 **Outcome: swept, and the sweep found the rule has two sides.** Thirteen exact-shape assertions were reviewed and they split cleanly.

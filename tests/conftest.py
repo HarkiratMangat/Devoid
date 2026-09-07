@@ -61,14 +61,16 @@ def recommend_sample() -> dict:
 
 @pytest.fixture()
 def isolated_logs(tmp_path, monkeypatch):
-    """Point both append-only logs at a tmp dir.
+    """Point the append-only log at a tmp dir.
 
-    A test must never append to the tracked ``jobs.jsonl`` or
-    ``labels/protection.jsonl`` — the label log is evidence, and salting it with
-    test rows would quietly corrupt the corpus it exists to build.
+    A test must never append to the tracked ``jobs.jsonl``.
+
+    ⚠️ It used to isolate ``labels/protection.jsonl`` too (2026-09-07 10:54 EDT).
+    That log's WRITER was removed — the engine repo's harness is where
+    labelled data lives — so there is nothing left to isolate. The file itself
+    stays in the repo with its history; see ``labels/README.md``.
     """
-    from server import jobs, labels
+    from server import jobs
 
-    monkeypatch.setattr(labels, "LABELS_PATH", tmp_path / "labels" / "protection.jsonl")
     monkeypatch.setattr(jobs, "JOBS_PATH", tmp_path / "jobs.jsonl")
     return tmp_path

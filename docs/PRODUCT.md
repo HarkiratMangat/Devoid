@@ -99,11 +99,13 @@ It generalises to every flag with a visible consequence — erosion, feather ban
 
 These are animated images. The defect classes this project actually records — dither crawl on every edge, flicker localised to specific rotation phases — are **only visible in motion**. An interface for animated images built out of still frames cannot show its own subject's bugs. Contact-sheet frames play, the open asset plays, both sides of the seam play.
 
-## It is also a labelling instrument, and that may be its strongest justification
+## It was also a labelling instrument, and that idea is retired
 
-Every answer is a labelled data point for the question the engine refuses: outline colour, enclosure ratio, frame counts, bbox, content type, verdict. The repo holds **981 classified labels** for `edge_hardness` — 1,038 entries, 57 of them prose notes — and **zero** for the protection decision, while the project's stated end goal is full autonomy. ⚠️ The skill repo's own docs still cite 714; it is stale by 267.
+⚠️ **Removed 2026-09-07 10:56 EDT, on Harkirat's call:** *"drop the labels from the app. it's just adding friction and the repo has its own corpus that i supply it anyway."*
 
-Capturing them costs one appended line. **Retrofitting discards every answer given before it existed, so it is designed in from the start.** After fifty real jobs it is a dataset for the exact decision that currently blocks autonomy — and if it turns out not to be learnable, that is the first evidence rather than an assumption.
+The argument was that every answer is a labelled data point for the question the engine refuses, captured for the cost of one appended line, and that the engine repo holds **981** classified labels for `edge_hardness` and **zero** for the protection decision.
+
+**What the argument missed is whose problem it was.** Devoid never read the log; the engine repo did. Labelled data there is supplied deliberately, and a corpus accumulated as a byproduct of a flow designed to be quick is friction charged to the wrong person. The file and its history stay in the repo — `labels/README.md` — and the engine repo's pointer to it needs correcting.
 
 ## Measured facts that shape the build
 
