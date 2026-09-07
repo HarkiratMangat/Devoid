@@ -2,96 +2,139 @@
   <img src="docs/banner.png" alt="Devoid" width="820">
 </p>
 
-# Devoid
+<p align="center">
+  <b>Remove the background from an animated image, and answer the two questions no tool can answer for you.</b><br>
+  macOS · runs entirely on your machine · <code>v1.0.0</code>
+</p>
 
-A local desktop app for removing the background from animated images — GIF, WebP, AVIF, APNG, and static PNG/JPEG — and fitting the result to a size or format target.
+---
 
-It is a front end for the [gif-background-remover](https://github.com/HarkiratMangat/gif-background-remover) skill, which stays the engine. Devoid reimplements no image processing.
+Devoid handles GIF, WebP, AVIF and APNG, plus static PNG and JPEG, and can fit the result to a size or format target. It is a front end for the [`gif-background-remover`](https://github.com/HarkiratMangat/gif-background-remover) skill, which does all the image processing.
 
-## Why a front end
+Nothing is uploaded. The app makes no network request unless you click **Check for Updates…**.
 
-The skill exposes **63 command-line options**, but that is not the friction it looks like — its own `--auto` already picks them. The friction is three questions: a coin-flip protection decision that fires on **10.2% of assets** (measured across 304; 12.8% pooled with the fade question), a fade it can name but not classify, and the size/format goal it deliberately never guesses.
+[Why it exists](#why-it-exists) · [Screenshots](#screenshots) · [Requirements](#requirements) · [Install](#install) · [First run](#first-run) · [Using it](#using-it) · [Features](#features) · [Settings](#settings) · [What it does not do](#what-it-does-not-do) · [For developers](docs/DEVELOPMENT.md)
 
-The first two are visual questions delivered as prose naming a hex colour and a bounding box. Nobody can answer them by reading. **They have to see it.** That is the product.
+## Why it exists
 
-`--recommend` already returns all three as structured JSON before anything renders, so Devoid reads the questions first, answers them, and `--auto` never refuses.
+The engine has 63 command-line options, and that is not the friction it looks like: its own `--auto` already picks them. The friction is a question it refuses to guess at.
 
-## The shape
+When a patch of background colour sits enclosed by the artwork on some frames but not all, whether that interior is design to protect or background showing through is a statement about intent. The pixels do not answer it. Across 304 measured assets the engine refuses **10.2%** of them (31) on that question alone, and **12.8%** (39) once a second question is counted: a region that fades toward the background colour, which it can find but cannot classify.
 
-**There is no mode — the strip is the app.** Nothing selected and it fills the space as a contact sheet; select one and it opens while the rest stay along the edge; panels are drawers summoned at the edge. Selection is the only state, so one asset and two hundred are the same layout.
+The refusal arrives as prose naming a hex colour and a bounding box. Nobody can answer that by reading it. You have to see it.
 
-**The core interaction is a seam you drag.** Two renders of the same asset, one dashed cut line between them, both playing. Instead of *"is this region design or background?"* — an analyst's question — you see both answers and pick. It generalises to every flag with a visible consequence.
+Devoid draws the region in doubt on the artwork and takes your answer as a click. The engine then never refuses, and every other option stays untouched so it keeps deciding those.
 
-## Layout
+## Screenshots
+
+<p align="center">
+  <img src="docs/shots/01-contact-sheet.png" alt="The contact sheet: assets arrive and state sets the hierarchy" width="820">
+</p>
+
+Assets arrive on a contact sheet. The one that needs you sorts to the front, is marked, and in a crowd keeps two columns so you can find it by shape without reading a word.
+
+<p align="center">
+  <img src="docs/shots/02-open-question.png" alt="An open question: the region outlined on the artwork, with Keep it and Cut it" width="820">
+</p>
+
+Open it and the question is drawn on the art: the region the engine could not classify, outlined in place, with **Keep it** and **Cut it**.
+
+<p align="center">
+  <img src="docs/shots/09-seam.png" alt="The seam: two renders of the same asset with a draggable cut line between them" width="820">
+</p>
+
+Drag the seam to see both answers at once. Two renders of the same asset, one dashed line between them, both playing.
+
+<p align="center">
+  <img src="docs/shots/03-emitting.png" alt="A render in flight, with the field washed back" width="820">
+</p>
+
+While a render is in flight the field washes back, so the work in progress is the only thing at full strength.
+
+## Requirements
+
+Read this before downloading.
 
 | | |
 |---|---|
-| `docs/HANDOFF.md` | **read first** — state of the work, decisions, rejected options, and the model to run the build session on |
-| `docs/PLAN.md` | the implementation plan — opens with a literal ten-step sequence |
-| `docs/PRODUCT.md` | what it is, who for, the non-negotiable constraints and the measurements behind them |
-| `docs/DESIGN.md` | the visual system — tokens, type, layout, motion, and the checks it has to keep passing |
-| `web/` | the front end: real state, real interactions, real corpus assets |
-| `server/` | the local HTTP server that fronts the skill |
+| **macOS on Apple silicon** | The published build is `arm64`. No Intel build is produced. |
+| **Python 3.11 from [python.org](https://www.python.org/downloads/)** | The app ships its own virtual environment, and a virtualenv still needs its base interpreter at `/Library/Frameworks/Python.framework/Versions/3.11`. |
+| **The engine, on disk** | [`gif-background-remover`](https://github.com/HarkiratMangat/gif-background-remover) at **v6.4.0 or later**. It is deliberately not bundled: the skill is the source of truth for every algorithm, and a copy inside the app would drift from it silently. See [Settings](#settings) for how the path is found. |
 
-## Running the app
+⚠️ **The disk image is signed with a self-signed certificate, not an Apple Developer ID.** It does not satisfy Gatekeeper on any machine other than the one that built it, and another Mac will refuse to open it. There is no paid Apple Developer account behind this project and notarisation is not planned. On any other machine, [build from source](docs/DEVELOPMENT.md) instead.
 
-```sh
-npm start
-```
+## Install
 
-Electron's main process spawns the Python server and opens the window. Clicking a frame opens it, the seam drags, the drawers summon, and the lighting toggle in the header — a miniature of the wipe — sweeps between the two states of the room.
+Download `Devoid-1.0.0-arm64.dmg` from [Releases](https://github.com/HarkiratMangat/Devoid/releases), open it, and drag Devoid into Applications. Subject to the signing note above.
 
-For a real `.app`: `npm run dist` builds a `.dmg` you can drag into Applications. It carries its own Python and runs from anywhere — see Packaging for the two things it still expects to find on the machine.
+To build it yourself, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
-⚠️ **To check anything visual, use the real window** — `npx electron scripts/capture-window.mjs` captures every state through Electron itself. A browser pane reports `visibilityState: hidden` and fires no `requestAnimationFrame`, which makes rAF-driven UI look broken when it is not. ⚠️ **The film strip does not scrub yet** — it highlights and counts, but the artwork is a looping `<img>` that never seeks. Frame-accurate seeking needs a canvas decoder; it is `PLAN.md` 3.3.
+## First run
 
-The assets in it are **real outputs from the skill's own corpus**, not icons drawn to flatter the layout — which is how the overlay bug in `docs/DESIGN.md` was found.
+Two things can be missing, and each one is a dialog that names the fix rather than a window that never opens.
 
-**Port.** Devoid serves on `127.0.0.1:8732`. If that port is already taken — a second window, a crashed run — the main process probes upward to `8740` and takes the first free one, passing it to both uvicorn and the window. Only when all nine are busy does it stop, with a dialog saying so. The probe is a real TCP connect: something that accepts is listening, `ECONNREFUSED` is free, and a socket that neither accepts nor refuses is treated as busy.
+**Python.** The app looks for its bundled interpreter, then for a system Python 3.10 or newer. If it finds one but the packages it needs are absent, it asks — *"Devoid needs a few Python packages"* — with **Install them** and **Quit**. Approve it once and it installs them into the right place, choosing `--user` or the virtual environment as appropriate. It installs nothing without being asked, and it refuses rather than guessing when the interpreter it found has no working `pip`.
 
-**Fonts are local.** Archivo and Spline Sans Mono are self-hosted under `web/fonts/`, declared in `web/fonts.css`, so an app whose whole premise is local does not fall back to Helvetica when the network is gone — the width axis and `tabular-nums` are load-bearing in `docs/DESIGN.md`. Regenerate them with `python3 scripts/fetch-fonts.py`.
+**The engine.** If the skill is not where Devoid expects, it says so and names all three places it looked.
 
-## Updates
+**Where your work is recorded.** `jobs.jsonl` lives under `~/Library/Application Support/Devoid/`. Nothing is written inside the app bundle.
 
-**Devoid → Check for Updates…** asks the GitHub Releases API what the newest published release is, compares it with the running version, and — if there is a newer one — offers to open the release page so you can download the disk image.
+## Using it
 
-⚠️ **It never checks on launch, only when you click it.** This app's premise is that it works on your machine with your files and talks to nothing; a version ping at startup would quietly break that for a feature nobody asked for at that moment.
+1. **Add files.** Drop them on the window or press **Add files**.
+2. **Wait for the read.** Each asset is analysed once. Most come back ready; roughly one in eight comes back with a question.
+3. **Answer it.** The region in doubt is outlined on the artwork. **Keep it** protects that interior, **Cut it** removes it. An answer applies to every region sharing that outline colour, because the engine's flags take colours rather than region ids. If a fade is in question, you are asked whether it is artwork.
+4. **Compare first, if you want to.** Drag the seam to see both answers on the same asset, both playing.
+5. **Say what you want out of it, or say nothing.** A goal is a size cap, a format, or neither. Left alone, the engine renders at full resolution and infers nothing.
+6. **Cut.** The render runs, then re-measures the file it wrote and corrects once if the encoded result disagrees with the calibration.
+7. **Read the verdict.** Leftover background, protected-region coverage, edge fringe and timing, per run. **Not checked** carries the same visual weight as done and failed, because a green tick that was not earned is worse than no tick.
+8. **Reuse it.** History replays a previous run's settings onto a new file, and says so if the engine has moved underneath the line it is replaying.
 
-⚠️ **It cannot install an update, and that is a signing constraint rather than a missing feature.** A real auto-updater on macOS runs through Squirrel.Mac, which **validates the code signature** of what it downloads — an unsigned build cannot install its own update, so wiring `electron-updater` today would ship a path that fails at runtime. See Signing below.
+## Features
 
-⚠️ **A 404 from GitHub is ambiguous and the dialog says so.** GitHub answers identically for "no releases published" and "this repository is private and you are anonymous", and this repository is private, so Devoid reports that it cannot tell which rather than claiming one.
+**Every control is tri-state.** Each option reads `auto · <value>` until you take it over, and only what you changed is sent. That is load-bearing rather than tidy: `--auto` applies its recommendation only where an option was left at its default, so an interface that sends all 63 flags turns `--auto` into a no-op and the engine stops thinking.
 
-## Packaging
+**The question is visual and the answer is a drag.** Two renders, one seam, both animating. It generalises to any option with a visible consequence.
 
-```sh
-npm run dist       # dmg + zip
-npm run dist:dir   # just assemble the .app, skip the installer step
-```
+**Verification is reported, never assumed.** The app never infers a size target and never claims a check the run did not perform.
 
-**The bundle runs outside this repo.** Verified 2026-09-05 by copying `Devoid.app` to `/tmp` and launching it there: it served `index.html`, `app.css`, `app.js` and the corpus assets, resolved the engine, and wrote its journal to `~/Library/Application Support/Devoid/` rather than inside itself.
+**Nothing is legible by colour alone.** Every state carries a mark or a word as well. The reason is measured: across eight real corpus assets, 31% of one asset's artwork and 21% of another's fall inside the same hue the app uses to mean *this goes*. `prefers-reduced-motion` is honoured throughout.
 
-Three things make that work, and each was a real failure before it:
+**The sheet knows how much is on it.** Tiles are 365px at six assets or fewer, 282px to forty, 154px beyond, and past forty the tile that needs you keeps two columns — while such tiles are still a minority, because a landmark every tile carries is not a landmark. A size change waits for a drop to finish arriving rather than resizing everything under your cursor.
 
-| piece | why |
+**One analysis per render, not three.** Devoid hands the engine the analysis it already computed. Measured on a 743 KB 8-frame asset: `analyze()` runs **0 times instead of 2**, and a render takes **4.28s instead of 9.84s**, with identical output bytes. Needs the engine at v6.4.0; against an older one the app detects the missing flag and pays the old cost.
+
+**Advice ships with an undo** of exactly what it changed, and every number in a preset is cited from the engine's own measurements.
+
+## Settings
+
+**Where the engine is.** Devoid checks these in order and takes the first hit:
+
+1. `$DEVOID_SKILL` — full path to `remove_gif_background.py`
+2. `devoid.config.json` at the repository root, with a `skill_path` key
+3. `/Applications/Claude Code/Gif-Background-Remover/scripts/remove_gif_background.py`
+
+**Where your data goes.** `$DEVOID_DATA_DIR` overrides the location of `jobs.jsonl` and the crash journal.
+
+**Updates.** **Devoid → Check for Updates…** asks GitHub for the newest published release and offers to open its page. It never checks on launch, only when you click it: a version ping at startup would quietly break the premise that this app talks to nothing. It cannot install an update — see below.
+
+## What it does not do
+
+Each of these is a decision with a reason, not a gap waiting to be filled.
+
+| | why |
 |---|---|
-| `server/` and `web/` ship as **extraResources**, not inside `app.asar` | Python cannot read an asar, and Python is what imports the server *and* serves `web/` as static files. Inside the asar they are invisible to it |
-| `.venv` ships as **`pyvenv`** in Resources | The old build spawned `.venv/bin/python` relative to its own directory, which exists only in this checkout |
-| The two logs and the crash journal follow `$DEVOID_DATA_DIR` | `main.js` points it at `~/Library/Application Support/Devoid` when packaged. Writing inside the bundle breaks under signing and is wiped by the next install |
+| Notarised builds | No paid Apple Developer account. The variables that would drive it stay unset, and no fake credential is supplied to make the path look testable. |
+| Installing its own updates | Squirrel.Mac validates the signature of what it downloads, and a self-signed build cannot pass that. Wiring an updater would ship a path that fails at runtime. |
+| A screen-reader pass | Not attempted at this stage. The states are legible without colour and the app is keyboard-operable, but no assistive-technology testing has been done and the app does not claim otherwise. |
+| Multi-select | Selection is the only state of the structure, which is what lets one asset and two hundred be the same layout. |
+| Frame-accurate scrubbing | The film strip highlights and counts; the artwork is a looping `<img>` that never seeks. Seeking needs a canvas decoder. |
+| Controls that map onto engine flags | New surface belongs in a goal the app asks about, never as a passthrough. The point is that you never learn the 63 flags. |
 
-⚠️ **It is not yet portable to another Mac, and the two reasons are worth knowing.** `pyvenv` is a *virtualenv*, so it still needs its base interpreter — **Python 3.11 from the python.org framework at `/Library/Frameworks/Python.framework/Versions/3.11`**. And the engine is resolved at runtime, not bundled: `$DEVOID_SKILL`, then `devoid.config.json`, then `/Applications/Claude Code/Gif-Background-Remover/scripts/remove_gif_background.py`. **The skill is deliberately not copied in** — it is the source of truth for every algorithm, and a bundled fork would drift silently. Both failures are now dialogs naming the fix, not a window that never opens.
+## For developers
 
-### Signing and notarisation (6.2)
+Building, packaging, signing, the test suite and the repository layout are in **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**.
 
-Both are driven entirely by environment variables, and **all of them are deliberately unset in `package.json`**. With none set, `npm run dist` produces an unsigned, un-notarised build — which is fine for local use, and is what will happen if you run it today.
+## Licence
 
-| variable | what it is for |
-|---|---|
-| `CSC_LINK` | path or base64 of the `.p12` Developer ID Application certificate |
-| `CSC_KEY_PASSWORD` | that certificate's password |
-| `APPLE_ID` | the Apple ID used for notarisation |
-| `APPLE_APP_SPECIFIC_PASSWORD` | an app-specific password for that Apple ID, not the account password |
-| `APPLE_TEAM_ID` | the Developer Program team ID |
-
-To sign, set the first two. To notarise as well, set all five and flip `build.mac.notarize` to `true` in `package.json`. `build/entitlements.mac.plist` already carries what the hardened runtime needs to spawn the Python interpreter — without those entitlements a signed build launches and then fails at the spawn, which looks like a server bug and is not one.
-
-**Neither path has been exercised here.** No certificate and no Apple ID were available, so the signed and notarised builds are configured but unverified.
+Not yet chosen. Until one is added, all rights are reserved.

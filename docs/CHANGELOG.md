@@ -20,15 +20,49 @@ What shipped, when, and why. Newest first.
 
 ---
 
-## Unreleased — on `feat/devoid-v1`, not pushed
+## v1.0.0 — 2026-09-07 15:55 EDT — the first working version
 
-**This becomes `v1.0.0` when the branch merges**, per the user's call 2026-09-05 00:07 EDT. `package.json` already reads `1.0.0`. There is no v0.x: the first release is the first working version, matching the engine repo's and Dior's Builds' convention.
+**82 commits**, derived with `git rev-list --count main..HEAD` rather than typed. There is no v0.x: the first release is the first working version, matching the engine repo's and Dior's Builds' convention.
 
-⚠️ **The commit count was hard-coded here as 28 and had drifted to 67 by 2026-09-07.** Derive it — `git rev-list --count main..HEAD` — rather than reading a number out of prose, which is this repo's own standing rule.
+The app shows the question the engine cannot answer. `--auto` refuses **12.8%** of assets (39 of 304) on questions that are visual — the enclosure question alone is **10.2%** (31 of 304), the fade question 2.6% — and delivering one of those as a hex string and a bounding box is the failure this exists to end. Answering them visually is also what keeps every other flag absent, because `--auto` applies its recommendation only where an option was left at its default.
+
+⚠️ **Requires the engine at v6.4.0 or later** for the analysis handoff below. Against an older engine the capability check returns false, no flag is sent, and every render costs a second analysis. It degrades; it does not break.
+
+**Sections below are the work that landed after 11:13 EDT on 2026-09-07.** Everything above that time is in the entries that follow.
+
+### The analysis is handed to the render instead of recomputed — 2026-09-07 15:55 EDT
+
+A render called the engine's `analyze()` **twice** — `--auto`'s pass 1 and its pass-3 verify — on top of the analysis `/analyze` had already paid for. Measured on `galaxy.gif` (743 KB, 8 frames) by wrapping the real function and counting: **2.80s + 2.93s of a 10.15s run**.
+
+The engine now takes an analysis as an input (`--analysis-json`, and `verify(input_analysis=)`, both v6.4.0). Devoid writes the one it already holds after `/analyze` and passes the path at render time.
+
+| | `analyze()` calls | wall |
+|---|---|---|
+| before | 2 | 9.84s |
+| engine parameter only | 1 | 7.93s |
+| with Devoid's handoff | **0** | **4.28s** |
+
+Output bytes identical (`354fcb04b142`). `server/engine.py` asks the engine's own parser whether the flag exists rather than assuming it. The document lives in a per-process temp directory, and the tolerance it records is read off the engine's parser default so the two cannot drift.
+
+### The density rule's three unseen edges — 2026-09-07 15:55 EDT
+
+The rule shipped asserted only where one tile needs you. Three edges were undecided:
+
+| edge | decision | measured |
+|---|---|---|
+| a crowd where nothing needs you | no landmark, and `data-demand="none"` says so | 60 tiles, one width, 154px |
+| a crowd where everything does | the span is dropped rather than doubling the scroll. Derived, not picked: a spanning tile holds 2 cells and a settled one 1, so spans hold under half the grid exactly while `2 x demanding < settled` | 19 demanding → 325/154px · 20 → 154/154px |
+| the 40/41 flip mid-drop | the bucket waits for the drop to stop; a trickle of ≤4 restarts a 700ms window, a bulk arrival re-buckets at once | 40 → `many`, +1 → `many` held, then `crowd` |
+
+⚠️ **The gate meant to prove this was itself broken.** Its `pad()` set `state: 'needs-you'` on a cloned asset, and `stateOf()` derives that verdict from `outstanding(a)`, never from `a.state`. The existing assertion passed anyway because the clones cycle a corpus containing a genuinely demanding asset. Both probes now build from real templates.
+
+### The versioning bars are written down — 2026-09-07 15:55 EDT
+
+`CLAUDE.md` gained the engine repo's three bars and three tie-breaks, derived there from 17 shipped tags. It also settled a contradiction: this changelog defined MINOR as "a small adjustment, fix or correction", which reads a behaviour-changing one-line fix as minor. Minor is the **absence** of a behaviour change, not smallness.
 
 ### The contact sheet knows how much is on it — 2026-09-07 11:13 EDT
 
-Three density buckets instead of two: **365px** at six or fewer, **282px** to forty, **147px** beyond. And in a crowd the tile that needs you keeps two columns — **325px against 147px** — so it is findable by shape rather than by reading. Asserted at three counts and falsified.
+Three density buckets instead of two: **365px** at six or fewer, **282px** to forty, **154px** beyond. And in a crowd the tile that needs you keeps two columns — **325px against 154px** — so it is findable by shape rather than by reading. Asserted at three counts and falsified. ⚠️ **This entry read 147px until 2026-09-07 15:55 EDT**, when the gate re-measured it at 154. The rule did not change; the number was wrong.
 
 ### The label log stops being written, and the app checks its own Python — 2026-09-07 11:00 EDT
 
