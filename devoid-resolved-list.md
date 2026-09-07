@@ -19,6 +19,15 @@ Heading shape, matching the engine repo's archive:
 
 ## Closed items
 
+## ✅ The hatch is painted over the exact rectangle the seam exists to reveal — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: fixed, and proved by a red-green cycle rather than by a string search.** The fill moved from `.qregion`'s own background to a `.qregion:before` clipped at `--qseam`, a per-element conversion of the seam's position into that region's own basis; `syncRegionSeams()` rewrites it on every drag and `seamToGroup()` opens the seam on the mean centre of the disputed bbox instead of a constant. `setSeam(50)` is gone from `openAsset`; `SEAM_NEUTRAL` is used only when nothing is disputed.
+
+⚠️ **The naive fix is wrong and was caught before it was built.** `clip-path:inset(0 0 0 var(--seam))` on the region does NOT cut where the seam is — a percentage in `clip-path` resolves against the clipped element's own box, so `--seam` would cut every region at its own midpoint and travel the wrong way as you drag.
+
+**Two new assertions in `scripts/capture-window.mjs`, and they were shown to fail.** Reverting only `web/app.css` and `web/app.js` with the gate in place gives `FAILED (2)` — *"clip-path on ::before = null"* — and restoring gives PASS. Counting `.qregion` nodes, which is what the gate did before, passed throughout the defect's whole life. `map explain seam` moved from **drift** to **verified**, and its checks were rewritten at the same time because the old signal encoded an implementation that could not be built (see the P1 filed the same day).
+
+
 ## ✅ With a question open, the artwork is 321px in a 1750px stage — CLOSED 2026-09-06 (branch `feat/devoid-v1`, unreleased in v1.0.0)
 
 **Outcome: closed by Task 21, measured.** The decision moved into a 340px column beside the artwork and the film strip lost its excess padding. `npm run gate:ui` reports **1037x1037** with a question open, and asserts `>= 550` so it cannot regress quietly. Below 1080px the column returns underneath, where a column would squeeze the artwork rather than free it.

@@ -121,7 +121,7 @@ nodes:
   - id: seam
     layer: surface
     stage: adopt
-    status: suspect
+    status: active
     statement: Two answers on one clock, compared by dragging the cut line between them.
     note: >-
       ⚠️ SUSPECT. The first version of this node checked only that wipe.js's
@@ -139,11 +139,39 @@ nodes:
         - claim: the region overlay is clipped by the seam, so the two halves can differ
           kind: signal_present
           path: web/app.css
-          signal: [".qregion{position:absolute;clip-path"]
+          signal: ["clip-path:inset(0 0 0 var(--qseam"]
+          # ⚠️ SIGNAL CHANGED 2026-09-07 00:28 EDT, AND THE CLAIM DELIBERATELY WAS NOT.
+          # It read ".qregion{position:absolute;clip-path" — clip-path on the
+          # ELEMENT — which cannot be built: `b` is positioned outside the box
+          # (app.css, bottom:calc(100% + var(--s1))) and clipping .qregion
+          # deletes the tag. The old string encoded one implementation, and the
+          # only one it named was the wrong one. Editing a check to match a fix
+          # is how this very node laundered a P0 once already, so: the sentence
+          # above is byte-identical, and the new strings can only be true of an
+          # overlay whose fill is actually clipped.
+        - claim: the clip follows the seam as it is dragged, in each region's own basis
+          kind: signal_present
+          path: web/app.js
+          signal: ["function syncRegionSeams"]
+          # ⚠️ ONE STRING, NOT SEVERAL — `signal_present` is ANY, not ALL.
+          # map-reconcile.js:171 is `const found = hit != null` over the FIRST
+          # match in the list, so every extra string makes a signal_present
+          # check WEAKER. (`signal_absent` is the opposite: more strings, more
+          # forbidden.) Read off the source 2026-09-07 00:31 EDT, after
+          # "seamToGroup" passed by matching a COMMENT on app.js:74 while the
+          # function itself sat at 1579.
+          # A percentage in clip-path resolves against the clipped element's own
+          # box, so --seam cannot be reused: it would cut every region at ITS
+          # midpoint. A static clip would satisfy the check above and still be
+          # the P0. This one asserts the conversion exists.
         - claim: the seam does not open at a constant unrelated to the disputed region
           kind: signal_absent
           path: web/app.js
           signal: ["setSeam(50)"]
+        - claim: the seam is aimed at the disputed bbox
+          kind: signal_present
+          path: web/app.js
+          signal: ["function seamToGroup"]
 
   - id: answer-bar
     layer: surface

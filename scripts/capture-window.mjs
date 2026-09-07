@@ -365,6 +365,27 @@ app.whenReady().then(async () => {
   const qr = await probe(`return { n: document.querySelectorAll('.qregion').length }`);
   check('the disputed region is drawn on the artwork', qr.n > 0, `${qr.n} .qregion nodes`);
 
+  // ⚠️ P0, 2026-09-07 00:33 EDT. DRAWING THE MARK IS NOT THE ASSERTION. The mark drew
+  // correctly and the fill was still painted over the disputed rectangle
+  // IDENTICALLY on both halves -- the critique measured 02-open-question.png at
+  // 2x and found it pixel-for-pixel the same either side of the dashed line. A
+  // count of .qregion nodes cannot see that, which is why it passed all along.
+  // The falsifiable form is: the fill's clip must MOVE when the seam moves. On
+  // the old CSS there is no ::before at all, so clipPath reads "none" and this
+  // fails on the first branch rather than passing vacuously.
+  const clipOf = `const m = document.querySelector('.qregion[data-onseam="1"]');
+    if (!m) return { v: null, seam: S.seam };
+    return { v: getComputedStyle(m, ':before').clipPath, seam: S.seam };`;
+  const clipA = await probe(clipOf);
+  await drag(0.82, 0.30);
+  const clipB = await probe(clipOf);
+  check('the disputed region has a fill that is clipped by the seam',
+        !!clipA.v && clipA.v !== 'none' && clipA.v.startsWith('inset('),
+        `clip-path on ::before = ${clipA.v}`);
+  check('the fill\'s cut line MOVES with the seam, so the two halves can differ',
+        !!clipB.v && clipB.v !== clipA.v,
+        `seam ${clipA.seam}% -> ${clipB.seam}%, clip ${clipA.v} -> ${clipB.v}`);
+
   // ⚠️ F3 was specced as "closed by F2 -- no separate work", and the 09-seam
   // capture falsified that: the hatch drew AND the panel still said "The place
   // outlined in 002864" over a raw bbox array. Drawing the mark does not delete

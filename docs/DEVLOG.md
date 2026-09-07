@@ -184,6 +184,16 @@ The desktop app runs a `PreToolUse` deny whose predicate is `isUnattendedSession
 
 ---
 
+### A `signal_present` map check is ANY, not ALL — so more signals means less assurance — 2026-09-07 00:37 EDT
+
+`map-reconcile.js:171` reads `const found = hit != null` over the first match in the list. So `signal: [a, b, c]` on a `signal_present` check passes when **any one** of the three is found, and every string added makes the check weaker. `signal_absent` is the reverse: each extra string forbids one more thing. The two kinds read identically in the YAML and mean opposite things about list length.
+
+⚠️ **And signals match comments.** Closing the P0, a check for `seamToGroup` passed against prose on `web/app.js:74` while the function itself was at `1579`. `question`'s check had already been burned by this once, and the lesson did not generalise because it was recorded as a fact about one node rather than about the mechanism.
+
+**Write one signal per `signal_present`, and make it something only live code can contain** — `function foo`, a full selector, a template expression. Never a bare identifier that a comment can say.
+
+---
+
 ## Decisions, and what was tried first
 
 ### The world: the ground is the void, the tools stay the matte world

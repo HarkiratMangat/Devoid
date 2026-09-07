@@ -69,6 +69,11 @@ const artUrl = a => a.url || `assets/${base(a.path)}`;
    directly into web/assets/. The comment above this line used to say a
    thumbnail route was needed and none existed; that is no longer true. */
 
+/* The seam's resting place when there is NOTHING disputed to point at. It is a
+   constant on purpose and only ever used in that case — when a group IS
+   disputed, seamToGroup() opens the seam on its bbox instead (2026-09-07 00:27 EDT). */
+const SEAM_NEUTRAL = 50;
+
 /* ── state ────────────────────────────────────────────────────────────────── */
 const S = {
   assets: [],            // GET /api/assets
@@ -92,7 +97,7 @@ const S = {
   history: null,       // GET /api/history — null means NOT FETCHED, [] means empty
   historyErr: null,
   engineVersion: null, // GET /api/engine/status — to spot a line cut by a DIFFERENT engine
-  seam: 50,
+  seam: SEAM_NEUTRAL,
   banner: null,          // {state, text, action:{label, run}|null}
   /* the empty table's one orchestrated moment (DESIGN.md) -- id -> stagger
      index, cleared once the arrival plays. Never replayed once used. */
@@ -493,6 +498,7 @@ function renderQuestionRegions(a) {
                  height: box.height - pad('paddingTop') - pad('paddingBottom') };
   if (disp.width <= 0 || disp.height <= 0) return;
   const ans = S.answers[a.id] || { byColour: {} };
+  const onSeam = seamGroup(a);
   for (const g of groups) {
     for (const r of g.regions) {
       const bb = r.bbox_xyxy; if (!bb || bb.length !== 4) continue;
@@ -506,8 +512,39 @@ function renderQuestionRegions(a) {
       m.style.height = Math.max(2, br.y - tl.y) + 'px';
       m.append(el('b', null, verdict === 'protect' ? 'keeping this'
                           : verdict === 'remove' ? 'cutting this' : 'is this yours?'));
+      /* ⚠️ The fill's clip needs the seam expressed in THIS element's basis, and
+         these two numbers are already in #wipe's coordinate space -- the same
+         space --seam is a percentage of, because .wipe has no padding and no
+         border (app.css:296) and * is border-box. Stored rather than measured
+         later so a drag does no forced layout. Only the group actually on the
+         seam is clipped; every other mark keeps a full hatch, because it is
+         not the one under trial. */
+      m.dataset.x0 = String(tl.x);
+      m.dataset.w = String(Math.max(2, br.x - tl.x));
+      m.dataset.onseam = (!verdict && onSeam && g.hex === onSeam.hex) ? '1' : '0';
       wipe.append(m);
     }
+  }
+  syncRegionSeams();
+}
+
+/* ── the fill's cut line, per region ───────────────────────────────────────
+   `--seam` is a percentage of #wipe and cannot be reused here: a percentage in
+   clip-path resolves against the clipped element's own box, so the same value
+   means a different place in every region. This converts once, into each
+   element's own basis, and runs on every drag -- a fill that does not follow
+   the seam is the P0 in a new costume. */
+function syncRegionSeams() {
+  const w = $('#wipe');
+  if (!w) return;
+  const wpx = w.getBoundingClientRect().width;
+  const seamPx = (S.seam / 100) * wpx;
+  for (const m of w.querySelectorAll('.qregion')) {
+    if (m.dataset.onseam !== '1') { m.style.setProperty('--qseam', '0%'); continue; }
+    const x0 = parseFloat(m.dataset.x0), wd = parseFloat(m.dataset.w);
+    if (!(wd > 0)) { m.style.setProperty('--qseam', '100%'); continue; }
+    const pct = Math.max(0, Math.min(100, ((seamPx - x0) / wd) * 100));
+    m.style.setProperty('--qseam', pct + '%');
   }
 }
 /* ⚠️ The mark has to stay registered to the artwork, and positioning it once
@@ -838,6 +875,7 @@ function setSeam(pct) {
      widget — the listener had no way to know which side was which. */
   wipe.setAttribute('aria-valuetext',
     `${Math.round(S.seam)}% — keep it on the left, cut it on the right`);
+  syncRegionSeams();
 }
 function seamFrom(e) {
   const r = wipe.getBoundingClientRect();
@@ -1516,16 +1554,39 @@ function maybeLoadSeamPair(a) {
   const key = open ? `${a.id}|protection|${open.hex}` : null;
   if (key === seamKey) return;                 // already showing exactly this pair
   seamKey = key;
-  if (!key) return;                            // nothing disputed — the img pair stands
+  if (!key) { setSeam(SEAM_NEUTRAL); return; } // nothing disputed — the img pair stands
 
   /* `protection` is the pseudo-flag whose two sides are --assume-protect and
      --assume-remove on the SAME colour (server/preview.py:_answer_argv). */
-  load(a.id, 'protection', open.hex, open.hex).catch(err => {
+  load(a.id, 'protection', open.hex, open.hex).then(() => {
+    seamToGroup(a, open);
+  }).catch(err => {
     seamKey = null;                            // let it be retried
     setBanner('failed',
       `Could not build the comparison for ${open.hex} — ${err && err.message ? err.message : err}`,
       null);
   });
+}
+
+/* ── open the seam ON the disputed region ──────────────────────────────────
+   A cut line parked at a constant is not a comparison of anything: it happened
+   to sit wherever it sat, and the region under trial might be nowhere near it.
+   The marks already carry their own geometry in #wipe's coordinate space, so
+   the mean centre of the group's rectangles is the honest place to start.
+   Clamped away from both edges so the handle is always grabbable, and silent
+   when there is no usable bbox -- the previous position is better than a
+   number invented to fill the gap. */
+function seamToGroup(a, g) {
+  const w = $('#wipe');
+  if (!w || !g) return;
+  renderQuestionRegions(a);          // the pair just mounted; re-register the marks
+  const marks = [...w.querySelectorAll('.qregion[data-onseam="1"]')];
+  if (!marks.length) return;
+  const wpx = w.getBoundingClientRect().width;
+  if (!(wpx > 0)) return;
+  let sum = 0;
+  for (const m of marks) sum += parseFloat(m.dataset.x0) + parseFloat(m.dataset.w) / 2;
+  setSeam(Math.max(8, Math.min(92, (sum / marks.length) / wpx * 100)));
 }
 
 /* what a settled cut says, and the one place the conflict policy lives */
@@ -1595,7 +1656,10 @@ window.addEventListener('devoid:regions-changed', e => {
 function openAsset(id) {
   S.open = id;
   S.frame = 0;
-  setSeam(50);
+  /* ⚠️ The seam used to be reset to a constant HERE, which is both too early
+     and unrelated to anything: the canvases have no dimensions yet, so there
+     is nothing to aim at. maybeLoadSeamPair() places it -- on the disputed
+     bbox when there is one, and at SEAM_NEUTRAL only when there is not. */
   /* ⚠️ canvas.js LISTENS for this and nothing was dispatching it, so regions
      drawn on one asset stayed armed over the next one and were sent as
      --protect-region / --remove-region against unrelated artwork. Regions are

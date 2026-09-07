@@ -19,13 +19,15 @@ The project-local tracker for open work, real TODOs, and reminders specific to t
 
 ## 🐞 Open — real TODOs with an available fix, not yet done
 
-### `[P0 · M · Opus5-High]` The hatch is painted over the exact rectangle the seam exists to reveal *(filed 2026-09-06, from `/impeccable critique`)*
+### `[P1 · S · Sonnet5-High]` Six map nodes assert LESS than they appear to, because `signal_present` is ANY *(filed 2026-09-07, found while closing the P0)*
 
-`web/app.css:897` — `.qregion` carries **no `clip-path`**; only `.wipe .after` is clipped, so the overlay paints identically on both halves and **structurally cannot differ across the seam**. Compounding it, `web/app.js:95` and `:1598` open the seam at a hardcoded **50%** with no relation to the disputed bbox. Verified by reading both files 2026-09-06 22:43 EDT; the critique measured it from `02-open-question.png` at 2× magnification, pixel-for-pixel identical either side of the dashed line.
+`map-reconcile.js:171` is `const found = hit != null` over the FIRST match in the signal list, so a `signal_present` check with N strings passes when **any one** of them is present. Every extra string makes such a check WEAKER, not stronger — the exact opposite of the natural reading, and the opposite of `signal_absent`, where more strings forbid more.
 
-A person drags the cut line and nothing changes, in either direction, at the moment the product's thesis is on trial. `seamCanHelp` (`wipe.js:189`) exists to prevent exactly this and is defeated by an overlay drawn above it.
+Nodes whose `signal_present` lists more than one string are therefore asserting only their easiest term: `launch` (3), `contact-sheet` (2), `region-mark` (2), `seam`'s first check (4), `question`'s first check (2), and any single-kind shorthand with a list. **`answer-bar`, `ledger` and the rest need auditing the same way.**
 
-**Concrete next action:** while a group is unanswered and on the seam, draw **outline + tag only** — keep the border and the `is this yours?` chip, drop both background layers; keep the hatch for contact-sheet tiles and for regions not under the seam. Then open the seam at the horizontal centre of the disputed bbox. **Verify:** `map explain seam` goes from divergence to convergence — its two failing checks already encode this.
+⚠️ **And a signal matches COMMENTS.** `seamToGroup` passed by matching prose on `web/app.js:74` while the function sat at `1579`. This is the same false-positive class that made `question`'s check fire on a comment recording the string it was forbidding.
+
+**Concrete next action:** for every `signal_present` in `map.yaml`, keep exactly ONE string, and make it something only live code can contain (`function foo`, a full selector, a template expression) rather than a bare identifier. **Verify:** delete the implementation of one node's subject and confirm its check goes red — a check that cannot fail is not a check.
 
 ### `[P1 · M · Opus5-High]` The decision is scattered across four zones and its evidence is exiled *(filed 2026-09-06, from `/impeccable critique`)*
 

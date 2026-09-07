@@ -895,15 +895,35 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
    ⚠️ This is the SECOND accepted `repeating-stripes-gradient` -- DESIGN.md
    predicted it: "expect one finding, and a second when the hatch lands." */
 .qregion{position:absolute;pointer-events:none;border:1.5px solid var(--ruby);
-  border-radius:var(--r);background:
+  border-radius:var(--r);box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+/* ⚠️ P0, 2026-09-07 00:27 EDT. THE FILL IS CLIPPED AT THE SEAM. It was painted on
+   `.qregion` itself, so it covered the disputed rectangle IDENTICALLY on both
+   halves — the one place the comparison exists to differ was the one place it
+   structurally could not. Left of the cut is `keeping this`, so the real
+   pixels now show with nothing over them; right of the cut is `cutting this`
+   and keeps the hatch, which is how removed material is marked.
+   ⚠️ IT IS A ::before, NOT THE ELEMENT'S OWN BACKGROUND, because `b` is
+   positioned OUTSIDE the box (bottom:calc(100% + var(--s1))) and clipping
+   `.qregion` would delete the tag.
+   ⚠️ AND THE VARIABLE IS `--qseam`, NEVER `--seam`. A percentage in clip-path
+   resolves against the CLIPPED ELEMENT's own box. `--seam` is a percentage of
+   #wipe; used here it would cut every region at ITS midpoint and travel the
+   wrong way as you drag. app.js writes `--qseam` per element, in that
+   element's own basis. The 100% default leaves the fill fully clipped, so a
+   region that never gets the property paints nothing rather than covering
+   both halves again. */
+.qregion:before{content:"";position:absolute;inset:0;border-radius:inherit;
+  clip-path:inset(0 0 0 var(--qseam,100%));background:
     repeating-linear-gradient(45deg,rgba(226,64,42,.30) 0 3px,transparent 3px 8px),
-    rgba(226,64,42,.14);
-  box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+    rgba(226,64,42,.14)}
 .qregion b{position:absolute;left:0;bottom:calc(100% + var(--s1));
   font:500 var(--t-micro)/1 "Spline Sans Mono",monospace;
   color:var(--qregion-ink);background:var(--ruby);   /* A4: was #fff on rubylith */
   padding:var(--s1) var(--s2);border-radius:var(--r);white-space:nowrap}
 .qregion[data-verdict="protect"]{border-color:var(--cyan);background:rgba(34,211,238,.12)}
+/* the tint used to OVERRIDE the hatch via the same `background` property;
+   now that the hatch lives on a pseudo-element, it has to be removed. */
+.qregion[data-verdict="protect"]:before{display:none}
 .qregion[data-verdict="protect"] b{background:var(--cyan);color:var(--go-ink)}
 .qregion[data-verdict="remove"]{opacity:.55}
 

@@ -152,6 +152,8 @@ linksee-memory map explain seam        # declared vs reality, with file:line evi
 linksee-memory map reconcile           # re-run every check
 ```
 
+🔴 **`signal_present` IS ANY, NOT ALL — so a longer signal list asserts LESS.** `map-reconcile.js:171` is `const found = hit != null` over the first match, so `signal: [a, b, c]` passes on any one of them. `signal_absent` is the opposite: every extra string forbids one more thing. **Write exactly one signal per `signal_present`**, and make it something only live code can contain — `function foo`, a full selector, a template expression — because **a signal matches comments**: `seamToGroup` passed against prose on `web/app.js:74` while the function was at `1579`. Read off the source 2026-09-07 00:37 EDT.
+
 ⚠️ **A node is reachable by file ONLY through `reality.path`.** ⚠️ **`where_am_i` needs `project: "devoid"`** — two maps are imported on this machine and the no-arg form cannot yet tell which repo you mean.
 
 ⚠️ **A check is only as honest as its signal, and the first two drafts proved it both ways.** `question`'s `signal_absent` named the prose *"The place outlined in"* and fired on the **comment** that records what the string used to be — a true positive for the checker, a false one for the product; it now names the template expression, which only live code can contain. And `seam` was declared `suspect` while its check asked only whether `wipe.js`'s functions exist — so the reconciler **refuted the suspect status and returned convergence**, laundering a P0 into a green tick. Existence was never the question. Its checks now assert that `.qregion` is clipped by the seam and that the seam does not open at a constant, and it reports **divergence** with the evidence.

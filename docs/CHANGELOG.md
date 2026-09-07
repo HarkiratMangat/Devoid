@@ -18,9 +18,15 @@ What shipped, when, and why. Newest first.
 
 ---
 
-## Unreleased — on `feat/devoid-v1`, 28 commits, not pushed
+## Unreleased — on `feat/devoid-v1`, not pushed
 
 **This becomes `v1.0.0` when the branch merges**, per the user's call 2026-09-05 00:07 EDT. `package.json` already reads `1.0.0`. There is no v0.x: the first release is the first working version, matching the engine repo's and Dior's Builds' convention.
+
+⚠️ **The commit count was hard-coded here as 28 and had drifted to 67 by 2026-09-07.** Derive it — `git rev-list --count main..HEAD` — rather than reading a number out of prose, which is this repo's own standing rule.
+
+### The seam can finally show a difference — 2026-09-07 00:37 EDT
+
+The disputed region's fill was painted over the rectangle identically on both halves, so the comparison the product exists for could not differ in the one place it was about. The fill is now clipped at the seam, in each region's own coordinate basis, and the seam opens on the disputed bbox instead of at 50%. Two assertions in `npm run gate:ui` cover it and were shown to fail on the old code.
 
 ### Stages 0–6 — the whole app
 
