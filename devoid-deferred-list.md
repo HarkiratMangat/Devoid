@@ -41,17 +41,6 @@ Five cases, 3.2 KB, referenced by no npm script and by no other file. `npm test`
 
 **Concrete next action:** add it to `test:coords`'s neighbours as its own script and into the `test` chain, then confirm it actually passes before assuming it does; it may have rotted.
 
-### `[P2 · S · Sonnet5-Med]` The engine repo needs its LGPLv3 licence *(filed 2026-09-07 16:26 EDT)*
-
-Harkirat's call, 2026-09-07 16:26 EDT: **the app is GPLv3 and the engine is LGPLv3**, so the engine can be used by anything while improvements to the engine itself come back. Devoid's `LICENSE` is in place. The engine repo has none, and adding one there is a change in that repository with its own branch, PR and version — a *minor* bump by its own bars, since nothing about what the tool does changes.
-
-⚠️ **The engine is already tagged v6.4.0 without a licence**, so the licence lands on a later tag rather than retroactively.
-
-**Concrete next action:** branch in `/Applications/Claude Code/Gif-Background-Remover`, add `LICENSE` (LGPL-3.0-or-later needs BOTH `COPYING` and `COPYING.LESSER` by the FSF's own instructions, since LGPLv3 is a set of additional permissions on top of GPLv3), and say so in `SKILL.md` and `README.md`. Push and merge are asked separately, there as here.
-
-
-**Empty as of 2026-09-07 14:21 EDT.** The last three closed together on `feat/devoid-v1`: the second full analysis per render (measured at **2** engine `analyze()` calls, not one, and now **0**), the density rule's three unseen edges, and the engine repo's stale pointer at this repo's label log. All three are in `devoid-resolved-list.md` with their outcomes. ⚠️ **An empty section is not a finished project** — the ✅ and 🔔 sections below carry standing decisions and cross-repo watches that are still live.
-
 ## ✅ Considered and NOT fixed — a real decision, not an oversight
 
 ### Notarisation, self-updates and a screen-reader pass are NOT being done *(decided 2026-09-07 11:05 EDT)*

@@ -156,7 +156,7 @@ Open work, and the decisions behind each of these, are in [`devoid-deferred-list
 
 ## Licence
 
-Copyright © 2026 Harkirat Mangat. **GPL-3.0-or-later** — see [LICENSE](LICENSE). Clone it, change it, ship it; a version you distribute stays under the same licence with its source available. The engine is licensed separately in its own repository.
+Copyright © 2026 Harkirat Mangat. **GPL-3.0-or-later** — see [LICENSE](LICENSE). Clone it, change it, ship it; a version you distribute stays under the same licence with its source available. The engine is **LGPL-3.0-or-later** in [its own repository](https://github.com/HarkiratMangat/gif-background-remover), from v6.4.1 — anything may use it, including something closed, and only an improvement to the engine itself comes back.
 
 To contribute, see [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 

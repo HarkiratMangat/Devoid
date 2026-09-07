@@ -52,7 +52,7 @@ Two fresh readers and two auditors were run over the README, `docs/DEVELOPMENT.m
 
 ### Licensed — 2026-09-07 16:28 EDT
 
-**GPL-3.0-or-later**, Harkirat's call. Anyone may clone, change and ship it; a distributed version stays under the same licence with its source available. The engine is to be **LGPL-3.0-or-later** in its own repository so it can be used by anything while improvements to it come back — filed there, since the engine was already tagged v6.4.0 without one.
+**GPL-3.0-or-later**, Harkirat's call. Anyone may clone, change and ship it; a distributed version stays under the same licence with its source available. The engine is **LGPL-3.0-or-later** from v6.4.1 (2026-09-07 16:45 EDT) so it can be used by anything, including something closed, while improvements to it come back. Both `COPYING` and `COPYING.LESSER` ship inside its `.skill` package.
 
 ### The analysis is handed to the render instead of recomputed — 2026-09-07 15:55 EDT
 
