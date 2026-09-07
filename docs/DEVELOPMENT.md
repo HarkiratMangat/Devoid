@@ -66,7 +66,7 @@ Three things make that work, and each was a failure before it was a design:
 | `.venv` ships as **`pyvenv`** in Resources | The old build spawned `.venv/bin/python` relative to its own directory, which exists only in this checkout |
 | The log and the crash journal follow `$DEVOID_DATA_DIR` | `main.js` points it at `~/Library/Application Support/Devoid` when packaged. Writing inside the bundle breaks under signing and is wiped by the next install |
 
-⚠️ **The bundle is not portable to an arbitrary Mac.** `pyvenv` is a *virtualenv*, so it still needs the python.org 3.11 framework build, and the engine is resolved at runtime rather than bundled — see the README's Requirements table, which is the canonical statement of both.
+⚠️ **The bundle's venv is built against THIS machine's interpreter, and that is an artefact rather than a requirement (corrected 2026-09-07 18:25 EDT).** `pyvenv` is a virtualenv, and a virtualenv hardcodes the path of the interpreter it was built against — here python.org's framework build under `/Library/Frameworks/`, because that is what happened to build it. On a Mac without that path the bundled environment is dead, and `main.js` falls back to a system Python 3.11: it probes `/usr/bin`, **`/opt/homebrew/bin`** and `/usr/local/bin`, then offers to install the packages. **Nothing in the code requires the framework build**, and the README said it did until this correction. The engine, separately, is resolved at runtime rather than bundled.
 
 ⚠️ **Only the Python failure is a dialog. The engine failure is not** (corrected 2026-09-07 16:28 EDT). `EngineUnavailable` names all three lookup paths, `main.js` prints it to stdout, and `web/app.js` reads `/api/engine/status` for `engine_version` alone — so a missing engine is a normal-looking window and a 503 the first time a file is added. Both this file and the README claimed a dialog for it. Filed `[P1 · S]`.
 
@@ -92,7 +92,7 @@ Those entitlements matter. A signed app cannot spawn the unsigned Python interpr
 npm test
 ```
 
-**Twelve commands, eleven gates** — `test:wipe` and `test:coords` share a row below. **The order is load-bearing and cannot be alphabetised:** `gate:ui` writes the captures and the `.boxes.json` sidecars that `check:greyscale` then measures, and `check:tracker` runs last because it is about the branch rather than the code.
+**Thirteen commands, twelve gates** — `test:wipe` and `test:coords` share a row below. **The order is load-bearing and cannot be alphabetised:** `gate:ui` writes the captures and the `.boxes.json` sidecars that `check:greyscale` then measures, and `check:tracker` runs last because it is about the branch rather than the code.
 
 | gate | asks |
 |---|---|
@@ -102,6 +102,7 @@ npm test
 | `test:hooks` | that each routing hook can both fire and stay silent |
 | `check:contrast` | text and UI contrast ratios |
 | `python3 scripts/check_font_axes.py --check` | every declared font axis range matches the shipped file. ⚠️ The only entry with no npm script of its own; it runs inline in the chain |
+| `check:claims` | the documents' checkable claims against the code they describe: badge versions against `package.json`, badge colours against both GitHub grounds, hardcoded option counts against the engine's own parser, promised environment variables against the source that reads them, files the docs tell you to create against `.gitignore`, every relative link, and inline code long enough to widen the page on a phone |
 | `check:detector` | the design detector reports **presence** against a deliberately defective fixture, so an empty result means something |
 | `check:design` | asks git what changed, then runs the detector over it; fails on drift or on a degraded run |
 | `gate:ui` | every UI state, captured through the real Electron window, with assertions on each |

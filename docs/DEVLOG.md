@@ -21,6 +21,36 @@ The **story** behind the app: the traps, the reasoning behind decisions, the thi
 
 ## ⚠️ Traps — each of these cost real time, and none is obvious
 
+### The class behind it: a claim true of one artefact, written as a property of the software (2026-09-07 18:33 EDT)
+
+The Homebrew entry below is one instance. Harkirat's response was *"we fix the class, not the instance"*, so the sweep found four more, all sharing one shape and none visible to any gate:
+
+| claim | what the code actually said |
+|---|---|
+| *"Homebrew's Python will not work"* | `main.js` probes `/opt/homebrew/bin/python3` **by name** |
+| *"the 63 options"* | the parser reported **64** the moment `--analysis-json` landed |
+| a `v1.0.0` badge | over a `package.json` reading `1.0.1` |
+| a `#22D3EE` swatch | **1.81:1** on white — fixed on the badge, left on the swatch |
+| *"the published build is `arm64`"* | `electron-builder.yml` pins no architecture; it builds for the host |
+
+Two more of the same shape came from a critique agent: `10-ledger.png` was captioned as *"the verification readings for a finished render"* while the shot's own header reads **not checked** with one question still open — the app's founding sin, committed on the page that advertises never committing it — and the README told people to `git clone` two **private** repositories, admitting it only in a collapsed aside six sections down.
+
+🔴 **The tell is available every time.** A constant that appears in comments and configuration but in **no conditional** is describing a habit, not a rule. `/Library/Frameworks/Python.framework/Versions/3.11` appeared three times in this repo, all three in prose.
+
+**The fix is a gate, not a resolution.** `npm run check:claims` (`scripts/check_claims.mjs`) reads the three user-facing documents and checks the parts with a right answer: badge versions against `package.json`, badge colours against **both** GitHub grounds, hardcoded option counts against the engine's own parser, promised environment variables against the source that reads them, files the docs tell you to create against `.gitignore`, every relative link, and inline code long enough to widen the page on a phone. Falsified against all seven defects; it found three more on its first real run.
+
+⚠️ **It cannot check prose, and must not be read as if it could.** It checks claims that have a right answer. *"Nobody can answer that by reading it"* is still on nobody's authority but the author's.
+
+### A packaging artefact documented as a product requirement (2026-09-07 18:25 EDT)
+
+The README told every reader they needed **python.org's framework build specifically, not Homebrew's** — in the source-install section, where it is simply false. Harkirat caught it: *"tf? the app doesn't support the homebrew version? arguably the more popular installation of it."*
+
+`systemPython()` in `main.js` probes `/usr/bin/python3`, **`/opt/homebrew/bin/python3`** and `/usr/local/bin/python3`. Homebrew is one of the three interpreters it is written to accept. Nothing in the code mentions the framework path at all except two comments.
+
+Where the path actually comes from: `.venv/pyvenv.cfg` on this machine reads `home = /Library/Frameworks/Python.framework/Versions/3.11/bin`, because that is the interpreter that happened to create it. A virtualenv hardcodes its base. So the shipped `pyvenv` inside the disk image wants that path — and even then it is not a hard block, because a dead bundled venv falls through to the system probe.
+
+⚠️ **The claim was true of one artefact on one machine and was written as a requirement of the software.** It reached three documents. The tell was available the whole time: the constant appears in `electron-builder.yml` and two comments, and in **zero** conditionals.
+
 ### `asar extract-file` wrote the archive's copy OVER the source (2026-09-07 16:33 EDT)
 
 `npx asar extract-file dist/mac-arm64/Devoid.app/Contents/Resources/app.asar package.json /tmp/shipped-pkg.json` printed `ok`, created nothing at the destination, and wrote the archive's **stripped** `package.json` into the repository root instead — over the real one. 26 lines gone: every `scripts` entry, `devDependencies`, `keywords`. The command was a one-line check of whether the built app carried the new `license` field.

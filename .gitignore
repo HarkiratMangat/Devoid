@@ -10,6 +10,11 @@ out/
 # The in-flight journal (PLAN.md 1.4). Machine state, not history:
 # what it holds is only meaningful to the run that wrote it.
 .devoid-journal.json
+
+# ⚠️ THE README TELLS YOU TO CREATE THIS. Following the install instructions wrote
+# an untracked file into a clean clone and left it dirty; the path inside it is
+# specific to one machine, so it must never be committed either.
+devoid.config.json
 .devoid-journal.json.lock
 .devoid-journal.json.tmp
 .claude/worktrees/

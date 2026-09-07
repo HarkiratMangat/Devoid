@@ -20,7 +20,13 @@ What shipped, when, and why. Newest first.
 
 ---
 
-## v1.0.0 — 2026-09-07 15:55 EDT — the first working version
+## v1.0.1 — 2026-09-07 17:20 EDT (#3) — the conventions this repo runs on, written down
+
+The banner is [DEVOID Banner V2_Warp](DEVOID%20Logo%20Assets/), resized to 1640px for its 820px display width. The rest is `CLAUDE.md`: the full lifecycle, the final pre-merge checkpoint, merge-vs-release, and commit/branch/PR naming — verified line by line against Dior's Builds and the engine repo rather than summarised from memory.
+
+⚠️ **This entry exists because the version it names was mis-tagged first.** `v1.0.1` was originally cut on `4d5199d`, a commit whose manifests both read `1.0.0` and which has no entry here. That tag was deleted, the bump and this entry moved onto the branch where they belong, and the tag re-cut. **The merge of PR #2 therefore carries no version of its own; it is absorbed here** — a recorded exception to "every merge gets a version", not a precedent.
+
+## v1.0.0 — 2026-09-07 15:55 EDT (#1 · `958d32f`) — the first working version
 
 **82 commits**, derived with `git rev-list --count main..HEAD` rather than typed. There is no v0.x: the first release is the first working version, matching the engine repo's and Dior's Builds' convention.
 
