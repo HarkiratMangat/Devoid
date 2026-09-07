@@ -19,6 +19,26 @@ Heading shape, matching the engine repo's archive:
 
 ## Closed items
 
+## ✅ The engine repo needs its LGPLv3 licence — CLOSED 2026-09-07 16:45 EDT (engine branch `docs/lgpl-licence`, merged `75a1b11`, tagged **v6.4.1**)
+
+**What happened.** Both texts, because LGPLv3 is a set of additional permissions on top of GPLv3 and the FSF's own instructions call for `COPYING` and `COPYING.LESSER` together. **Both are packaged into the `.skill`**, which is the part that was not obvious: the package is what gets distributed, and a distribution without its licence text is exactly the defect fixed on this side the same day, where five `.woff2` files were shipping inside the disk image with no OFL 1.1 anywhere in the repository. The archive went from 6 members to 8, diffed against v6.4.0 to prove it added exactly those two and lost nothing, and `gate_package.py` passes.
+
+⚠️ **One claim in that branch was false and was corrected in place.** The comment on `audit_docs.py`'s `packaged` set said the entry is what lets `SKILL.md` point at `COPYING`. Reverting the set and re-running showed the pointer check passes anyway — it matches names **with an extension**, so `gif-deferred-list.md` is caught and an extensionless `COPYING` is invisible to it. The set stays corrected because it should be true; the gap is filed there as `[P2 · XS]`.
+
+**Original entry, struck through:**
+
+> ~~### `[P2 · S · Sonnet5-Med]` The engine repo needs its LGPLv3 licence *(filed 2026-09-07 16:26 EDT)*~~
+>
+> ~~Harkirat's call, 2026-09-07 16:26 EDT: **the app is GPLv3 and the engine is LGPLv3**, so the engine can be used by anything while improvements to the engine itself come back. Devoid's `LICENSE` is in place. The engine repo has none, and adding one there is a change in that repository with its own branch, PR and version — a *minor* bump by its own bars, since nothing about what the tool does changes.~~
+>
+> ~~⚠️ **The engine is already tagged v6.4.0 without a licence**, so the licence lands on a later tag rather than retroactively.~~
+>
+> ~~**Concrete next action:** branch in `/Applications/Claude Code/Gif-Background-Remover`, add `LICENSE` (LGPL-3.0-or-later needs BOTH `COPYING` and `COPYING.LESSER` by the FSF's own instructions, since LGPLv3 is a set of additional permissions on top of GPLv3), and say so in `SKILL.md` and `README.md`. Push and merge are asked separately, there as here.~~
+>
+>
+> ~~**Empty as of 2026-09-07 14:21 EDT.** The last three closed together on `feat/devoid-v1`: the second full analysis per render (measured at **2** engine `analyze()` calls, not one, and now **0**), the density rule's three unseen edges, and the engine repo's stale pointer at this repo's label log. All three are in `devoid-resolved-list.md` with their outcomes. ⚠️ **An empty section is not a finished project** — the ✅ and 🔔 sections below carry standing decisions and cross-repo watches that are still live.~~
+
+
 ## ✅ Every render pays for a second full analysis the app already ran — CLOSED 2026-09-07 14:21 EDT (branch `feat/devoid-v1`; engine branch `feat/analysis-reuse-across-processes`, commit `63447a4`)
 
 **What happened, and the filing understated it.** The item said the engine recomputes ONE analysis per render. Measured on `galaxy.gif` (743 KB, 8 frames) by wrapping the engine's own `analyze()` and counting real calls under Devoid's exact render argv: **two**. Pass 1's `recommend()` and pass 3's `verify()`, 2.80s and 2.93s of a 10.15s run — **56%**, not the 39–47% filed.
