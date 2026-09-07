@@ -33,6 +33,8 @@ The 27-task remediation plan is **complete**. What is open is what the critique 
 
 ## What NOT to carry
 
+⚠️ **Do NOT carry "the `/linksee:*` slash commands do not route".** That claim is in `~/.claude/TOOLING.md:159` and it is FALSE — Harkirat produced a screenshot of the `/` menu listing all five, labelled `(MCP)`. Worse, the note was written at 18:28 on 2026-09-06, **two minutes after** `~/.claude.json`'s linksee entry was changed from `npx -y linksee-memory` to `/opt/homebrew/bin/linksee-memory` at 18:26:24 — so a possible regression was recorded as a pre-existing limitation. Verified 2026-09-06 23:02 EDT: ONE registration, not two (the "double registration" theory is dead), and both spellings serve the same five prompts to a stdio probe. The Diors-Builds session "Portal step 3 completion handoff" is diagnosing it; the note prepared for it is `linksee-routing-note.md` in this session's scratchpad.
+
 Do not reproduce the critique, the plan, or the tracker into a new document. Point at them. `docs/superpowers/plans/2026-09-06-devoid-remediation.md` and its spec remain the record of how the 27 tasks were decided, including four places the plan was **wrong** and running it proved so.
 
 ## Unilateral decisions — mine, unreviewed, and named as such

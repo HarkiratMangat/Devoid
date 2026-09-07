@@ -172,6 +172,18 @@ The defect F21 found is real; the metric was wrong. Adjacent planes are now meas
 
 ⚠️ **Two commands are ruled out by their own documentation, not by taste.** `bolder`: *"Do not use it on dashboards people stare at for hours… Not in operator tools."* `overdrive`: *"Do not use it on operator tools, dashboards, or anything where reliability beats spectacle."* The two that sound most like "wow factor" are the two an Operate surface may not have.
 
+### `send_message` is refused here, and the cause is this session's provenance — 2026-09-06 23:02 EDT
+
+`mcp__ccd_session_mgmt__send_message` returns *"This tool is unavailable in unattended sessions (scheduled-task runs and remote-dispatched trees)."* It is not a bug, not a setting, and not something a session can clear for itself.
+
+The desktop app runs a `PreToolUse` deny whose predicate is `isUnattendedSession(e){return!!(e.scheduledTaskId||e.dispatchParentId||e.dispatchParentOrigin||e.remoteControlEnabled||e.bridgeSessionId||t.Pp(e))}`, and it logs `reason:"unattended_send_message"`. Two of the six fields are set on this repo's long-running session — `dispatchParentId: "local_ditto_7e228f03-…_g1"` and `dispatchParentOrigin: "local"` — because it was spawned as a dispatch child of a local agent-mode tree. Everything else is null, which is why `get_session` reports `isRemote: false` while the tool still refuses.
+
+⚠️ **The same predicate gates more than messaging** — `preview_start`, the Chrome MCP tools, computer-use takeover and the iOS-simulator tools all deny on it, each with its own wording. A refusal that says *"requires an attended session"* is this, not a missing capability, and retrying never helps.
+
+**The fix is not in this repo.** The fields are fixed at spawn and the app rewrites its own session JSON, so editing `~/Library/Application Support/Claude/claude-code-sessions/…/local_<id>.json` while the app runs is overwritten. To message another session, use one you opened yourself.
+
+---
+
 ## Decisions, and what was tried first
 
 ### The world: the ground is the void, the tools stay the matte world
