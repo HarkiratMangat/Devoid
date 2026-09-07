@@ -58,7 +58,7 @@ This is a standing preference, stated at the top of the first session here (*"As
 | situation | reach for | not |
 |---|---|---|
 | "Where is X defined? What calls it? What breaks if I change it?" | `search_graph` → `trace_path(direction:"both")` → `get_code_snippet` | `rg` and hand-tracing |
-| Re-read a file you already read this session | `mcp__linksee__read_smart` | a second `Read` |
+| **Any read of a file you will not `Edit`** — the first one included | `mcp__linksee__read_smart` | `Read` |
 | A question about this repo's own prose (docs, rules, plans) | `ctx_search({source:"project:devoid-docs", queries:[…]})` | `rg` — measured elsewhere at **0 files for 3 of 4** natural-language questions |
 | Read a file to analyse rather than edit it | `ctx_execute_file(path, language, code)` | `Read` — the bytes never need to enter context |
 | Run anything whose output could exceed ~20 lines | `ctx_batch_execute(commands, queries)` | `Bash` |
@@ -103,7 +103,11 @@ This is a standing preference, stated at the top of the first session here (*"As
 
 **This repo is entity `Devoid` (`project`), momentum 4.85, 46 memories** — the Stop hook writes automatically; **reads require you to pull.**
 
-⚠️ **THE INSTALLED SKILL FILE TEACHES FOUR TOOLS THAT DO NOT EXIST.** `~/.claude/skills/linksee-memory/SKILL.md` names `list_entities` (its "Task Start" step), `recall_file` (its "File Edit" step), `update_memory` (its update step) and `consolidate` (its tidy-up step). **All four were removed in v0.7.0–v0.11.x and `ToolSearch` finds none of them.** Following that file verbatim produces four failed calls. The live equivalents:
+⚠️ **THE SKILL FILE TEACHES FOUR TOOLS THAT DO NOT EXIST, AND REINSTALLING DOES NOT FIX IT.** `~/.claude/skills/linksee-memory/SKILL.md` names `list_entities` (its "Task Start" step), `recall_file` (its "File Edit" step), `update_memory` (its update step) and `consolidate` (its tidy-up step) — 16 mentions in all. All four were merged away in v0.7.0–v0.11.x.
+
+**This is an UPSTREAM doc bug at 0.11.5, not a stale install.** Verified 2026-09-06 21:05 EDT: the package is `linksee-memory@0.11.5`, the server reports `v0.11.5`, and the skill file was already force-reinstalled on 2026-09-06 18:27 — it still teaches all four. ⚠️ Separately worth knowing for the next package update: **`install-skill` SKIPS rather than upgrades**, so `--force` is required or the file silently stays a month old.
+
+**The server answers a removed tool with a migration hint rather than silence** — `{"ok":false,"error":"Tool \"list_entities\" was merged in v0.7.0. Migration: recall() with no params"}`, `isError: true`. So calling one is a wasted round trip that self-documents, not a silent failure. The live equivalents:
 
 | the skill file says | actually call |
 |---|---|
@@ -118,6 +122,9 @@ This is a standing preference, stated at the top of the first session here (*"As
 - **`caveat` is auto-protected and can never be deleted or demoted.** Record one the moment something fails, not at the end. `importance >= 0.9` pins a memory in any layer.
 - ⚠️ **Never store raw chat.** "yeah do it all" is not a memory; the extracted scope is.
 - **Auto-captured memories arrive undistilled.** The Stop hook has no LLM, so it stores raw utterances with `needs_distill: true`. `dream()` returns them as a `distill_queue`; rewriting one **requires `"distilled": true` in the JSON**, or the next session's re-import silently resurrects the raw text.
+- **`read_smart` on the FIRST read too.** That read builds the AST chunk map every later one is ~50 tokens against, so routing it costs nothing. ⚠️ The "only for re-reads" framing is measured elsewhere as the reason it went unused for a whole session — it is wrong, and it was in the first draft of this section.
+- **Read the `memory://caveats` RESOURCE before significant work.** It is a resource, not a tool, and it is the docs' own advice.
+- **A `caveat` is ONE SENTENCE, verb-first.** It is protected forever, so a paragraph is the wrong shape for something that will be read a hundred times.
 - ⚠️ **`where_am_i` and `drift_status` need a `map.yaml` at the repo root, and this repo has none** — so they return nothing here. That is unconfigured, not broken.
 
 ### What this repo does NOT have, so nothing may assume it
