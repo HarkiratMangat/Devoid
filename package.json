@@ -13,7 +13,8 @@
     "test:coords": "node --test tests/test_canvas_coords.mjs",
     "test:versions": "node --test tests/test_versions.mjs",
     "check:contrast": "python3 scripts/check_contrast.py --check",
-    "check:greyscale": ".venv/bin/python scripts/check_greyscale.py --check"
+    "check:greyscale": ".venv/bin/python scripts/check_greyscale.py --check",
+    "refresh:index": "bash scripts/refresh-index.sh"
   },
   "author": "Harkirat Mangat",
   "repository": {

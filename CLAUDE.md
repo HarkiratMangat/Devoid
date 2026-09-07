@@ -127,11 +127,27 @@ This is a standing preference, stated at the top of the first session here (*"As
 - **A `caveat` is ONE SENTENCE, verb-first.** It is protected forever, so a paragraph is the wrong shape for something that will be read a hundred times.
 - ⚠️ **`where_am_i` and `drift_status` need a `map.yaml` at the repo root, and this repo has none** — so they return nothing here. That is unconfigured, not broken.
 
-### What this repo does NOT have, so nothing may assume it
+### Keeping the two snapshots fresh
 
-- No `map.yaml`, so linksee's product-map half is inert.
-- No `ctx-index-refresh` hook, so no index here is guaranteed fresh.
-- No ADR in the graph (`adr_present: false`); `manage_adr` would be creating one, not updating.
+**Neither layer has change detection**, so both serve last week's text under a real heading with a real path. `npm run refresh:index` re-indexes all three sources; run it after a branch's worth of work and before trusting any query about something that moved. Measured: the graph went **1,384 → 1,406 nodes** inside one session.
+
+⚠️ **Three defects the script found in itself, each of which reported success:**
+
+| symptom | cause |
+|---|---|
+| Two content DBs, and a `ctx_search` scoped to one could not see the other | `--project` defaults to the **indexed directory**, not the repo. Pass `--project "$ROOT"` on every call |
+| `cap reached at 20 files`, then `at 40`, still printing "Indexed" | the CLI's default extension allowlist includes **source files**, so the prose index was pulling in `server/*.py` |
+| — | fixed with `--ext .md`. Code belongs in the graph, which answers structural questions properly |
+
+**The ADR is written** (`manage_adr`, 8 sections) from `get_architecture` plus the repo's own decisions. One finding in it is worth repeating here: Leiden clustering identifies `web/advice.js` as a **6-member cluster at cohesion 1.0** — perfectly isolated — which is why a stale palette shipped in it while three nightly detector runs scanned only `index.html`, `app.css` and `app.js`. **Scope a detector run by the graph's clusters, not by the files you happened to edit.**
+
+### What this repo still does NOT have
+
+- **No `map.yaml`**, so `where_am_i` and `drift_status` are inert. It is a declaration of desired state, not something to infer.
+- **No linksee North Star.** `dream()` says so on every call. ⚠️ `declare_anchor`'s own contract is **`declare-don't-mine: anchors come ONLY from explicit human declaration, never from pattern extraction`** — so it cannot be written from `PRODUCT.md`, only proposed and confirmed.
+- **No index-refresh HOOK.** `npm run refresh:index` exists and must be run deliberately; Diors-Builds fires the equivalent on `PreToolUse`. Registering one here edits `.claude/settings.json`.
+
+*Setup completed 2026-09-06 21:18 EDT: prose indexed as `project:devoid-docs` and `project:devoid-rules`, code graph at 1,406 nodes, ADR written, `memory://caveats` read (143 protected), Devoid's four items drained from linksee's distill queue.*
 
 ## Testing
 
