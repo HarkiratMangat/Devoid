@@ -32,6 +32,14 @@ What shipped, when, and why. Newest first.
 - **Stage 5 — memory.** Two append-only logs with two schemas and one writer each, a crash journal that surfaces orphans without resuming them, history with rerun, and advice that ships with an undo of exactly what it changed.
 - **Stage 6 — ship it.** Menus, the port probe, engine logging, self-hosted fonts, and `electron-builder` packaging. ⚠️ The `.app` is **not standalone** — see `devoid-deferred-list.md`.
 
+### The tooling layer became enforceable, and a critique found what it had been hiding
+
+`/impeccable init` + `document` completed the product record and merged a token frontmatter into `DESIGN.md`, which **turned on three detector rules that had never fired** — they immediately found 15 real violations. `/impeccable critique` then ran dual-agent and scored the interface **25/40**, with one P0: `.qregion` has no `clip-path`, so the seam's two halves cannot differ inside the rectangle the seam exists to reveal.
+
+The three MCP layers are set up and, for the first time, **enforced rather than described**: prose indexed as `project:devoid-docs` / `project:devoid-rules`, the code graph at 1,406 nodes with an ADR, linksee carrying a North Star anchor and a 17-node `map.yaml` whose reconciler already reports the P0 as divergence. Three PreToolUse hooks carry the conventions into the moment of the mistake; `npm run test:hooks` asserts both directions.
+
+⚠️ **Prose was measurably not enough** — `grep` 788× against `rg` 4× on a standing rule, and this session's own author broke two written context-mode rules while both were loaded.
+
 ### The remediation plan is executed — 27 tasks, five stages
 
 `docs/superpowers/plans/2026-09-06-devoid-remediation.md`, finished 2026-09-06 19:46 EDT. Four systems that were built, tested, exported and wired to nothing are connected; the interface stopped making claims that are false; the token, type and surface systems are derived and checked by script; the layout puts the artwork first; and three signature components were added.

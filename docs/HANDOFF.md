@@ -1,55 +1,55 @@
-# Devoid — where the work stands
+# Handoff
 
-*Written 2026-09-06 09:08 EDT. Supersedes `2026-09-05-handoff.superseded.md`, which describes the state before the design review and is now history — if anything in your context says the app was last audited on 2026-09-04, or quotes 34 commits, that is the stale one.*
+*Rewritten 2026-09-06 22:44 EDT. ⚠️ This file is EPHEMERAL by design — it gets renamed `<date>-handoff.superseded.md`. Nothing durable may live only here. The four tracked carriers are named in `CLAUDE.md`.*
 
-⚠️ **When this goes stale, rename it `<date>-handoff.superseded.md` and write a new one. Do not edit it in place.**
+## §0 — Correction, before anything else
 
-## §0 — READ THIS FIRST, IT IS A CORRECTION
+**If your context says the app's design was verified, or quotes "exactly one detector finding" as a full check — that is stale.**
 
-**Three claims this project made about itself are false, and two of them are in files you are about to read.**
+Three of the detector's rules — `design-system-font`, `design-system-color`, `design-system-radius` — were **structurally inert** until 2026-09-06, because `docs/DESIGN.md` declared its palette and type stack in prose rather than in the format the parser reads. **Falsified:** a file containing `#FF00FF`, `#7C3AED`, `border-radius:17px` and Comic Sans returned **0 findings**, run twice. Every "exactly one finding" recorded before today is true about the rules that ran and silent about three that did not. Turning them on found **15** real violations in the shipped surface.
 
-1. **The UI gate proves things EXIST, never that they are CONNECTED.** Fourteen subsystems have shipped built, tested, exported and wired to nothing. Nine green captures were taken of a seam that could not be dragged. **A green gate here is not evidence a feature works.**
-2. **The design detector ran DEGRADED with no banner** on CSS-only invocations until 2026-09-06. Any detector result quoted before then is unverified. Filed in `devoid-deferred-list.md`.
-3. **`DEVLOG.md`'s "~490px artwork" and its "the starfield is generated, never tiled"** are both retracted in place, with evidence. The tiled SVG still ships on every `.chk-s` surface.
+**And the interface has now been reviewed by something other than its author, for the first time.** `/impeccable critique`, dual-agent, scored it **25/40 — "Acceptable, significant improvements needed"** with one P0 and five P1s. They are filed in `devoid-deferred-list.md`, not here.
 
-## The first action
+## State
 
-**Open `docs/superpowers/plans/2026-09-06-devoid-remediation.md` and continue at the first unchecked task.** It argues from `docs/superpowers/specs/2026-09-06-devoid-remediation-design.md`, which is the evidence register — every finding marked VERIFIED, REPORTED or RETRACTED, with the arbitration rules and the list of what must not change. **Read both. This file is a pointer, not a summary of them.**
+Branch `feat/devoid-v1`, never pushed. ⚠️ **Derive it, do not trust a number written here** — a count in prose is a claim about a tree that no longer exists:
 
-## Where the state actually is — derive it, do not trust a number here
-
-```sh
-git branch --show-current && git rev-list --count main..HEAD && git status --porcelain | wc -l
-rg -n '^### Task ' docs/superpowers/plans/2026-09-06-devoid-remediation.md   # 23 tasks, 4 stages
-.venv/bin/python -m pytest -q && npm run test:coords && npm run test:wipe && npm run test:versions
-npx electron scripts/capture-window.mjs                                      # the only truthful visual surface
+```bash
+git rev-list --count main..HEAD && git status --porcelain | wc -l
+.venv/bin/python -m pytest -q && npm run test:coords && npm run test:wipe && npm run test:versions && npm run test:hooks
+npm run check:contrast && npm run check:greyscale && npx electron scripts/capture-window.mjs
+node ~/.claude/skills/impeccable/scripts/detect.mjs --json web/index.html web/app.css web/app.js
+linksee-memory map status          # the product map's own verdict on the code
+npm run refresh:index              # both indexes + the graph are SNAPSHOTS
 ```
 
-⚠️ **Any commit count, test count or green suite written into prose is a claim about a tree that no longer exists.** The commands above are the answer; a number here would not be.
+The 27-task remediation plan is **complete**. What is open is what the critique found, plus the tracker's standing items.
 
-## How to run it
+## Next
 
-```sh
-npm start            # the dev loop
-npm run gate:ui      # the real-window gate — hidden window, never steals focus
-npm run dist         # Devoid-1.0.0-arm64.dmg
-```
+1. **The P0 first** — `devoid-deferred-list.md`, top item. `map explain seam` already encodes both halves of it as failing checks, so the verify condition is written and runnable before you start.
+2. Then the five P1s in the same file, in order.
+3. `.impeccable/critique/2026-09-07T01-08-32Z__web-index-html.md` is the full critique — the tracker carries the actions, that file carries the reasoning and the persona findings.
 
-## ⚠️ The traps, in the order they bite
+## What NOT to carry
 
-`docs/DEVLOG.md`'s Traps section is the full account. The four that matter most:
+Do not reproduce the critique, the plan, or the tracker into a new document. Point at them. `docs/superpowers/plans/2026-09-06-devoid-remediation.md` and its spec remain the record of how the 27 tasks were decided, including four places the plan was **wrong** and running it proved so.
 
-- **Never open a browser pane.** It reports `visibilityState: hidden`, fires zero `requestAnimationFrame` callbacks, and has produced two false defect claims here.
-- **Falsify the instrument before trusting a red.** `sendInputEvent({type:'mouseMove', buttons:1})` does not set `PointerEvent.buttons` — use `modifiers:['leftButtonDown']`. The first version of the seam-drag assertion reported a defect that was its own.
-- **`element.focus()` does not trigger `:focus-visible`.** Press a real Tab.
-- **Wait ~1s after a state change before measuring.** Transitions run 300–420ms.
+## Unilateral decisions — mine, unreviewed, and named as such
 
-## What is open
+These shipped on my judgement and nobody has looked at them. They are neither approved nor unbuilt.
 
-`devoid-deferred-list.md` is the tracked list and the plan is the sequenced one. **Do not reconstruct either from this file.** Every item there carries a priority, an effort, and a concrete next action; items that closed are in `devoid-resolved-list.md` with their original wording and their outcome.
+- **The contact sheet dims every non-demanding tile** (`brightness(.55) saturate(.65)`) so state wins the squint test. It dims real artwork on a navigation surface; nothing dims on the stage. Margin went 0.4 → **73.0**/255.
+- **The `Answer` button was kept** while the critique argues it should be deleted. I filed the argument rather than acting on it.
+- **`--t-figure` (34px) on the ledger's removed-pixel count.** A large jump, chosen because it is the first number worth looking at.
+- **The North Star holds two metaphors** ("The Void and the Bench — lit by an accretion disk") because both were confirmed true. The spec wants one.
 
-## Standing orders
+## Traps this session paid for — the full list is `docs/DEVLOG.md`
 
-- **Every question goes in an `AskUserQuestion` popup, never in prose.** **Ask before dispatching any subagent** — a skill that forks counts.
-- Push and merge are each asked, every time. Nothing has been pushed.
-- Do not touch: the strip-is-the-app architecture, the palette, the corpus assets, the alpha checkerboard, the empty state.
+⚠️ **A gate that proves EXISTENCE is not a gate.** It happened again inside the tool brought in to catch it: the `seam` map node was declared `suspect`, its check asked only whether `wipe.js`'s functions exist, and the reconciler **refuted the suspect status and returned convergence** — laundering a P0 into a green tick.
+
+⚠️ **Never read `$?` after a pipe** — it reports the last command's status. `VERIFY_EXIT=0` printed over output that said `file added:`.
+
+⚠️ **`ctx_execute` CAPTURES, `ctx_search` FILTERS.** Narrowing inside a capture discards the rest from the index permanently, for zero context saving.
+
+⚠️ **The linksee SKILL.md teaches four tools that do not exist** — upstream bug at 0.11.5, patched locally with a header a `--force` reinstall will remove.
