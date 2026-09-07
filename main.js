@@ -33,37 +33,97 @@ function resolvePython() {
   return null;
 }
 
-/* ── can this Python actually run the engine? ──────────────────────────────
-   ⚠️ WHY THIS EXISTS (2026-09-07 10:57 EDT). The bundled `pyvenv` is a
-   VIRTUALENV, which is a set of shortcuts into
-   /Library/Frameworks/Python.framework/Versions/3.11 — a system-wide install
+/* ── can this Python actually run the engine, and can we fix it if not? ─────
+   ⚠️ WHY THIS EXISTS. The bundled `pyvenv` is a VIRTUALENV — shortcuts into
+   /Library/Frameworks/Python.framework/Versions/3.11, a system-wide install
    that is not part of the bundle. Copy Devoid.app to another Mac and it starts,
-   finds its interpreter shortcut, and then dies somewhere inside an import,
-   which reads as "the app is broken" rather than "this Mac is missing Python".
-   Harkirat's call was to check rather than to ship a relocatable interpreter:
-   look for what is missing, say so plainly, and offer to install it ONCE with
-   permission. Never silently. */
+   finds its interpreter shortcut, and dies inside an import, which reads as
+   "the app is broken" rather than "this Mac is missing Python".
+
+   🔴 THE FIRST VERSION OF THIS WAS BROKEN IN THREE WAYS, ALL FOUND BY ASKING
+   WHETHER ITS REMEDY COULD RUN (2026-09-07 12:01 EDT) — never by running it:
+     1. It offered `pip install --user`. Inside a virtualenv that is a HARD
+        ERROR: "Can not perform a '--user' install. User site-packages are not
+        visible in this virtualenv." A venv installs into itself.
+     2. `electron-builder.yml` excludes `lib/**/pip/**` from the bundle — the
+        prune was written the same day — so `python -m pip` in a packaged app
+        is `No module named pip`. The dialog named a command that could not
+        exist on the machine it was for.
+     3. It could not tell a MISSING MODULE from a DEAD INTERPRETER. Both
+        surface as a non-zero exit, so the case this whole feature exists for —
+        no Python 3.11 on the machine — reported "five packages are missing"
+        and offered to install them into a corpse.
+   The lesson, and it is this repo's founding one: a check is not finished when
+   it detects; it is finished when its REMEDY has been shown to run. */
 const RUNTIME_IMPORTS = ['starlette', 'uvicorn', 'numpy', 'scipy', 'PIL'];
 const PIP_NAMES = { starlette: 'starlette', uvicorn: 'uvicorn', numpy: 'numpy',
                     scipy: 'scipy', PIL: 'Pillow' };
 
-function missingImports(python) {
-  /* One probe per module, so the message can NAME what is missing rather than
-     say "an import failed". Cheap: five interpreter starts, once, at launch. */
-  const missing = [];
-  for (const mod of RUNTIME_IMPORTS) {
-    const r = spawnSync(python, ['-c', `import ${mod}`], { timeout: 20000 });
-    if (r.error || r.status !== 0) missing.push(mod);
+/* One spawn, not five: it reports which imports failed AND whether pip is
+   reachable AND whether the interpreter is a venv, in a single start-up cost.
+   Five sequential 20s probes could stall a first launch for a minute and a half
+   behind a window that had not appeared yet. */
+const PROBE = `
+import json, sys
+out = {"ok": True, "missing": [], "pip": False, "venv": sys.prefix != sys.base_prefix,
+       "version": list(sys.version_info[:2])}
+for m in ${JSON.stringify(RUNTIME_IMPORTS)}:
+    try:
+        __import__(m)
+    except Exception:
+        out["missing"].append(m)
+try:
+    import pip  # noqa: F401
+    out["pip"] = True
+except Exception:
+    pass
+print(json.dumps(out))
+`;
+
+function probePython(python) {
+  const r = spawnSync(python, ['-c', PROBE], { timeout: 30000, encoding: 'utf8' });
+  if (r.error || r.status !== 0) {
+    /* ⚠️ THE INTERPRETER ITSELF DID NOT RUN. On another Mac that means the
+       venv's base Python is absent, which is a different sentence to show a
+       person than "a package is missing" — and pip cannot help with it. */
+    return { dead: true, why: String(r.error || r.stderr || '').trim().split('\n').slice(-2).join(' ') };
   }
-  return missing;
+  try { return { dead: false, ...JSON.parse(r.stdout) }; }
+  catch { return { dead: true, why: 'the interpreter answered with something that was not JSON' }; }
 }
 
-async function offerToInstall(python, missing) {
-  /* ⛔ ASKS FIRST, ALWAYS, and says exactly what it would run. Installing
-     packages onto someone's machine without being told to is not a convenience.
-     --user keeps it out of any system directory. */
-  const names = missing.map((m2) => PIP_NAMES[m2] || m2);
-  const cmd = `${python} -m pip install --user ${names.join(' ')}`;
+/* A Python on this machine that is NOT the bundled venv, for the case where the
+   bundle's base interpreter is gone. Nothing is installed into it without being
+   asked; it is only a candidate. */
+function systemPython() {
+  for (const cand of ['/usr/bin/python3', '/opt/homebrew/bin/python3', '/usr/local/bin/python3']) {
+    if (!fs.existsSync(cand)) continue;
+    const p = probePython(cand);
+    if (!p.dead && p.version && p.version[0] === 3 && p.version[1] >= 10) return { python: cand, probe: p };
+  }
+  return null;
+}
+
+async function offerToInstall(python, probe) {
+  const names = probe.missing.map((m) => PIP_NAMES[m] || m);
+  /* ⛔ NO `--user`. In a virtualenv it is a hard error; outside one it is the
+     right flag. Choose by what the interpreter reported about itself. */
+  const flags = probe.venv ? [] : ['--user'];
+  const cmd = `${python} -m pip install ${flags.join(' ')}${flags.length ? ' ' : ''}${names.join(' ')}`;
+
+  if (!probe.pip) {
+    dialog.showErrorBox(
+      'Devoid needs a few Python packages, and cannot install them itself',
+      `Missing: ${names.join(', ')}.\n\n` +
+        'This copy of Python has no `pip`, so Devoid cannot add them for you — ' +
+        'the packaged app deliberately ships without it to keep the bundle small.\n\n' +
+        'Install them yourself:\n\n' +
+        `    ${python} -m ensurepip --upgrade\n    ${cmd}\n\n` +
+        'or point DEVOID_PYTHON at a Python 3.11 that already has them, and reopen Devoid.'
+    );
+    return false;
+  }
+
   const { response } = await dialog.showMessageBox({
     type: 'warning',
     buttons: ['Install them', 'Quit'],
@@ -74,16 +134,20 @@ async function offerToInstall(python, missing) {
     detail:
       'The engine runs as a Python subprocess, and this Mac is missing ' +
       `${names.length === 1 ? 'one package it needs' : `${names.length} packages it needs`}.\n\n` +
-      'Devoid can install them for you, once, into your user directory — ' +
-      'nothing system-wide, and nothing is installed unless you say so here:\n\n' +
+      'Devoid can install them for you, once, and nothing is installed unless ' +
+      'you say so here:\n\n' +
       `    ${cmd}\n\n` +
+      (probe.venv
+        ? 'They go into the copy of Python inside Devoid, not into your system.\n\n'
+        : 'They go into your user directory, not into your system.\n\n') +
       'This can take a few minutes; scipy and numpy are large.',
   });
   if (response !== 0) return false;
 
-  const r = spawnSync(python, ['-m', 'pip', 'install', '--user', ...names],
+  const r = spawnSync(python, ['-m', 'pip', 'install', ...flags, ...names],
     { timeout: 15 * 60 * 1000, encoding: 'utf8' });
-  if (r.status === 0 && missingImports(python).length === 0) return true;
+  const after = probePython(python);
+  if (r.status === 0 && !after.dead && after.missing.length === 0) return true;
 
   dialog.showErrorBox(
     'That install did not finish',
@@ -560,13 +624,36 @@ app.whenReady().then(async () => {
 
   /* ⚠️ BEFORE the server, not after. A missing package surfaces as a server
      that never answers, and `waitForServer` then blames the port after 40
-     seconds of nothing. Five cheap probes here turn that into a sentence. */
-  const missing = missingImports(found.python);
-  if (missing.length) {
-    console.log(`[devoid] missing: ${missing.join(', ')}`);
-    const fixed = await offerToInstall(found.python, missing);
+     seconds of nothing. One probe here turns that into a sentence. */
+  let py = found.python;
+  let probe = probePython(py);
+  if (probe.dead) {
+    /* the bundle's venv cannot run — almost always its base interpreter is
+       absent on this Mac. Look for a real one before giving up. */
+    const alt = systemPython();
+    if (alt) {
+      console.log(`[devoid] bundled python is dead (${probe.why}); using ${alt.python}`);
+      py = alt.python; probe = alt.probe;
+    } else {
+      dialog.showErrorBox(
+        'Devoid needs Python 3.11 and this Mac does not have it',
+        `Devoid ships a copy of Python, but that copy is a virtual environment: ` +
+          'it needs the Python it was built against, and that is a system-wide ' +
+          'install rather than part of the app.\n\n' +
+          `Tried: ${py}\n${probe.why}\n\n` +
+          'Install Python 3.11 from python.org, or set DEVOID_PYTHON to a ' +
+          'Python 3.11 that has starlette, uvicorn, numpy, scipy and Pillow.'
+      );
+      app.quit();
+      return;
+    }
+  }
+  if (probe.missing.length) {
+    console.log(`[devoid] missing: ${probe.missing.join(', ')} (venv=${probe.venv}, pip=${probe.pip})`);
+    const fixed = await offerToInstall(py, probe);
     if (!fixed) { app.quit(); return; }
   }
+  found.python = py;
 
   startServer(activePort, found.python);
   waitForServer(

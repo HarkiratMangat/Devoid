@@ -190,13 +190,13 @@ Both have the same fix and it is **not small: decode frames to a canvas.** That 
 
 ## Stage 5 — memory
 
-**5.1 The label log — `labels/protection.jsonl`, tracked, in this repo.** ⚠️ **Design it in now; retrofitting discards every answer given before it existed.**
+**5.1 The label log — BUILT, THEN REMOVED. Do not build it again.** ⚠️ **Retired 2026-09-07 12:02 EDT**, on Harkirat's call: *"drop the labels from the app. it's just adding friction and the repo has its own corpus that i supply it anyway."* The reasoning that follows was the reasoning at the time and is kept because it is a good argument that turned out to be answering the wrong question — Devoid never READ the log; the engine repo did, and supplies its labelled data deliberately. `docs/PRODUCT.md` carries the retirement; `labels/README.md` explains the kept file; `devoid-resolved-list.md` carries the closure. **The original text, struck through in effect:**
 
 ⚠️ **Living here costs discoverability, deliberately.** The people who would use these labels are working on the skill's autonomy, in *that* repo, and nothing there surfaces a file in this one. A tracked pointer at `Gif-Background-Remover/scripts/harness/labels/README.md` closes the gap — **keep it accurate if this path moves.** One JSON line per decision: outline colour, enclosure ratio, frame counts, bbox, content type, verdict. The repo holds **981 classified labels** for `edge_hardness` (1,038 entries, 57 of them prose notes rather than classifications) and **zero** for the protection decision, while the project's stated goal is autonomy. ⚠️ The skill repo's own docs still say 714 — stale by 267; do not copy that figure forward. This makes Devoid a labelling instrument for its own engine's hardest unsolved problem, which is a far stronger reason to build it than drag-and-drop.
 
 **5.2 History — `jobs.jsonl`, a separate file and schema from the labels.** Append-only: input path, settings, output path, verdict, timestamp. Re-run with a tweak by loading a line.
 
-**Deliberately separate from `labels/protection.jsonl`.** They look alike and are not: the label log is evidence about the *engine's* hardest decision and may one day be shared or analysed on its own; the job log is a record of *your* work. One writer each, one schema each.
+⚠️ **There is ONE log with one writer now (2026-09-07 12:02 EDT):** `jobs.jsonl`. The separation rule survives in the only form still meaningful — `jobs.jsonl` must never start appending into `labels/protection.jsonl`, which is kept but no longer written. `tests/test_jobs.py` asserts both the separation and that the kept file still exists.
 
 **No stored thumbnails** — point at the output files on disk. A missing file is information: it says that output was deleted.
 

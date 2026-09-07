@@ -19,6 +19,25 @@ The project-local tracker for open work, real TODOs, and reminders specific to t
 
 ## 🐞 Open — real TODOs with an available fix, not yet done
 
+### `[P2 · S · Opus5-Med]` The density rule has three edges nobody has seen *(filed 2026-09-07, from the deep pass that followed building it)*
+
+The rule ships and is asserted at 4, 20 and 60 assets with **exactly one** `needs-you` tile. All three assertions test its happy path. ⚠️ **Falsifying the CHECK is not testing the RULE's edges** — breaking the CSS makes the gate go red, which proves the gate works and says nothing about these:
+
+1. **A crowd where NOTHING needs you.** Two hundred settled assets: every tile 147px, no span, no landmark. The rule's whole justification is findability and in the commonest end state it provides none. That may be correct — nothing needs finding — but it is undecided rather than decided.
+2. **A crowd where EVERYTHING needs you.** Two hundred `needs-you` tiles all spanning two columns degenerates to a uniform grid at double size, which is *worse* than uniform 147px because it doubles the scroll. Nothing caps the span.
+3. **The 40/41 boundary, mid-drop.** One arriving asset flips every tile from 282px to 147px — a 48% jump while the person is watching. Assets arrive one at a time from a drop, and `07-arrival` captures 12, nowhere near it.
+
+**Concrete next action:** decide each one before writing CSS — a floor on the span count, a different landmark when the crowd is uniform, and whether the bucket change should be animated or deferred until the drop settles. Then extend the gate: it currently seeds one demanding tile, so give it a zero-demanding and an all-demanding case.
+
+### `[P2 · XS · Sonnet5-Med]` The engine repo's pointer to this one is wrong, and only Devoid knows *(filed 2026-09-07)*
+
+`scripts/harness/labels/README.md` in `/Applications/Claude Code/Gif-Background-Remover` says Devoid *"records every answer as a labelled row"* at `labels/protection.jsonl`. **That stopped being true 2026-09-07 12:03 EDT** when the writer was removed.
+
+⚠️ **The correction is flagged in this repo's `CLAUDE.md` and filed NOWHERE in that repo** — so a session working on the engine's autonomy reads a confident sentence and believes it. That repo has already had to clean up exactly this shape once: `gif-deferred-list.md:185` reads *"This was previously described in Devoid's HANDOFF.md as already filed here. It was not."* **Filing it there is the fix; flagging it here is what caused that entry.**
+
+**Concrete next action:** branch in the engine repo, correct the README's claim, and file the item in `gif-deferred-list.md` so the correction is visible from inside that repo. Push and merge are asked separately, there as here.
+
+
 ### `[P1 · S · Sonnet5-High]` Every render pays for a second full analysis the app already ran *(filed 2026-09-05)*
 
 `server/render.py:143` builds every render argv through `cli.build_argv(..., auto=True)`, which always emits `--auto`. `--auto`'s pass 1 is `recommend()`, which is the same analysis `POST /api/assets/{id}/analyze` already ran and stored on the asset. **So the engine recomputes, per render, an answer Devoid is holding in memory** — measured in the engine repo at 39–47% of a run's cost, ~18s on a corpus asset here.

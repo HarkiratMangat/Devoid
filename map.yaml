@@ -58,9 +58,23 @@ nodes:
       The engine is never bundled — it is the source of truth and must not be
       forked into a copy that silently drifts.
     reality:
-      kind: signal_present
-      path: main.js
-      signal: ["function resolvePython"]
+      checks:
+        - claim: the app resolves an interpreter rather than assuming one
+          kind: signal_present
+          path: main.js
+          signal: ["function resolvePython"]
+        - claim: it checks that interpreter can actually run the engine, before the server
+          kind: signal_present
+          path: main.js
+          signal: ["function probePython"]
+          # ⚠️ ADDED 2026-09-07 12:02 EDT. Resolving a PATH and running an
+          # INTERPRETER are different claims, and the node asserted only the
+          # first. On another Mac the bundled venv's base Python is absent, so
+          # the path resolves and the interpreter is dead.
+        - claim: it never offers a --user install into a virtualenv
+          kind: signal_absent
+          path: main.js
+          signal: ["'--user',"]
 
   - id: empty-table
     layer: surface
@@ -84,9 +98,25 @@ nodes:
       Sorted by state, and the field dims so the tile that needs you wins a
       desaturated blur. Asserted at 8/255 by check:greyscale; measured at 73.0.
     reality:
-      kind: signal_present
-      path: web/app.js
-      signal: ["const renderSheet"]
+      checks:
+        - claim: the sheet renders from state, not from arrival order
+          kind: signal_present
+          path: web/app.js
+          signal: ["const renderSheet"]
+        - claim: the sheet responds to how much is on it
+          kind: signal_present
+          path: web/app.js
+          signal: ["dataset.density"]
+          # ⚠️ ADDED 2026-09-07 12:02 EDT. The node was `signal_present` on
+          # `const renderSheet` alone, so the sheet could regress to ONE tile
+          # size for every batch — the exact defect closed today — and the map
+          # would still report this node verified. "17/17 verified" was being
+          # quoted as coverage when it was coverage of what the nodes happened
+          # to name.
+        - claim: in a crowd the demanding states keep their size
+          kind: signal_present
+          path: web/app.css
+          signal: ["grid-column:span 2"]
 
   - id: question
     layer: surface
@@ -187,12 +217,16 @@ nodes:
     layer: surface
     stage: adopt
     status: active
-    statement: The two answers sit under their own half of the seam.
-    note: The choice and the evidence for it are one object.
+    statement: The two answers sit under their own half of the seam, and picking one IS the answer.
+    note: >-
+      The choice and the evidence for it are one object. ⚠️ The `Answer` button
+      was deleted 2026-09-07 12:02 EDT — it was the loudest control in the
+      column and a second commit step behind a decision already made. This node
+      asserted only that a bar renders, so its return would have gone unseen.
     reality:
       kind: signal_present
       path: web/app.js
-      signal: ["function renderAnswerBar"]
+      signal: ["function pickAnswer"]
 
   - id: ledger
     layer: surface

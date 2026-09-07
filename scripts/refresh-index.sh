@@ -37,6 +37,42 @@ echo "── prose ────────────────────�
 context-mode index "$ROOT/docs" --source project:devoid-docs  --project "$ROOT" --ext .md --max-files 60 --max-depth 4 | sed 's/^/  /'
 context-mode index "$ROOT"      --source project:devoid-rules --project "$ROOT" --ext .md --max-files 40 --max-depth 1 | sed 's/^/  /'
 
+echo "── the ENGINE repo ───────────────────────────────────────"
+# ⚠️ ADDED 2026-09-07 11:59 EDT. The gif repo was indexed and then had NO
+# freshness mechanism — `ctx_index` is a snapshot with no change detection, so
+# a session told to search `project:gif-*` would have been served whatever that
+# repo looked like on the day it was indexed. Devoid is a front end for it and
+# its lessons/investigations move independently of this checkout.
+GIF="/Applications/Claude Code/Gif-Background-Remover"
+if [ -d "$GIF" ]; then
+  for spec in \
+    "SKILL.md:project:gif-skill" \
+    "CLAUDE.md:project:gif-rules" \
+    "README.md:project:gif-readme" \
+    "gif-deferred-list.md:project:gif-deferred" \
+    "gif-resolved-list.md:project:gif-resolved" \
+    "scripts/harness/labels/README.md:project:gif-harness-labels"; do
+    rel="${spec%%:*}"; src="${spec#*:}"
+    context-mode index "$GIF/$rel" --source "$src" --project "$GIF" --ext .md | sed 's/^/  /' | head -1
+  done
+  for spec in \
+    "references:project:gif-references" \
+    "docs/investigations:project:gif-investigations" \
+    "docs/plans:project:gif-plans" \
+    "docs/handoffs:project:gif-handoffs-SUPERSEDED"; do
+    rel="${spec%%:*}"; src="${spec#*:}"
+    context-mode index "$GIF/$rel" --source "$src" --project "$GIF" --ext .md --max-files 20 --max-depth 2 | sed 's/^/  /' | head -1
+  done
+  # ⚠️ .py deliberately, and ONLY this file: it is the engine, and its
+  # docstrings carry findings no other document repeats. Its STRUCTURE lives in
+  # the code graph below, which is the right tool for "what calls this".
+  context-mode index "$GIF/scripts/remove_gif_background.py" --source project:gif-engine --project "$GIF" --ext .py | sed 's/^/  /' | head -1
+  ~/.local/bin/codebase-memory-mcp cli index_repository --repo_path "$GIF" \
+    | python3 -c 'import sys,json; d=json.load(sys.stdin); print("  %s: %d nodes, %d edges" % (d["project"], d["nodes"], d["edges"]))'
+else
+  echo "  SKIPPED — $GIF is not on this machine"
+fi
+
 echo "── product map ───────────────────────────────────────────"
 # The map's verdicts go stale the same way: `reconcile` re-runs every node's
 # reality checks against the code and OVERRIDES the hand-declared status.

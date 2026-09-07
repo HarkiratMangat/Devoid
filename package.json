@@ -18,7 +18,8 @@
     "test:hooks": "bash .claude/hooks/hooks.test.sh",
     "check:detector": "node scripts/check_detector.mjs",
     "check:design": "node scripts/check_design.mjs",
-    "check:tracker": "python3 scripts/audit_tracker.py --diff main"
+    "check:tracker": "python3 scripts/audit_tracker.py --diff main",
+    "test": ".venv/bin/python -m pytest -q && npm run test:wipe && npm run test:coords && npm run test:versions && npm run test:hooks && npm run check:contrast && python3 scripts/check_font_axes.py --check && npm run check:detector && npm run check:design && npm run gate:ui && npm run check:greyscale && npm run check:tracker"
   },
   "author": "Harkirat Mangat",
   "repository": {
