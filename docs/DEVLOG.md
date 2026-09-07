@@ -330,6 +330,26 @@ Lifting the last P3 out of the tracker, the slice ran to the next `^### ` and to
 
 ---
 
+### A PASS that says nothing about what it measured — 2026-09-07 11:13 EDT
+
+The density rule's three assertions went green on the first run, and `check()` is silent on success — so the gate reported PASS without ever printing a tile width. The rule could have been holding by coincidence and it would have read identically.
+
+**The numbers are printed now**, beside the rAF and plotter line: `density few 365px · many 282px · crowd 147px · needs-you in a crowd 325px`. ⚠️ The first attempt put that line in the summary block, which runs BEFORE the probe, and the gate died on `Cannot access 'density' before initialization`.
+
+**A silent assertion is a check; a printed number is evidence.** This repo's own rule is that anything measured belongs in the docs with its numbers, and a gate that measures without reporting makes that impossible to obey.
+
+---
+
+### Half a complaint did not survive being looked at — 2026-09-07 11:13 EDT
+
+The reframed contact-sheet item said eight assets in a wide window "reads as atmosphere rather than as a small batch". Building the density rule and measuring it: eight assets at 262px in a 1280px window is **4 columns by 2 rows**. That is not sparse.
+
+**The `few` threshold was left at ≤6 where a previous decision put it**, rather than moved to make the claim true. The real defect was entirely at the other end — 262px at 60 and at 200 — and that is what changed.
+
+**A filing's diagnosis is not evidence, including when the filing is yours from an hour ago.**
+
+---
+
 ## Decisions, and what was tried first
 
 ### The world: the ground is the void, the tools stay the matte world

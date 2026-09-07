@@ -24,6 +24,10 @@ What shipped, when, and why. Newest first.
 
 ⚠️ **The commit count was hard-coded here as 28 and had drifted to 67 by 2026-09-07.** Derive it — `git rev-list --count main..HEAD` — rather than reading a number out of prose, which is this repo's own standing rule.
 
+### The contact sheet knows how much is on it — 2026-09-07 11:13 EDT
+
+Three density buckets instead of two: **365px** at six or fewer, **282px** to forty, **147px** beyond. And in a crowd the tile that needs you keeps two columns — **325px against 147px** — so it is findable by shape rather than by reading. Asserted at three counts and falsified.
+
 ### The label log stops being written, and the app checks its own Python — 2026-09-07 11:00 EDT
 
 Answering no longer appends to `labels/protection.jsonl`: the engine repo's harness is where labelled data lives and is supplied deliberately. The file and its history stay. And the bundle drops ~36 MB of build machinery while `main.js` now probes for its five runtime imports before starting the server, naming what is missing and asking permission before installing anything.

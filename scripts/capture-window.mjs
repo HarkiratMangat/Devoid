@@ -807,6 +807,58 @@ app.whenReady().then(async () => {
   console.log(`  rAF ${raf.frames}f/500ms · plotter ${plot.w}x${plot.h} on ${opened.state || 'nothing'}`
     + ` · history ${hist.rows} row(s) · reduced-motion ${rm.reduce}`);
 
+
+  /* ── the density rule, asserted at three counts ─────────────────────────
+     ⚠️ 2026-09-07 11:06 EDT. The sheet had two buckets and the tile measured
+     262px at 8, 20, 60 AND 200 assets — a rule that holds at one size is the
+     thing being replaced, so this asserts it at three.
+     ⚠️ The asset list is PADDED IN THE RENDERER rather than registered: this
+     measures grid geometry, and registering 200 real assets would cost a
+     minute of analysis to learn nothing about layout. The padding clones a
+     real asset object so `tile()` renders the same shape it always does. */
+  const density = await probe(`
+    const real = S.assets.slice();
+    const pad = (n) => {
+      const out = [];
+      for (let i = 0; i < n; i++) out.push({ ...real[i % real.length], id: 'pad-' + i });
+      if (out[0]) out[0] = { ...out[0], state: 'needs-you' };
+      return out;
+    };
+    const at = (n) => {
+      S.assets = pad(n); S.sel = new Set(); render();
+      const sheet = document.getElementById('sheet');
+      const tiles = [...sheet.querySelectorAll('.frame')];
+      const demanding = tiles.find((t) => t.dataset.state === 'needs-you');
+      const settled = tiles.find((t) => t.dataset.state !== 'needs-you');
+      return {
+        bucket: sheet.dataset.density,
+        tile: settled ? Math.round(settled.getBoundingClientRect().width) : null,
+        demanding: demanding ? Math.round(demanding.getBoundingClientRect().width) : null,
+      };
+    };
+    const out = { few: at(4), many: at(20), crowd: at(60) };
+    S.assets = real; S.sel = new Set(); render();
+    return out;
+  `);
+  check('the sheet has a density rule, not one tile size for every batch',
+        density.few.tile > density.many.tile && density.many.tile > density.crowd.tile,
+        `few ${density.few.tile}px > many ${density.many.tile}px > crowd ${density.crowd.tile}px`);
+  check('in a crowd the tile that needs you stays findable by SIZE',
+        density.crowd.demanding > density.crowd.tile,
+        `needs-you ${density.crowd.demanding}px against a settled ${density.crowd.tile}px`);
+  check('the buckets are the ones app.js names',
+        density.few.bucket === 'few' && density.many.bucket === 'many'
+          && density.crowd.bucket === 'crowd',
+        `${density.few.bucket} / ${density.many.bucket} / ${density.crowd.bucket}`);
+
+  /* ⚠️ PRINTED, not just asserted, and HERE rather than in the summary line —
+     which runs earlier and referenced `density` before it existed. check() is
+     silent on success, so a PASS said the rule held without saying what it
+     measured, and this repo's rule is that anything measured belongs in the
+     docs with its numbers. */
+  console.log(`  density few ${density.few.tile}px · many ${density.many.tile}px`
+    + ` · crowd ${density.crowd.tile}px · needs-you in a crowd ${density.crowd.demanding}px`);
+
   /* ⚠️ CAPTURES LAST, ASSERTIONS FIRST, 2026-09-07 02:09 EDT. These two shots
      close the open asset to photograph the sheet, and every attempt to put it
      back afterwards broke something else — the artwork assertion, then the

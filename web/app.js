@@ -282,7 +282,26 @@ const renderSheet = () => {
   const RANK = { 'needs-you': 0, blocked: 1, refused: 2, failed: 3 };
   const order = [...S.assets].sort((x, y) =>
     (RANK[stateOf(x)] ?? 9) - (RANK[stateOf(y)] ?? 9));
-  $('#sheet').toggleAttribute('data-few', S.assets.length <= 6);   // F37
+  /* ⚠️ THE DENSITY RULE (2026-09-07 11:05 EDT). The sheet had two buckets —
+     six or fewer, and everything else — so the tile measured 262px at 8, 20,
+     60 AND 200 assets. Measured, not guessed: `scripts/measure_scale.mjs`.
+     Eight assets in a wide window read as atmosphere rather than as a small
+     batch; two hundred at the same size is a scroll with no landmarks, where
+     the only way to find the one that needs you is to pass 199 that do not.
+     Neither is a performance or a contrast failure. They are the same missing
+     idea, which is that the sheet had no notion of how much is on it.
+     THE THRESHOLDS HAVE REASONS, not round numbers:
+       few   ≤6   the corpus, and a batch you can take in at once.
+       many  ≤40  at 228px and a 1280px window that is ~5 columns and 8 rows,
+                  about two screens — still something you scroll, not search.
+       crowd >40  past two screens the sheet stops being a glance, so the tile
+                  shrinks and the DEMANDING states keep their size instead.
+     ⚠️ State setting size is the same rule this surface already lives by,
+     extended from appearance to geometry: a needs-you tile spans two columns
+     in a crowd, so it is findable by shape at any zoom, in greyscale, and
+     without reading a word. */
+  const n = S.assets.length;
+  $('#sheet').dataset.density = n <= 6 ? 'few' : n <= 40 ? 'many' : 'crowd';
   $('#sheet').replaceChildren(...order.map(a => tile(a, true)));
 };
 const renderEdge  = () => $('#edge').replaceChildren(...S.assets.map(a => tile(a, false)));

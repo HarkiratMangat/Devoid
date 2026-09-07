@@ -19,6 +19,35 @@ Heading shape, matching the engine repo's archive:
 
 ## Closed items
 
+## ✅ The contact sheet is one fixed tile size for every batch — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: the sheet has a density rule, and it is asserted at three counts.** The old rule had two buckets — six or fewer, everything else — so the tile measured **262px at 8, 20, 60 and 200**.
+
+| bucket | count | tile | why that threshold |
+|---|---|---|---|
+| `few` | ≤6 | **365px** | a batch you take in at once. Pre-existing (F37), unchanged |
+| `many` | 7–40 | **282px** | at 228px min in a 1280px window that is ~5 columns and 8 rows — about two screens, still something you scroll rather than search |
+| `crowd` | >40 | **147px** | past two screens the sheet stops being a glance |
+
+**And size became a state channel, which is the part that answers "how do I find the one that needs me".** Shrinking every tile equally would make 200 assets scannable and still leave no landmark. In a crowd the demanding states keep **two columns — 325px against a settled 147px** — so the tile that needs you is findable by SHAPE: at any zoom, in greyscale, without reading a word. That is this surface's own rule (state sets the hierarchy, never the artwork's colours) extended from appearance to geometry.
+
+**Falsified.** Making `crowd` identical to `many` and removing the span produces `FAILED (2)` naming both numbers — *"saw few 365px > many 282px > crowd 282px"* and *"needs-you 282px against a settled 282px"*. `gate:ui` prints the four numbers on every run, because `check()` is silent on success and a PASS that says nothing about what it measured is not evidence.
+
+⚠️ **A cost, measured rather than glossed:** at 200 assets first paint went **326 → 401ms** and settle **1100 → 1221ms**, with RSS **656 → 731 MB**. The span-2 layout is not free. It is still flat enough that the numbers do not move between 60 and 200.
+
+⚠️ **8 assets still land in `many`, not `few`.** The reframed item said eight in a wide window "reads as atmosphere"; at 262px in a 1280px window it is 4 columns by 2 rows, which is not sparse. That half of the complaint did not survive being looked at, and the threshold was left where a previous decision put it rather than moved to fit a claim.
+
+### `[P2 · M · Opus5-High]` The contact sheet is one fixed tile size for every batch *(reframed 2026-09-07; filed 2026-09-05 as "never been seen with a real batch")*
+
+⚠️ **The original question was wrong and Harkirat replaced it.** It asked whether 262px *"looks right"* at twenty. His reframe: *"the question isn't 'does it look right', the question is 'how can it be improved to work in all situations/scenarios, regardless of sheet size? How can it be user friendly? How can it be intuitive and useful?'"*
+
+**The measurements are done and they are not the problem.** `npx electron scripts/measure_scale.mjs <n>` at 8, 20, 60 and 200 real assets: first paint flat at ~330ms, settle ~1.09s, RSS growing about 1.06 MB per asset — and **the tile is 262px at every single size**. Captures in `local/scale-shots/`. Nothing performs badly; the sheet simply does not respond to how much is on it.
+
+**What "works at any size" would mean, as questions rather than answers:** eight assets on a 1280px window leaves the sheet mostly empty and reads as atmosphere rather than as a small batch; two hundred at 262px is a scroll with no landmarks and no way to find the one that needs you except by scrolling past 199 that do not. Neither is a contrast or a performance failure — both are the same missing idea, which is that the sheet has no notion of density.
+
+**Concrete next action:** decide the density rule before writing any CSS — does the tile scale with count, with viewport, or with state (the needs-you tile staying large while settled ones shrink)? Then make `gate:ui` assert it at two counts, because a rule that holds at one size is the thing being replaced.
+
+
 ## ✅ `content_type` is permanently "unknown" in every label row — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
 
 **Outcome: closed by removing the log's writer, which is a bigger answer than the column.** Harkirat, 2026-09-07: *"drop the labels from the app. it's just adding friction and the repo has its own corpus that i supply it anyway."*
