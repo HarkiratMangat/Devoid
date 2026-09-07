@@ -24,6 +24,13 @@ def client(isolated_logs):
 
 
 def test_engine_status_shape(client):
+    """⚠️ EQUALITY HERE IS THE ASSERTION, and it stays (2026-09-07 10:29 EDT).
+
+    This test exists to pin the frozen shape in ``docs/API-CONTRACT.md``, so a
+    key appearing or vanishing SHOULD turn it red — that is the whole job. The
+    flow tests below were relaxed to supersets because exactness was incidental
+    there; do not relax this one to match them.
+    """
     r = client.get("/api/engine/status")
     assert r.status_code == 200
     body = r.json()
@@ -56,17 +63,24 @@ def test_end_to_end_register_then_analyze(client, fast_asset):
     assert len(created) == 1
     # ``url`` joined the shape when GET /api/assets/{id}/source landed — the
     # frontend can no longer derive an image URL from the basename.
-    assert set(created[0]) == {"id", "path", "ext", "state", "url"}
+    # ⚠️ SUPERSET, NOT EQUALITY (2026-09-07 10:29 EDT). This is a FLOW test —
+    # register, then analyse — and the shape is incidental to it. As equality
+    # it turned `url` (a deliberate, documented contract addition) into a red
+    # suite, which trains people to edit the test rather than read it. Assert
+    # the keys this test depends on; the frozen contract is asserted, on
+    # purpose and exactly, by `test_engine_status_shape` here and by
+    # `test_questions_matches_the_contract_shape` in tests/test_validate.py.
+    assert {"id", "path", "ext", "state", "url"} <= set(created[0])
     assert created[0]["state"] == "loading"
     asset_id = created[0]["id"]
 
     r = client.post(f"/api/assets/{asset_id}/analyze")
     assert r.status_code == 200, r.text
     body = r.json()
-    assert set(body) == {"state", "questions", "engine_version", "took_ms"}
+    assert {"state", "questions", "engine_version", "took_ms"} <= set(body)
     assert body["state"] in ("needs-you", "refused", "ready")
     q = body["questions"]
-    assert set(q) == {
+    assert set(q) >= {
         "ambiguous_protection",
         "nameable_fade",
         "recommended_format",
@@ -189,7 +203,7 @@ def test_preview_pair_on_a_real_asset(client, fast_asset, monkeypatch):
     assert {"a_url", "b_url", "ledger_a", "ledger_b", "format_is_gif"} <= set(body)
     assert body["format_is_gif"] is True  # the source is a .gif
     for side in ("ledger_a", "ledger_b"):
-        assert set(body[side]) == {"bg", "art", "total"}
+        assert {"bg", "art", "total"} <= set(body[side])
         assert body[side]["total"] > 0
     # The two answers must actually differ, or the seam has nothing to show.
     assert body["ledger_a"] != body["ledger_b"]
@@ -224,3 +238,55 @@ def test_history_reads_newest_first(client, tmp_path, fast_asset):
     rows = client.get("/api/history?limit=2").json()
     assert len(rows) == 2
     assert rows[0]["output_path"] == "/tmp/out2.webp"
+
+
+def test_a_rerun_says_when_the_engine_moved_under_that_line(client, fast_asset, isolated_logs):
+    """⚠️ PLAN.md's edge case, closed at the point where it costs something.
+
+    `engine_version` was RECORDED on every jobs row and never COMPARED, so two
+    installs whose `--recommend` differ semantically both passed — the
+    validation boundary checks JSON shape, not engine behaviour. A rerun
+    replays one run's settings against whatever engine resolves NOW, which
+    `docs/PLAN.md` 0.2 notes may be the synced claude.ai bundle rather than the
+    checkout. Written 2026-09-07 10:33 EDT.
+
+    It reports; it does not refuse. Whether an older result is worth
+    reproducing is a judgement, and the person makes it.
+    """
+    from server import jobs
+
+    jobs.append_job({
+        "input_path": str(fast_asset),
+        "settings": {"overrides": {"feather": 2}, "regions": [], "goal": {}, "answers": {}},
+        "output_path": str(fast_asset),
+        "verdict": "done",
+        "engine_version": "sha256:deadbeefcafe",   # deliberately not the live one
+        "state": "done",
+    })
+    history = client.get("/api/history?limit=5").json()
+    assert history, "the isolated log has no rows — the fixture did not take"
+    line_id = history[0]["line_id"]
+
+    body = client.post(f"/api/history/{line_id}/rerun", json={}).json()
+    assert body["engine_version"] == "sha256:deadbeefcafe"
+    assert body["engine_version_now"] != "sha256:deadbeefcafe"
+    assert body["engine_changed"] is True, "a moved engine must be reported"
+    # and the settings still come back — reporting is not refusing
+    assert body["settings"]["overrides"] == {"feather": 2}
+
+
+def test_a_rerun_is_silent_when_the_engine_did_not_move(client, fast_asset, isolated_logs):
+    """The other half, so the flag is not simply always true."""
+    from server import engine, jobs
+
+    jobs.append_job({
+        "input_path": str(fast_asset),
+        "settings": {"overrides": {}, "regions": [], "goal": {}, "answers": {}},
+        "output_path": str(fast_asset),
+        "verdict": "done",
+        "engine_version": engine.engine_version(),
+        "state": "done",
+    })
+    line_id = client.get("/api/history?limit=5").json()[0]["line_id"]
+    body = client.post(f"/api/history/{line_id}/rerun", json={}).json()
+    assert body["engine_changed"] is False

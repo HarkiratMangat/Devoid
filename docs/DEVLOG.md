@@ -295,6 +295,29 @@ The emitting rail read **2.6/255** off its surroundings under a blur. A stronger
 
 ---
 
+### A ported gate whose falsifier would not fire, twice — 2026-09-07 10:34 EDT
+
+`scripts/audit_tracker.py` was ported from the gif repo to enforce the conservation rule. It reported *"conservation holds"* — and reported it again after an entire tracker item was deleted with nothing archived.
+
+**Two different causes, both structural, neither visible in the code:**
+
+1. It diffed `main...HEAD`, which compares **commits**. An uncommitted deletion is invisible, and before the commit is exactly when this gate is useful.
+2. Fixed to diff the working tree, it still passed — because **an item filed and closed on the same branch never existed at the merge base**, so its addition and its removal cancel. That is this branch's ordinary pattern.
+
+**A port inherits the source repo's assumptions along with its code.** The gif repo's items predate its branches, so a merge-base diff is the right question there and the wrong one here. The gate runs two scopes now and names which one failed.
+
+⚠️ **The only reason either defect was found is that the falsifier was run.** A gate reporting "holds" on a branch where nothing is wrong looks identical to one that cannot fail.
+
+---
+
+### A slice that stopped at the wrong heading level — 2026-09-07 10:34 EDT
+
+Lifting the last P3 out of the tracker, the slice ran to the next `^### ` and took **13 lines instead of 9** — walking past a `## ✅` section heading and the `---` above it. The size assertion caught it before anything was written.
+
+**A deletion asserts what survives, and the heading level is part of the boundary.** Stop at `^#{2,3} `, not at `^### `.
+
+---
+
 ## Decisions, and what was tried first
 
 ### The world: the ground is the void, the tools stay the matte world

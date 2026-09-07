@@ -52,6 +52,7 @@ Server: `server/app.py` mounts these under `/api/*` alongside the existing stati
 
 - `GET /api/history?limit=N` → most recent `N` lines of `jobs.jsonl`, newest first.
 - `POST /api/history/{line_id}/rerun` → loads that line's `settings` back onto the named asset (re-registers it if the input path still exists; `404` with `{"error": "input_missing"}` if not — PLAN.md edge case "source file moved/renamed").
+  - ⚠️ **Additive 2026-09-07 10:30 EDT:** the response also carries `engine_version` (the version the row recorded), `engine_version_now` (the live one) and `engine_changed: bool`. Recording a version and never comparing it is what `PLAN.md`'s edge-case table calls out — two installs whose `--recommend` differ semantically both pass a shape check. The route reports; it does not refuse.
 
 ## Schemas (append-only, one writer each — PLAN.md 5.1/5.2, `server/jobs.py` and `server/labels.py`)
 

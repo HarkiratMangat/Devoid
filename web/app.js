@@ -1312,9 +1312,20 @@ async function loadHistoryLine(line) {
   const restored = ['settings'];
   if (regions.length) restored.push(`${regions.length} region${regions.length > 1 ? 's' : ''}`);
   const answers = Object.keys((settings.answers || {})).length;
+  /* ⚠️ THE ENGINE MAY HAVE MOVED UNDER THIS LINE (2026-09-07 10:30 EDT).
+     Every row records `engine_version` and nothing ever compared it, so a
+     replay against a different engine looked exactly like a replay against the
+     same one. It is said here rather than blocked: the settings are still the
+     settings, and whether an older result is worth reproducing is a judgement.
+     The state stays `not-checked`, which is what it is. */
+  const engineMoved = r.body.engine_changed === true;
   setBanner('not-checked',
     `Loaded ${restored.join(' and ')} from that run` +
     (answers ? '. Its answers were not restored — this copy has not been analysed yet' : '') +
+    (engineMoved
+      ? `. ⚠️ That run used a different engine (${String(r.body.engine_version || '?').slice(0, 19)}), `
+        + `this one is ${String(r.body.engine_version_now || '?').slice(0, 19)} — the result may not match`
+      : '') +
     /* ⚠️ F17. Named a button that does not exist. */
     '. Nothing is cut until you press Cut',
     null);

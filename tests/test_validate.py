@@ -38,6 +38,13 @@ def test_parses_a_real_captured_payload(recommend_sample):
 
 
 def test_questions_matches_the_contract_shape(recommend_sample):
+    """⚠️ EQUALITY HERE IS THE ASSERTION, and it stays (2026-09-07 10:29 EDT).
+
+    Its name is its contract: this pins the questions payload frozen in
+    ``docs/API-CONTRACT.md``. An exact-key-set assertion is a trap in a FLOW
+    test, where the shape is incidental — see tests/test_api.py, relaxed for
+    exactly that reason — and is the point in a CONTRACT test.
+    """
     q = parse_recommend(recommend_sample).questions()
     assert set(q) == {
         "ambiguous_protection",

@@ -19,6 +19,57 @@ Heading shape, matching the engine repo's archive:
 
 ## Closed items
 
+## ✅ An exact-key-set assertion made a contract addition a test failure — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: swept, and the sweep found the rule has two sides.** Thirteen exact-shape assertions were reviewed and they split cleanly.
+
+**Relaxed to supersets** — the ones inside `test_end_to_end_register_then_analyze` and the preview-pair flow. The shape is incidental to a flow test, and as equality it turned `url`, a deliberate documented addition, into a red suite.
+
+**Kept exact, and now say why** — `test_engine_status_shape` and `test_questions_matches_the_contract_shape`. Their job IS the frozen shape in `docs/API-CONTRACT.md`, so a key appearing or vanishing SHOULD turn them red. Each carries a docstring saying so and pointing at the other kind, because the next person sweeping this pattern will otherwise "fix" them too.
+
+⚠️ **`tests/test_journal.py`'s job-id set comparison was left alone** — that is a CONTENT assertion about which jobs are in flight, not a shape assertion, and it reads similar to the pattern being swept.
+
+**The rule, as the filing wrote it, holds with one clause added:** assert the keys you depend on, not the absence of keys you do not — *unless the absence is the assertion*, in which case say so in the test.
+
+### `[P3 · XS · Sonnet5-Low]` An exact-key-set assertion made a contract addition a test failure *(filed 2026-09-06)*
+
+`tests/test_api.py::test_end_to_end_register_then_analyze` asserted `set(created[0]) == {"id","path","ext","state"}`. Publishing `url` from `Asset.public()` — a deliberate, documented contract addition — turned that into a red suite. The assertion was widened in the same change.
+
+**Worth keeping because the shape recurs:** an exact-key-set assertion on a public payload converts every additive change into a failure, which trains people to edit the test rather than read it. **Assert the keys you depend on, not the absence of keys you do not.** Sweep `tests/` for other exact-shape assertions before the next contract change.
+
+## ✅ This file's conservation rule is unenforced — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: gated, and the port needed a correction the source repo never needed.** `scripts/audit_tracker.py` (`npm run check:tracker`) ports the conservation half of the gif repo's `audit_docs.py`, keeping its three hard-won false-positive corrections: a unified diff renders an EDIT as a removal plus an addition, a markdown heading is structure and not an item, and both the fingerprint window and the haystack must be normalised the same way.
+
+🔴 **THE PORT'S OWN FALSIFIER WOULD NOT FIRE, AND THAT IS WHY THE DEFECT WAS FOUND.** Deleting a whole item and running the gate reported *"conservation holds"*. Two causes, in order: the first version diffed COMMITS (`main...HEAD`), so an uncommitted deletion was invisible; and then, even against the working tree, **an item filed and closed on the SAME BRANCH never existed at the merge base**, so the addition and the deletion cancel and the diff shows nothing. That is exactly this branch's pattern — several items were filed and closed within it.
+
+**It runs two scopes now.** `branch` asks whether the branch as a whole dropped something it never archived; `working` asks whether the change about to be committed does. **Falsified against the second:** deleting one item exits **1** naming the first removed line; restoring it exits **0**.
+
+⚠️ **Not wired into a pre-commit hook.** It is `npm run check:tracker`, and the standing preference in this repo is against Stop-time sweeps that fire while work is in progress.
+
+### `[P3 · S · Sonnet5-Med]` This file's conservation rule is unenforced *(filed 2026-09-05)*
+
+The gif repo gates its tracker with `python3 scripts/audit_docs.py --diff <base>`, which fails if the deferred list loses a substantive line that cannot be traced into the archive by content. **That gate exists because that repo shipped a tracker that lied about its own contents.** Devoid has the rule and not the gate.
+
+**Concrete next action:** port the tracker half of `audit_docs.py` — it is content-matching against the archive, not a diff heuristic — and wire it into whatever gate `docs/PLAN.md` names for docs. Small, and worth doing before this file has enough closed items for the drift to be invisible.
+
+## ✅ Two engine versions can both validate, and nothing compares them — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: compared at the one place a stale replay costs something.** The rerun route now returns `engine_version` (what the row recorded), `engine_version_now` (what resolves today) and `engine_changed: bool` — an **additive** contract change, recorded in `docs/API-CONTRACT.md`. `loadHistoryLine` puts it in the banner: *"That run used a different engine (…), this one is (…) — the result may not match"*.
+
+**It reports; it does not refuse.** The settings still load. Whether an older result is worth reproducing is a judgement, and `PLAN.md` 0.2's note that the resolver may find the synced claude.ai bundle rather than the checkout is precisely a case where the person, not the app, should decide.
+
+**Two tests, both directions** — a row with a bogus version must set the flag, and a row with the live version must not, so the flag cannot be simply always true. ⚠️ Both use the `isolated_logs` fixture: a test must never append to the tracked `jobs.jsonl` or the label corpus.
+
+### `[P3 · XS · Sonnet5-Low]` Two engine versions can both validate, and nothing compares them *(filed 2026-09-05, `PLAN.md`'s edge-case table)*
+
+`engine.engine_version()` is recorded on the asset and written into every `jobs.jsonl` row — that half of the edge case is done. What is missing is any **comparison**: the validation boundary checks JSON *shape*, not engine *semantics*, so two installs whose `--recommend` differ meaningfully both pass. `docs/PLAN.md` 0.2 notes the resolver may find the synced claude.ai bundle, which is a different version of the skill.
+
+**Concrete next action:** warn when a history line's recorded `engine_version` differs from the live one before offering a rerun — the rerun route (`POST /api/history/{line_id}/rerun`) is where a stale-engine replay actually costs something.
+
+---
+
+
 ## ✅ The impeccable skill has never been set up here, only its detector — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
 
 **Outcome: set up, and the expensive half was the briefs.** `.impeccable/` now holds `config.json`, `config.local.json`, a critique snapshot and — the part the filing called expensive — **three surface briefs**: `contact-sheet`, `open-view`, `empty-table`. `surface-brief.mjs list` reads all three. Every impeccable command reads a brief for the surface's MODE before anything else, and without one each command re-infers it, which the skill's docs name as the source of generic advice. All three are **Operate**, which `PRODUCT.md` already settled.

@@ -24,6 +24,10 @@ What shipped, when, and why. Newest first.
 
 ⚠️ **The commit count was hard-coded here as 28 and had drifted to 67 by 2026-09-07.** Derive it — `git rev-list --count main..HEAD` — rather than reading a number out of prose, which is this repo's own standing rule.
 
+### The three P3s — 2026-09-07 10:34 EDT
+
+The tracker's conservation rule is a gate (`npm run check:tracker`) rather than an honour system, and it took two corrections before its own falsifier would fire. A rerun now says when the engine moved under the line it is replaying. And the exact-key-set sweep found the rule has two sides: relaxed in flow tests, kept and labelled in the two tests whose job is the frozen contract.
+
 ### The light state can be looked at again — 2026-09-07 10:26 EDT
 
 The edge rail and the film strip lost their current element entirely in emitting: **2.6/255** and **1.5** against a floor of 8.0, where the void reads 114.3 and 45.0. Both now read **14.5** and **16.2**, on the light state's own shadow scale rather than a border. Three surface briefs and a label bring-back path landed with them.

@@ -339,7 +339,23 @@ async def rerun_history_line(request: Request) -> JSONResponse:
     if not input_path or not Path(input_path).is_file():
         return _error("input_missing", 404, path=input_path)
     asset = registry.register(input_path)
-    return JSONResponse({"asset": asset.public(), "settings": row.get("settings") or {}})
+    # ⚠️ ADDITIVE, 2026-09-07 10:30 EDT. `engine_version` was RECORDED on every
+    # row and never COMPARED, so two installs whose `--recommend` differ
+    # semantically both passed — the validation boundary checks JSON shape, not
+    # engine behaviour. A rerun is where that costs something: it replays a
+    # run's settings against whatever engine is resolved now, which
+    # `docs/PLAN.md` 0.2 notes may be the synced claude.ai bundle rather than
+    # the checkout. The route reports both and says nothing about what to do;
+    # the decision is the person's, and the UI puts it in front of them.
+    then = row.get("engine_version")
+    now = engine.engine_version()
+    return JSONResponse({
+        "asset": asset.public(),
+        "settings": row.get("settings") or {},
+        "engine_version": then,
+        "engine_version_now": now,
+        "engine_changed": bool(then) and then != now,
+    })
 
 
 routes = [

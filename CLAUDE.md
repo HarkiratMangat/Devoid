@@ -192,4 +192,6 @@ The underlying command is `node ~/.claude/skills/impeccable/scripts/detect.mjs -
 
 **Front end:** `cd "/Applications/Claude Code/Devoid" && npm start` launches the real app (Electron main spawns the server and opens the window). It uses **real processed assets from the skill's corpus**, deliberately — putting real art in is what found the rubylith-over-red bug that drawn icons had hidden. Do not replace them with synthetic icons.
 
+**Tracker:** `npm run check:tracker` — the conservation rule as a gate (2026-09-07 10:34 EDT). ⚠️ It runs **two scopes**: `branch` (the branch's net effect against the merge base) and `working` (the change about to be committed). The second exists because **an item filed and closed on the same branch never existed at the merge base**, so a branch-scope diff sees the addition and the deletion cancel — the ported gate passed on a deleted item twice before that was understood.
+
 **Anything measured belongs in the docs with its numbers.** This project's history is that unmeasured design claims are wrong about a third of the time.
