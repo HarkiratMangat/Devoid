@@ -1,3 +1,139 @@
+---
+name: Devoid
+description: Removing the background from animated images, by showing you the question instead of describing it
+colors:
+  rubylith-red: "#E2402A"
+  rubylith-ink: "#FF8168"
+  rubylith-bg: "#3A150E"
+  event-horizon-cyan: "#22D3EE"
+  event-horizon-ink: "#5FE0F5"
+  event-horizon-bg: "#0B2C33"
+  accretion-gold: "#FFE9B8"
+  deep-sky-violet: "#110E1B"
+  singularity-black: "#030209"
+  starlight: "#FFFFFF"
+  bench: "#221D37"
+  bench-raised: "#2C2547"
+  bench-well: "#020204"
+  sprocket: "#1A162A"
+  graphite: "#E8E9F2"
+  graphite-2: "#A6A6BC"
+  graphite-3: "#8E8EA8"
+  checker-a: "#0C0A16"
+  checker-b: "#08060F"
+  status-ok: "#46C98A"
+  status-amber: "#E3B04B"
+  on-cyan: "#04212A"
+  on-rubylith: "#1F0403"
+  chroma-key-rest: "#4C6357"
+  chroma-key-live: "#00FF7F"
+  ring-inner: "#FFFFFF"
+  ring-outer: "#0B0A12"
+  lamp-lit-1: "#FFF9EC"
+  lamp-lit-2: "#F6F2E7"
+  lamp-lit-3: "#E7E3D8"
+  rim-core: "rgba(255,246,222,1)"
+  rim-mid: "rgba(255,214,150,.42)"
+  rim-edge: "rgba(255,190,110,0)"
+  emitting-bloom: "rgba(255,252,244,.95)"
+typography:
+  display:
+    fontFamily: "Archivo, 'Helvetica Neue', Arial, sans-serif"
+    fontSize: "30px"
+    fontWeight: 700
+    lineHeight: 1.1
+    letterSpacing: "-0.03em"
+    fontVariation: "'wdth' 116"
+  headline:
+    fontFamily: "Archivo, 'Helvetica Neue', Arial, sans-serif"
+    fontSize: "22px"
+    fontWeight: 600
+    lineHeight: 1.2
+  title:
+    fontFamily: "Archivo, 'Helvetica Neue', Arial, sans-serif"
+    fontSize: "18px"
+    fontWeight: 600
+    lineHeight: 1.3
+  body:
+    fontFamily: "Archivo, 'Helvetica Neue', Arial, sans-serif"
+    fontSize: "14px"
+    fontWeight: 400
+    lineHeight: 1.5
+  label:
+    fontFamily: "'Spline Sans Mono', monospace"
+    fontSize: "12px"
+    fontWeight: 500
+    lineHeight: 1.35
+  caption:
+    fontFamily: "'Spline Sans Mono', monospace"
+    fontSize: "11px"
+    fontWeight: 500
+    letterSpacing: "0.02em"
+  figure:
+    fontFamily: "Archivo, 'Helvetica Neue', Arial, sans-serif"
+    fontSize: "34px"
+    fontWeight: 500
+    lineHeight: 1
+  display-fluid:
+    fontFamily: "Archivo, 'Helvetica Neue', Arial, sans-serif"
+    fontSize: "clamp(28px, 5vw, 44px)"
+    fontWeight: 700
+    letterSpacing: "-0.03em"
+    fontVariation: "'wdth' 118"
+rounded:
+  xs: "4px"
+  sm: "6px"
+  md: "8px"
+  lg: "12px"
+  pill: "20px"
+spacing:
+  xs: "6px"
+  sm: "10px"
+  md: "16px"
+  lg: "26px"
+  xl: "38px"
+components:
+  button:
+    backgroundColor: "transparent"
+    textColor: "{colors.graphite}"
+    typography: "{typography.label}"
+    rounded: "{rounded.sm}"
+    padding: "7px 15px"
+  button-hover:
+    backgroundColor: "{colors.bench-raised}"
+  button-primary:
+    backgroundColor: "{colors.event-horizon-cyan}"
+    textColor: "{colors.on-cyan}"
+    rounded: "{rounded.sm}"
+    padding: "7px 15px"
+  tile:
+    backgroundColor: "{colors.sprocket}"
+    rounded: "{rounded.md}"
+    padding: "{spacing.sm}"
+  tile-needs-you:
+    backgroundColor: "{colors.bench-raised}"
+  input:
+    backgroundColor: "{colors.deep-sky-violet}"
+    textColor: "{colors.graphite}"
+    typography: "{typography.caption}"
+    rounded: "{rounded.sm}"
+    padding: "3px 9px"
+  card:
+    backgroundColor: "{colors.bench}"
+    rounded: "{rounded.md}"
+    padding: "{spacing.lg}"
+  tab:
+    backgroundColor: "transparent"
+    textColor: "{colors.graphite-2}"
+    rounded: "{rounded.sm}"
+    size: "40px"
+  region-mark:
+    backgroundColor: "{colors.rubylith-red}"
+    textColor: "{colors.on-rubylith}"
+    typography: "{typography.caption}"
+    rounded: "{rounded.sm}"
+---
+
 # Devoid — design system
 
 *Rewritten 2026-09-03 23:20 EDT, after a prototype built with real assets falsified three claims the first version made. Product context is in `PRODUCT.md`; where the work stands is in `HANDOFF.md`.*
@@ -5,6 +141,59 @@
 **Mode: Operate.** The person is completing a task. Scanability, consistency and the real usage scene outrank expression; brand lives in precise details.
 
 ⚠️ **This document states rules and points at tokens. It does not restate numbers the CSS owns.** The first version quoted a checkerboard cell size, the prototype changed it for a measured reason, and the doc was stale inside its own commit. A doc that repeats a value has a second copy to keep in sync; a doc that names the rule and the token does not.
+
+## Overview
+
+**Creative North Star: "The Void and the Bench — lit by an accretion disk"**
+
+*Named 2026-09-06 20:53 EDT. Two metaphors were offered and both were wanted, so the North Star holds both rather than picking: the STRUCTURE is a bench standing in the void, and the LIGHT on it is an accretion disk. Neither half survives alone — a bench with no void is a workshop app, and a void with no bench is a screensaver.*
+
+The ground is deep space and the tools standing on it stay matte and physical. Nothing about the void reaches the artwork: lensing lives in the empty table's horizon and in the lighting toggle, never on the stage, because warping something you are judging shows you a result you are not going to get. The palette was not chosen to fit this world — the world was chosen because the app's two existing load-bearing colours already **were** an accretion disk's two colours, hot blue on the inner edge and warm red-orange on the outer. The world explains the palette; it did not replace it.
+
+Density is a tool's, not a document's. The person is usually mid-task and wants to be finished, so chrome earns its place against the artwork every time and loses by default.
+
+**Key characteristics:**
+
+- Two load-bearing colours and no third accent — rubylith says *this goes*, cyan says *this stays*.
+- No state is ever colour alone. Every state carries a mark or a word, and `npm run check:greyscale` proves it.
+- Two depth strategies on purpose: borders on the void, shadows on light. A stated exception with a measured reason, not an inconsistency.
+- Numbers live in the CSS. This document names rules and points at tokens; a doc that repeats a value has a second copy to keep in sync.
+
+## Colors
+
+Two lighting states, not two themes: **collapsed** is the void, **emitting** is a white hole — the same field giving light back instead of taking it. Every token below has a value in both, and `npm run check:contrast` measures every pair in both before it is allowed to be true.
+
+| role | collapsed | emitting | carries |
+|---|---|---|---|
+| `rubylith-red` | `#E2402A` | `#E2402A` | **this goes.** Also the destructive colour, so there is no second red |
+| `rubylith-ink` | `#FF8168` | `#A82D18` | rubylith as text |
+| `event-horizon-cyan` | `#22D3EE` | `#0E7F96` | **this stays**, the path, focus, the seam. ⚠️ Light needs its own value: `#22D3EE` measures 1.81:1 on white |
+| `event-horizon-ink` | `#5FE0F5` | `#0E6B80` | cyan as text |
+| `accretion-gold` | `#FFE9B8` | `#B08029` | the horizon, and the warm rim on the lighting toggle |
+| `deep-sky-violet` | `#110E1B` | `#EFEEF6` | the ground. Violet-tinted, never neutral black |
+| `bench` / `bench-raised` / `bench-well` / `sprocket` | `#221D37` / `#2C2547` / `#020204` / `#1A162A` | `#FFFFFF` / `#F2F1FA` / `#E2E1EE` / `#D6D5E4` | the surface ladder, ~4 ΔL\* per step |
+| `graphite` / `-2` / `-3` | `#E8E9F2` / `#A6A6BC` / `#8E8EA8` | `#12111A` / `#4E4C60` / `#55536A` | text, three tiers |
+| `status-ok` / `status-amber` | `#46C98A` / `#E3B04B` | `#12734A` / `#7A5500` | ⚠️ **marks only, never surfaces** |
+| `chroma-key-rest` / `-live` | `#4C6357` / `#00FF7F` | same | the matte swatch at rest, and the real key green when you reach for it |
+| `ring-inner` / `ring-outer` | `#FFFFFF` / `#0B0A12` | same | a two-tone ring, because one hue cannot read on white, black, a checkerboard and chroma |
+
+⚠️ **Adjacent surfaces are measured in ΔL\*, not in WCAG contrast ratio.** WCAG's `+0.05` flare term dominates at the dark end, so a 1.35:1 step from the void lands near `#252525` — meeting it literally deletes the void. `scripts/check_contrast.py` carries the arithmetic.
+
+## Typography
+
+Two self-hosted families, and the split is a job, not a taste: **Archivo** speaks, **Spline Sans Mono** annotates. Anything you read a sentence of is Archivo; anything that labels, counts or reports an instrument reading is mono.
+
+| step | size | used for |
+|---|---|---|
+| `--t-figure` | 34px | the ledger's removed-pixel count — the first number worth looking at |
+| `--t-h1` | 30px | the open asset's name |
+| `--t-h2` | 22px | section headings |
+| `--t-h3` | 18px | the question |
+| `--t-body` / `--t-label` | 14px | body, drawer headings |
+| `--t-meta` | 12px | metadata, control labels |
+| `--t-micro` | 11px | instrument readings, tags, the state word |
+
+⚠️ **The width axis is Archivo's only.** Spline Sans Mono's two self-hosted `.woff2` files carry a `wght` axis and **no `wdth`**, browsers do not synthesise width, and `font-stretch` on a mono selector is inert. It is declared on `.tabs button` and `.ctl .lab` and nowhere else for that reason.
 
 ## The world
 

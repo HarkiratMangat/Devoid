@@ -81,7 +81,16 @@
   --stars-a:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Ccircle cx='23' cy='41' r='.9' fill='%23fff' opacity='.9'/%3E%3Ccircle cx='187' cy='66' r='.7' fill='%23CFDCFF' opacity='.7'/%3E%3Ccircle cx='98' cy='150' r='1.1' fill='%23fff'/%3E%3Ccircle cx='271' cy='119' r='.8' fill='%23fff' opacity='.8'/%3E%3Ccircle cx='54' cy='238' r='.7' fill='%23CFDCFF' opacity='.65'/%3E%3Ccircle cx='219' cy='271' r='.9' fill='%23fff' opacity='.85'/%3E%3Ccircle cx='146' cy='304' r='.6' fill='%23fff' opacity='.5'/%3E%3C/svg%3E");
   --float:0 2px 8px rgba(0,0,0,.4), 0 20px 50px rgba(0,0,0,.4);
 
-  --r:8px; --r2:12px; --ease:cubic-bezier(.23,1,.32,1);
+  /* ⚠️ The radius scale ran 3, 4, 5, 6, 8 and 12px — five values across a 9px
+     range, which is drift wearing a scale's clothes. `design-system-radius`
+     could not say so until DESIGN.md declared a scale (2026-09-06). Two small
+     steps now, not four. */
+  --r-xs:4px; --r-sm:6px; --r:8px; --r2:12px; --ease:cubic-bezier(.23,1,.32,1);
+  /* the lamp's warm side and the emitting bloom: real, deliberate colours that
+     were living as literals inside three gradients. Named so they are checkable. */
+  --lit-1:#FFF9EC; --lit-2:#F6F2E7; --lit-3:#E7E3D8;
+  --rim-core:rgba(255,246,222,1); --rim-mid:rgba(255,214,150,.42); --rim-edge:rgba(255,190,110,0);
+  --bloom:rgba(255,252,244,.95);
   --s1:6px; --s2:10px; --s3:16px; --s4:26px; --s5:38px;
 }
 /* EMITTING. The white hole -- the exact physical inverse: it gives back what
@@ -120,7 +129,7 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
    scored 1.40-1.81 on the emitting field -- worst on the primary button, where
    the ring was the same cyan as the fill it surrounded. Dark keeps cyan; light
    takes an ink ring. One token, so a new surface cannot silently reintroduce it. */
-:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:var(--r-xs)}
 /* ⚠️ NARROWED from a blanket rule. DESIGN.md "Motion" names the blanket
    version as wrong: `animation-duration:.01ms` on `*` kills OPACITY
    transitions too, and opacity is the channel that carries meaning here.
@@ -178,7 +187,7 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
   transition:background .15s var(--ease),transform .09s var(--ease)}
 .btn:hover{background:var(--raise)}
 .btn:active{transform:scale(.97)}
-.btn.go{background:var(--cyan);border-color:var(--cyan);color:#04212A;font-weight:700}
+.btn.go{background:var(--cyan);border-color:var(--cyan);color:var(--go-ink);font-weight:700}
 .table{flex:1;display:flex;min-height:0;position:relative}
 .work{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
 
@@ -299,7 +308,7 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .seam{position:absolute;top:0;bottom:0;left:var(--seam,50%);width:0;
   border-left:1.5px dashed var(--cyan);pointer-events:none}
 .seam:after{content:"";position:absolute;top:50%;left:-9px;width:18px;height:34px;
-  transform:translateY(-50%);border-radius:4px;background:var(--cyan);
+  transform:translateY(-50%);border-radius:var(--r-xs);background:var(--cyan);
   box-shadow:0 2px 8px rgba(0,0,0,.4)}
 .wipetag{position:absolute;top:var(--s2);font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);
   padding:3px 9px;border-radius:20px;background:var(--bench);color:var(--graphite-2)}
@@ -344,7 +353,7 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
   position:relative;transition:background .18s var(--ease)}
 .edge button:hover{background:var(--raise)}
 .edge button[aria-current="true"]{background:var(--raise);box-shadow:inset 0 0 0 1.5px var(--cyan)}
-.edge .win{position:relative;border-radius:5px;overflow:hidden;aspect-ratio:1;display:grid;place-items:center}
+.edge .win{position:relative;border-radius:var(--r-sm);overflow:hidden;aspect-ratio:1;display:grid;place-items:center}
 .edge img{width:100%;height:100%;object-fit:contain;padding:5px}
 
 /* ── drawers: summoned, and they open beside what they affect ───────────── */
@@ -563,10 +572,10 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 /* ⚠️ F26. This was `.swatch`, the SAME class as the 28px matte button 130 lines
    below — and it sets `background` as a SHORTHAND, which wipes the matte
    button's checkerboard image. One name, two components, one of them broken. */
-.hexchip{width:14px;height:14px;flex:none;border-radius:3px;background:var(--hex,#888);
+.hexchip{width:14px;height:14px;flex:none;border-radius:var(--r-xs);background:var(--hex,var(--graphite-3));
   box-shadow:inset 0 0 0 1px var(--score-2)}
 .qpair{display:flex;gap:var(--s2)}
-.qpair .btn.on{background:var(--cyan);border-color:var(--cyan);color:#04212A;font-weight:700}
+.qpair .btn.on{background:var(--cyan);border-color:var(--cyan);color:var(--go-ink);font-weight:700}
 .qwarn{margin:var(--s2) 0 0;font-size:var(--t-meta);color:var(--ruby-ink)}
 .qfoot{display:flex;align-items:center;gap:var(--s3)}
 .qhint{font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);color:var(--graphite-3)}
@@ -676,7 +685,7 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 /* ⚠️ At 56x28 with no border this was effectively invisible on `--bench:#FFFFFF`
    in emitting, and read as a corrupted thumbnail between two labelled buttons
    in collapsed. 64x32 also clears SC 2.5.8 on both axes. */
-.lamp{width:64px;height:32px;border-radius:6px;padding:0;position:relative;
+.lamp{width:64px;height:32px;border-radius:var(--r-sm);padding:0;position:relative;
   overflow:hidden;--s:72%;border:1px solid var(--score-2)}
 .lamp:hover{border-color:var(--mark)}
 .lamp-word{font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);
@@ -685,11 +694,11 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
   background-image:radial-gradient(70% 90% at 24% 76%,var(--neb-violet),transparent 72%),
     var(--stars-a);background-size:auto,470px 470px;background-position:0 0,-180px -60px}
 .lamp .sg-lit{position:absolute;inset:0;clip-path:inset(0 0 0 var(--s));
-  background:linear-gradient(100deg,#FFF9EC 0%,#F6F2E7 38%,#E7E3D8 100%);
+  background:linear-gradient(100deg,var(--lit-1) 0%,var(--lit-2) 38%,var(--lit-3) 100%);
   transition:clip-path .42s var(--ease)}
 .lamp .sg-rim{position:absolute;top:0;bottom:0;left:var(--s);width:11px;margin-left:-5.5px;
-  background:linear-gradient(to right,rgba(255,190,110,0) 0%,rgba(255,214,150,.42) 34%,
-    rgba(255,246,222,1) 50%,rgba(255,214,150,.42) 66%,rgba(255,190,110,0) 100%);
+  background:linear-gradient(to right,var(--rim-edge) 0%,var(--rim-mid) 34%,
+    var(--rim-core) 50%,var(--rim-mid) 66%,var(--rim-edge) 100%);
   transition:left .42s var(--ease)}
 /* ⚠️ THE COLLAPSE, adapted from the reference file rather than copied: its own
    toggle is a sliding orb, which is the "iOS rocker" and the "circle with a
@@ -722,7 +731,7 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
    never by a colour fill alone. */
 .matte{display:flex;align-items:center;gap:0;padding:var(--s1);border-radius:var(--r);
   background:var(--well);border:1px solid var(--score)}
-.swatch{width:28px;height:28px;border-radius:6px;padding:0;position:relative;
+.swatch{width:28px;height:28px;border-radius:var(--r-sm);padding:0;position:relative;
   background-clip:content-box;border:5px solid transparent;
   box-shadow:inset 0 0 0 1px var(--score-2)}
 .swatch.chk-s{background-size:8px 8px}
@@ -772,7 +781,7 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
    measured on a different basis (source vs cut) and plotting it here would
    claim a precision the number doesn't have. */
 .ledger{flex-wrap:wrap;row-gap:var(--s1)}
-.ledger-bar{flex:0 0 100%;display:flex;height:6px;border-radius:3px;overflow:hidden;
+.ledger-bar{flex:0 0 100%;display:flex;height:6px;border-radius:var(--r-xs);overflow:hidden;
   background:var(--well)}
 .lseg{display:block;min-width:2px}
 /* ⚠️ F30. `--ruby-bg` against `--cyan-bg` is a 1.10:1 greyscale step collapsed
@@ -817,7 +826,7 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
    somewhere. One soft luminance behind the work area, the inverse of the
    nebula the collapsed state carries. */
 .emitting .table{background-image:
-  radial-gradient(64% 50% at 50% 34%,rgba(255,252,244,.95),transparent 70%),
+  radial-gradient(64% 50% at 50% 34%,var(--bloom),transparent 70%),
   radial-gradient(52% 42% at 16% 88%,var(--neb-violet),transparent 74%),
   radial-gradient(44% 36% at 86% 10%,var(--neb-blue),transparent 72%)}
 
@@ -895,7 +904,7 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
   color:var(--qregion-ink);background:var(--ruby);   /* A4: was #fff on rubylith */
   padding:var(--s1) var(--s2);border-radius:var(--r);white-space:nowrap}
 .qregion[data-verdict="protect"]{border-color:var(--cyan);background:rgba(34,211,238,.12)}
-.qregion[data-verdict="protect"] b{background:var(--cyan);color:#04212A}
+.qregion[data-verdict="protect"] b{background:var(--cyan);color:var(--go-ink)}
 .qregion[data-verdict="remove"]{opacity:.55}
 
 /* the wipe with nothing to compare against yet */
