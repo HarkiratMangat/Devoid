@@ -156,6 +156,22 @@ The defect F21 found is real; the metric was wrong. Adjacent planes are now meas
 
 ⚠️ **The same script's first draft reported "all pairs meet their target" over an empty table** — its CSS parser matched nothing and it counted zero failures as success. It now refuses to run on zero tokens. A checker that passes because it read nothing is worse than no checker.
 
+### A green detector run was checking fewer rules than it looked like
+
+`CLAUDE.md` has said "exactly one finding" since the first session, and that number was measured all night against Stage 3's token work. It is true. It is also narrower than it reads: `design-system-font`, `design-system-color` and `design-system-radius` unlock only when `DESIGN.md` declares a palette and a type stack **in the section format the parser reads**, and `docs/DESIGN.md` declares both in prose under headings of its own choosing (`## Type`, `## The colour rule`). `doctor.mjs` says so plainly — *"docs/DESIGN.md has no colors, typography section"* — and nothing was reading `doctor`.
+
+**Falsified rather than reasoned about (2026-09-06 20:32 EDT):** a file containing `#FF00FF`, `#7C3AED`, `border-radius:17px` and `font-family:"Comic Sans MS"` returns **0 findings**. Run twice, once outside the project and once inside it with `DESIGN.md` discoverable. Both zero.
+
+⚠️ **The shape is this project's own signature failure, one level out.** A gate proved something EXISTS — a finding count — and the count was real; what nobody checked was whether the rules that would have caught a palette violation were CONNECTED to anything. `/impeccable document` fills the sections from the CSS and unlocks all three, which is why it is the first command to run rather than `critique`.
+
+### The impeccable skill has never been set up here, only its detector
+
+`.impeccable/` does not exist: no config, no `design.json`, and no surface briefs. `PRODUCT.md` and `DESIGN.md` live in `docs/` and `context.mjs` finds them, so the detector CLI has always worked — which is exactly why the absence went unnoticed for three sessions. `doctor.mjs` reports two findings: the product record predates the schema (`init`), and `DESIGN.md` has no readable colors or typography section (`document`).
+
+⚠️ **The missing surface briefs are the expensive half.** Every command reads `.impeccable/surfaces/<name>.md` to learn the surface's **mode**, and mode is the single judgement that changes the output most. Without one, each command re-infers it from code — which the skill's own docs name as where generic advice comes from. Devoid has three surfaces (the contact sheet, the open view, the empty table) and all three are **Operate**.
+
+⚠️ **Two commands are ruled out by their own documentation, not by taste.** `bolder`: *"Do not use it on dashboards people stare at for hours… Not in operator tools."* `overdrive`: *"Do not use it on operator tools, dashboards, or anything where reliability beats spectacle."* The two that sound most like "wow factor" are the two an Operate surface may not have.
+
 ## Decisions, and what was tried first
 
 ### The world: the ground is the void, the tools stay the matte world

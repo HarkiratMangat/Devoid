@@ -21,6 +21,18 @@ The project-local tracker for open work, real TODOs, and reminders specific to t
 
 *Ordered by priority, P1 first.*
 
+### `[P1 · S · Sonnet5-High]` Three detector rules have never fired, and the contract does not say so *(filed 2026-09-06)*
+
+`design-system-font`, `design-system-color` and `design-system-radius` unlock only when `DESIGN.md` declares a palette and a type stack in the format the parser reads. `docs/DESIGN.md` declares both, in prose, under headings of its own — so `doctor.mjs` reports *"no colors, typography section"* and the three rules check nothing. **Falsified:** `#FF00FF`, `#7C3AED`, `border-radius:17px` and Comic Sans in one file return **0 findings**, inside the project. Every "exactly one finding" on record is true about the rules that ran.
+
+**Concrete next action:** `/impeccable document`, which `doctor` names — it fills the two sections from the CSS in the spec's six-section format. ⚠️ It confirms before overwriting; `docs/DESIGN.md` carries the world's reasoning and must not be replaced by a generated file, only extended.
+
+### `[P2 · S · Opus5-Med]` The impeccable skill has never been set up here, only its detector *(filed 2026-09-06)*
+
+`.impeccable/` does not exist: no config, no `design.json`, **no surface briefs**. The detector CLI works without them, which is why three sessions did not notice. `doctor.mjs`'s other finding is that `docs/PRODUCT.md` has no schema stamp and none of the sections the current record adds — Positioning, Operating Context, Evidence on Hand, Product Principles — so it predates this version and `init` is the named fix. ⚠️ `init` is an **interview**; it needs Harkirat, and it preserves confirmed answers rather than rewriting from inference.
+
+**The briefs are the expensive half.** Every command reads `.impeccable/surfaces/<name>.md` for the surface's **mode**, the single judgement that changes the output most; without one each command re-infers it, which the skill's docs name as the source of generic advice. Three surfaces — the contact sheet, the open view, the empty table — and all three are **Operate**. ⚠️ Writing a brief records a chosen direction, so it is design work with the user's fingerprints on it: offered, never done unasked.
+
 ### `[P1 · S · Sonnet5-High]` The design detector ran DEGRADED with no banner, and its deps live in `/tmp` *(filed 2026-09-06)*
 
 `CLAUDE.md` makes the detector a gate: *exactly one finding, `repeating-stripes-gradient`, and an empty result only counts when the header does not say DEGRADED.* Found 2026-09-06: `htmlparser2`, `css-select`, `css-tree` and `domutils` were **missing** from `~/.claude/skills/impeccable/node_modules`, and on a **CSS-only** invocation the tool printed a bare `[]` with **no DEGRADED banner at all** — the banner appears only once HTML is in the argument list. So the documented safeguard does not cover the most common invocation shape.
