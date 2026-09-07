@@ -49,6 +49,83 @@ This is a standing preference, stated at the top of the first session here (*"As
 
 ⚠️ **`labels/protection.jsonl` is pointed at from the skill repo** (`scripts/harness/labels/README.md`) because nothing there would otherwise surface it. **If this path moves, fix that pointer.**
 
+## Tool routing — the three memory and search layers
+
+*Written 2026-09-06 21:03 EDT, after reading each skill's own instructions and verifying each one live in this repo. The rule that produced this section: **verify by QUERY, never by the tool's success line** — `ctx_index` cheerfully reports "Indexed 29 files" for a badly-labelled index, and `list_projects` returns `{"projects":[]}` for a corrupt one with a friendly hint that is indistinguishable from never-indexed.*
+
+**Look up the situation, not the tool.** The right-hand column is the fallback, not an equal option.
+
+| situation | reach for | not |
+|---|---|---|
+| "Where is X defined? What calls it? What breaks if I change it?" | `search_graph` → `trace_path(direction:"both")` → `get_code_snippet` | `rg` and hand-tracing |
+| Re-read a file you already read this session | `mcp__linksee__read_smart` | a second `Read` |
+| A question about this repo's own prose (docs, rules, plans) | `ctx_search({source:"project:devoid-docs", queries:[…]})` | `rg` — measured elsewhere at **0 files for 3 of 4** natural-language questions |
+| Read a file to analyse rather than edit it | `ctx_execute_file(path, language, code)` | `Read` — the bytes never need to enter context |
+| Run anything whose output could exceed ~20 lines | `ctx_batch_execute(commands, queries)` | `Bash` |
+| Before starting a task, or before touching a file with history | `mcp__linksee__recall({query})` / `recall({path})` | starting cold |
+| After a compact, "what were we doing?" | `ctx_search({queries:["summary"], source:"compaction", sort:"timeline"})` | asking the user |
+| Fetch a URL | `ctx_fetch_and_index(url, source)` | `curl` / `WebFetch` — **both are intercepted and blocked** |
+
+⚠️ **`Read` and `Edit` stay correct for the file you are about to change.** `Edit` needs the exact bytes in context to match against. The routing above is for *analysis*, not for editing.
+
+### context-mode
+
+**Source labels are the only discriminator.** `source_category` exists in the FTS5 schema and is NULL on every row, so an unlabelled index is indistinguishable from this repo's own code. The convention is **`project:devoid-<area>`** for this repo's files and **`vendor:<name>`** for third-party documentation. Measured elsewhere: 310 of 596 sources labelled by raw path, 110 files indexed twice, **3,404 duplicate chunks** returning the same text to every query.
+
+⚠️ **`ctx_execute` CAPTURES; `ctx_search` FILTERS. Never narrow inside the capture.** A `head`, `sed -n` or `awk` filter inside `ctx_execute` permanently discards the rest from the index **for zero context saving**, because large stdout is auto-indexed rather than returned inline. Run the command in full; do every narrowing step downstream. A `ctx_execute` that greps is a grep wearing a costume, and no gate sees it.
+
+- **Batch, and set `concurrency`.** `ctx_batch_execute(commands, queries)` runs everything and returns matching sections in one round trip. Use `concurrency: 4-8` for network work, **1** for anything CPU-bound or sharing state (a build, a test run, two writes to one repo).
+- **Re-indexing the same `source` REPLACES; it does not append.** Re-indexing is safe and cheap.
+- ⚠️ **`ctx_index` is a snapshot with no change detection.** There is no `detect_changes` equivalent, and this repo has no re-index hook — so a stale index serves last month's text under a real heading. Re-index before trusting a query about anything that moves.
+- **`ctx_purge` is scoped**: `{confirm:true, sessionId:"…"}` wipes one session; `{confirm:true, scope:"project"}` wipes this project's whole knowledge base. It is **not** cross-project. There is no undo.
+- **`ctx_stats` is a per-session savings report, not a source list.** Nothing enumerates labels; discover one by running a search and reading the labels that come back. When it is run on purpose, its entire output is pasted verbatim — summarising it violates its own skill.
+
+**Verified 2026-09-06 21:03 EDT:** `ctx_doctor` returns `[OK]` on every check — v1.0.169, FTS5 native module PASS, all six hooks configured.
+
+### codebase-memory
+
+**This repo is indexed as `Applications-Claude-Code-Devoid` — 1,384 nodes, 4,089 edges.** Verified by query, not by the indexer's own line: `search_graph(query:"render question regions")` returns `renderQuestionRegions` at `web/app.js:461`.
+
+⚠️ **`index_repository` DOES NOT WORK through the MCP tool.** It reports `"Indexing worker crashed on a file"`, which is false: the MCP tool takes `project_path` and the worker requires `repo_path`, which it never receives. Re-index with the CLI:
+
+```bash
+~/.local/bin/codebase-memory-mcp cli index_repository --repo_path "/Applications/Claude Code/Devoid"
+```
+
+⚠️ **Three spellings for one argument** — `--repo_path` (CLI) · `project_path` (MCP `index_repository`) · `project`, which is a NAME not a path (`search_graph`, `trace_path`, `detect_changes`). When it fails, the real error is in `~/.cache/codebase-memory-mcp/logs/.worker-<pid>.log`, never in the returned hint.
+
+- `search_graph` before `trace_path` — tracing needs the exact name, and `search_graph(query:…)` does BM25 with camelCase splitting.
+- `direction:"both"` — `"outbound"` misses cross-service callers.
+- Results page at 10 by default; check `has_more` and use `offset`. `query_graph` caps at 200 rows.
+- **Re-index after a branch's worth of work.** The graph is a snapshot; it does not follow edits.
+
+### linksee
+
+**This repo is entity `Devoid` (`project`), momentum 4.85, 46 memories** — the Stop hook writes automatically; **reads require you to pull.**
+
+⚠️ **THE INSTALLED SKILL FILE TEACHES FOUR TOOLS THAT DO NOT EXIST.** `~/.claude/skills/linksee-memory/SKILL.md` names `list_entities` (its "Task Start" step), `recall_file` (its "File Edit" step), `update_memory` (its update step) and `consolidate` (its tidy-up step). **All four were removed in v0.7.0–v0.11.x and `ToolSearch` finds none of them.** Following that file verbatim produces four failed calls. The live equivalents:
+
+| the skill file says | actually call |
+|---|---|
+| `list_entities({kind})` | `recall({})` — no params is entity overview |
+| `recall_file({path_substring})` | `recall({path:"app.js"})` |
+| `update_memory({memory_id, content})` | `remember({memory_id, content})` |
+| `consolidate({scope, min_age_days})` | nothing — it runs automatically |
+
+- **Recall by `query`, not by `entity_name`.** Entity attribution is path-derived, so memories scatter across entities named after folders and entity-scoped recall **under-returns silently**. On write, always pass `entity_name` explicitly.
+- **Queries are keywords, not sentences.** `recall({query:"seam drag caveat", layer:"caveat"})` works; `recall({query:"what happened last time"})` matches everything.
+- **`content` is a JSON string carrying three axes** — `altitude` (mission/strategy/architecture/implementation), `type` (question/comparison/decision/work/outcome/learning/note), `state` (open/decided/in_progress/done/stalled/parked/superseded) — plus `title`, `what`, `why`, and `affects`. A decision also needs `agent_proposal` and `user_approval_scope`: what was proposed, and **what exactly** was approved.
+- **`caveat` is auto-protected and can never be deleted or demoted.** Record one the moment something fails, not at the end. `importance >= 0.9` pins a memory in any layer.
+- ⚠️ **Never store raw chat.** "yeah do it all" is not a memory; the extracted scope is.
+- **Auto-captured memories arrive undistilled.** The Stop hook has no LLM, so it stores raw utterances with `needs_distill: true`. `dream()` returns them as a `distill_queue`; rewriting one **requires `"distilled": true` in the JSON**, or the next session's re-import silently resurrects the raw text.
+- ⚠️ **`where_am_i` and `drift_status` need a `map.yaml` at the repo root, and this repo has none** — so they return nothing here. That is unconfigured, not broken.
+
+### What this repo does NOT have, so nothing may assume it
+
+- No `map.yaml`, so linksee's product-map half is inert.
+- No `ctx-index-refresh` hook, so no index here is guaranteed fresh.
+- No ADR in the graph (`adr_present: false`); `manage_adr` would be creating one, not updating.
+
 ## Testing
 
 **Design:** `node ~/.claude/skills/impeccable/scripts/detect.mjs --json <files>` must return **exactly one finding, `repeating-stripes-gradient`** — the alpha checkerboard and the hatch, both accepted (see `DESIGN.md`). Anything else is a real defect. ⚠️ It runs **degraded** without `htmlparser2`, `css-select`, `css-tree` and `domutils`, and a degraded run returns `[]` while saying so on the line above. An empty result only counts when the header does not say DEGRADED.
