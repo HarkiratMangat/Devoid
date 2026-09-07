@@ -23,6 +23,29 @@ Do not invent separate conventions for this repo.
 - **Conventional Commits v1.0.0**, only the 11 standard types, `<type>(<scope>): <description>` — colon and one space, imperative, lowercase, no trailing period. Branches are `<type>/<kebab-description>`.
 - **Commit trailers:** `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>` and `Co-Authored-By: diorswrld <310361322+diorswrld@users.noreply.github.com>`.
 - **Timestamps** in docs and comments are `YYYY-MM-DD HH:MM TZ`, never a bare date.
+
+### Versioning — `v{major}.{moderate}.{minor}`, and how to DECIDE the tier
+
+*Copied from the engine repo 2026-09-07 15:31 EDT at Harkirat's instruction. Its bars were **derived from all 17 of its shipped tags**, not asserted, and two earlier wordings of them were found to contradict that history — so this is the reasoned version, not a restatement. `docs/CHANGELOG.md` keeps the MECHANICS (entry shape, the one-release-later hash backfill); this is how you pick the number.*
+
+| tier | the bar | for this repo |
+|---|---|---|
+| **major** | **A new capability class.** The app can do something it structurally could not before, and the person gets new vocabulary for it. A planned multi-part round, never a bundle of fixes that happened to be large. | ⚠️ **Bumped only with Harkirat's explicit confirmation.** |
+| **moderate** | **The product behaves differently, inside capabilities it already had** — new controls, fixed defects, changed defaults, new refusals. **This is the DEFAULT tier for any merge that touches behaviour.** | Resets MINOR to 0. Climbs past 9 indefinitely (v1.10.x); double digits is **not** a reason to bump major. |
+| **minor** | **Nothing about the product's behaviour changes — something that was wrong is now correct.** Documentation, packaging, metadata, repo-side files, or a one-line fix restoring an intended state. **A correction is the usual shape of this tier, not a separate tier.** | |
+
+**Three tie-breaks the engine's history forces, each of which contradicts an intuition:**
+
+1. **Bundling does not promote.** Many fixes in one merge is still moderate.
+2. **Diff size does not decide.** There, moderate has run from **15 to 917** changed script lines and minor from **0 to 1**. The axis is what changed FOR A USER, never how large the diff was.
+3. **Minor is defined by the ABSENCE of a behaviour change**, not by "mainly docs". A merge that touches code can be minor; a 15-line one can be moderate.
+
+⚠️ **Reason it through against each bar for THIS change — do not pattern-match to whichever tier a similar-sounding change landed in.** All three tiers require the same rigour before shipping (confirmed root cause, or confirmed-true for a documentation note); the SIZE of the change picks the tier, never the care taken over it.
+
+**The unit that earns a number is a MERGED PR** — not a push, not a branch commit. `main` only ever advances through a PR, each merge squashes to one commit, and that commit gets one version and one tag. A branch may carry many real changes with no number yet. **At merge, judge the CUMULATIVE tier of everything since the last tag as a whole and bump once, to that** — not the sum of each commit's own tier.
+
+**Worked example, 2026-09-07 15:31 EDT:** the engine merge carrying `--analysis-json` is **moderate**, not minor, and the reasoning is the point. Its output bytes are provably identical, which sounds like minor — but minor requires the *absence* of a behaviour change, and there is one: the tool now accepts an input it did not before, refuses a stale one with a message, and skips a pass. "New flags" is named in the moderate bar verbatim. Diff size (157 lines) decided nothing either way.
+
 - **Markdown is soft-wrapped** — one physical line per paragraph or list item. Check with `node "/Applications/Claude Code/Diors-Builds/scripts/reflow-prose.mjs" --check <files>`.
 
 ## Asking

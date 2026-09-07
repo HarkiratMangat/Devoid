@@ -8,7 +8,9 @@ What shipped, when, and why. Newest first.
 
 - **MAJOR** — a major overhaul or major new functionality. Bumped **only deliberately, with the user's confirmation**.
 - **MODERATE** — a significant merged PR: a new feature, a real design change, several large bug fixes, or a bundle of adjustments. Bumping it resets MINOR to 0. It climbs past 9 indefinitely (v1.10.x, v1.11.x); double digits is **not** a reason to bump MAJOR.
-- **MINOR** — a small adjustment, fix or correction.
+- **MINOR** — a small adjustment, fix or correction. ⚠️ **SHARPENED 2026-09-07 15:31 EDT**, against the engine repo's own bars now copied into `CLAUDE.md`: minor is defined by the **ABSENCE of a behaviour change**, not by being small. A one-line fix that changes what the app DOES is moderate; a change that touches code and alters nothing a person can observe is minor.
+
+**How to decide which tier a merge is, is in `CLAUDE.md`** — three bars and three tie-breaks, derived from the engine repo's 17 shipped tags rather than asserted. This section keeps the mechanics; that one keeps the judgement.
 
 **The unit that earns a version number is a merged PR**, not a push and not a raw commit. `main` only ever advances through a PR (`CLAUDE.md`), each merge squashes to one commit, and that commit gets one version number and one git tag.
 
