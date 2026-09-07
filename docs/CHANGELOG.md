@@ -24,6 +24,10 @@ What shipped, when, and why. Newest first.
 
 ⚠️ **The commit count was hard-coded here as 28 and had drifted to 67 by 2026-09-07.** Derive it — `git rev-list --count main..HEAD` — rather than reading a number out of prose, which is this repo's own standing rule.
 
+### The gate stops seeding the corpus, and the design contract became a command — 2026-09-07 01:32 EDT
+
+`gate:ui` runs against a scratch data dir and asserts the tracked label log is byte-identical across the run; 24 synthetic rows it had already committed are removed. `/impeccable hooks on` is wired and verified live — and `npm run check:design` covers what its `Edit|Write` matcher cannot see, which is most of how this repo is edited.
+
 ### Answering is one act now, and Keep no longer looks like Cut — 2026-09-07 01:22 EDT
 
 The `Answer` button is gone: picking a side sends the answer, and the undo that only ⌘Z reached is a visible control. The ledger moved to the top of the decision column, under the question it prices. The eight region tools are two labelled groups divided by a rule, each verdict carrying a mark as well as a colour — **Δ 19.3 in greyscale against a floor of 12.0 that a falsifier chose**, in the first control `check_greyscale.py` has ever covered.

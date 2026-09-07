@@ -28,3 +28,7 @@ DEVOID Logo Assets/*/
 # ⚠️ labels/protection.jsonl is the OPPOSITE case and STAYS TRACKED -- that log
 # is evidence, meant to accumulate, and is pointed at from the engine repo.
 jobs.jsonl
+
+# the UI gate runs the server against a scratch data dir so it can never write
+# to labels/protection.jsonl, which is tracked evidence
+local/gate-data/
