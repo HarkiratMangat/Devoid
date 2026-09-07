@@ -129,6 +129,24 @@ This is a standing preference, stated at the top of the first session here (*"As
 - **A `caveat` is ONE SENTENCE, verb-first.** It is protected forever, so a paragraph is the wrong shape for something that will be read a hundred times.
 - ⚠️ **`where_am_i` and `drift_status` need a `map.yaml` at the repo root, and this repo has none** — so they return nothing here. That is unconfigured, not broken.
 
+### The ENGINE repo is indexed too — search it before re-deriving its findings
+
+*Indexed 2026-09-07 11:43 EDT. Devoid is a front end for `gif-background-remover`, and sessions here kept re-reading that repo's files to re-derive answers it had already measured and written down.*
+
+| source | holds | sections |
+|---|---|---|
+| `project:gif-references` | `lessons.md`, `flag-reference.md`, `compression.md`, `version-history.md` — **the durable findings** | 298 |
+| `project:gif-engine` | `scripts/remove_gif_background.py`, all 10,848 lines | 305 |
+| `project:gif-plans` · `project:gif-investigations` | ready-to-build tasks · measured investigations | 114 · 97 |
+| `project:gif-deferred` · `project:gif-resolved` | its open tracker · its archive | 44 · 76 |
+| `project:gif-skill` · `project:gif-rules` · `project:gif-readme` | `SKILL.md` · its `CLAUDE.md` · `README.md` | 35 · 25 · 19 |
+| `project:gif-handoffs-SUPERSEDED` | ⚠️ **ephemeral by that repo's own convention** — the label says so, so a hit announces its own staleness | 98 |
+| code graph | `Applications-Claude-Code-Gif-Background-Remover` | **2,796 nodes, 6,101 edges** |
+
+🔴 **SCOPE THE QUERY BY SOURCE, OR BM25 BURIES THE SMALLER CORPUS.** Five unscoped verification queries returned **only** `project:gif-references` — `project:gif-engine`'s 305 sections returned nothing at all, which read as a failed index. Scoped to `source: "project:gif-engine"`, the same queries return `verify()`'s signature, `analyze()`'s signature and `main()`. **Nothing was wrong with the index.** "Verify by QUERY, never by the success line" is right and not sufficient: an unscoped query can make a correct index look empty.
+
+🔴 **AND THE METHOD, BECAUSE THIS WENT WRONG FIRST.** `/context-mode:ctx-index` exists and says to prefer the **`ctx_index` MCP tool**; the CLI is its documented FALLBACK. `ctx_batch_execute` is the GATHER tool — **running a mutation through it is a category error**. Code goes to the **graph**, prose to context-mode. Recall from **linksee** before touching a repo with history, and write the caveat after. All four were broken here, in one pass, with this file loaded and the rule stated in three consecutive prompts. ⚠️ **The apology then overstated the damage** — 29 capture sources were blamed on this session and belong to other sessions; the gif store has zero. **A correction is a claim and needs the same evidence as the thing it corrects.**
+
 ### Keeping the two snapshots fresh
 
 **Neither layer has change detection**, so both serve last week's text under a real heading with a real path. `npm run refresh:index` re-indexes all three sources; run it after a branch's worth of work and before trusting any query about something that moved. Measured: the graph went **1,384 → 1,406 nodes** inside one session.
