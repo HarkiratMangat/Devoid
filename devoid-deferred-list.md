@@ -19,27 +19,11 @@ The project-local tracker for open work, real TODOs, and reminders specific to t
 
 ## 🐞 Open — real TODOs with an available fix, not yet done
 
-### `[P1 · S · Sonnet5-High]` Six map nodes assert LESS than they appear to, because `signal_present` is ANY *(filed 2026-09-07, found while closing the P0)*
-
-`map-reconcile.js:171` is `const found = hit != null` over the FIRST match in the signal list, so a `signal_present` check with N strings passes when **any one** of them is present. Every extra string makes such a check WEAKER, not stronger — the exact opposite of the natural reading, and the opposite of `signal_absent`, where more strings forbid more.
-
-Nodes whose `signal_present` lists more than one string are therefore asserting only their easiest term: `launch` (3), `contact-sheet` (2), `region-mark` (2), `seam`'s first check (4), `question`'s first check (2), and any single-kind shorthand with a list. **`answer-bar`, `ledger` and the rest need auditing the same way.**
-
-⚠️ **And a signal matches COMMENTS.** `seamToGroup` passed by matching prose on `web/app.js:74` while the function sat at `1579`. This is the same false-positive class that made `question`'s check fire on a comment recording the string it was forbidding.
-
-**Concrete next action:** for every `signal_present` in `map.yaml`, keep exactly ONE string, and make it something only live code can contain (`function foo`, a full selector, a template expression) rather than a bare identifier. **Verify:** delete the implementation of one node's subject and confirm its check goes red — a check that cannot fail is not a check.
-
 ### `[P1 · M · Opus5-High]` The decision is scattered across four zones and its evidence is exiled *(filed 2026-09-06, from `/impeccable critique`)*
 
 Measured off `09-seam.png`: question heading top-right, "answer it under the seam", buttons bottom-left, submit back top-right, and the two numbers that price both answers **~600px below the heading**. Eye travel for one binary: right → left → right → down. The `Answer` button is the only `btn go` in the column, so it is the loudest control there — and it is not the decision, it is a second commit step behind it.
 
 **Concrete next action:** move the ledger directly under the answer pair, and delete the `Answer` button — `noteAnswer` commits on pick and ⌘Z already undoes (`app.js:800`, `:1946`). Surface the undo as a visible affordance instead.
-
-### `[P1 · S · Sonnet5-High]` The disabled primary is unreadable and `check_contrast.py` is blind to it *(filed 2026-09-06, from `/impeccable critique`)*
-
-Measured from the captured window: emitting `#FFFFFF` on `#A6C5CF` = **1.82:1**; collapsed `#181E30` on `#406E87` = **3.00:1**. `scripts/check_contrast.py:76` tests only `btn.go ink on cyan` — the **enabled** pair — so `npm run check:contrast` passes green over the shipped pixel, and the button is disabled for the entire time the question is open.
-
-⚠️ Disabled controls are exempt from SC 1.4.3, but `PRODUCT.md` commits to contrast in both states as chosen rigour and presents the gate as proof. **Concrete next action:** an explicit disabled token pair, measured in both states, added to the script's `PAIRS`.
 
 ### `[P1 · S · Sonnet5-Med]` Eight region tools, with keep and cut separated by colour alone *(filed 2026-09-06, from `/impeccable critique`)*
 
@@ -47,46 +31,11 @@ Measured from the captured window: emitting `#FFFFFF` on `#A6C5CF` = **1.82:1**;
 
 **Concrete next action:** two labelled groups with a divider, each button carrying its grease-pencil mark. Extend `check_greyscale.py` to controls.
 
-### `[P1 · S · Sonnet5-Med]` `web/advice.js` carries a whole stale palette generation *(filed 2026-09-06, from Assessment B)*
-
-Six detector findings — `#E7EDEB` ×3 and `#9DAEAA` are a previous generation of `--graphite`/`--graphite-2`; `#12332A` matches `--ok-bg` which `DESIGN.md` does not document; `border-radius:5px` is off the scale and **unconditional**. Plus three rgba fallbacks the rule cannot see: `--score-2` `.19` vs `.42`, `--mark` `.34` vs `.62`, `--score` `.09` vs `.16`.
-
-⚠️ **Every flagged colour is the fallback half of `var(--token, …)` and every token is defined**, so none paints — except the radius. **Concrete next action:** delete the fallbacks; a `var()` fallback for a token that always exists is a second palette nobody maintains.
-
-### `[P1 · S · Opus5-Med]` Four of ten captures are the same empty table, and the drawers have never been seen *(filed 2026-09-06)*
-
-`04-empty-emitting`, `05-empty-void`, `06-history` and `08-reduced-motion` all render the empty table. `06-history` runs `S.drawer='what you did'` **after** `04` set `S.assets=[]`, and `renderTabs` force-hides the rail and drawer on an empty table (`app.js:1336`). All four `.boxes.json` sidecars are `{}` — confirmed.
-
-**So the six-drawer surface carrying all 63 flags has never been visually reviewed**, and `08-reduced-motion` verifies the motion rules on the one screen with no wash, no arrival stagger and no seam. ⚠️ `PRODUCT.md`'s Evidence table cites these ten as evidence of the real window. **Concrete next action:** populate the table before the history and reduced-motion shots, and assert the drawer's own bounding box is non-zero.
-
-
-*Ordered by priority, P1 first.*
-
-### `[P1 · S · Sonnet5-High]` Three detector rules have never fired, and the contract does not say so *(filed 2026-09-06)*
-
-`design-system-font`, `design-system-color` and `design-system-radius` unlock only when `DESIGN.md` declares a palette and a type stack in the format the parser reads. `docs/DESIGN.md` declares both, in prose, under headings of its own — so `doctor.mjs` reports *"no colors, typography section"* and the three rules check nothing. **Falsified:** `#FF00FF`, `#7C3AED`, `border-radius:17px` and Comic Sans in one file return **0 findings**, inside the project. Every "exactly one finding" on record is true about the rules that ran.
-
-**Concrete next action:** `/impeccable document`, which `doctor` names — it fills the two sections from the CSS in the spec's six-section format. ⚠️ It confirms before overwriting; `docs/DESIGN.md` carries the world's reasoning and must not be replaced by a generated file, only extended.
-
 ### `[P2 · S · Opus5-Med]` The impeccable skill has never been set up here, only its detector *(filed 2026-09-06)*
 
 `.impeccable/` does not exist: no config, no `design.json`, **no surface briefs**. The detector CLI works without them, which is why three sessions did not notice. `doctor.mjs`'s other finding is that `docs/PRODUCT.md` has no schema stamp and none of the sections the current record adds — Positioning, Operating Context, Evidence on Hand, Product Principles — so it predates this version and `init` is the named fix. ⚠️ `init` is an **interview**; it needs Harkirat, and it preserves confirmed answers rather than rewriting from inference.
 
 **The briefs are the expensive half.** Every command reads `.impeccable/surfaces/<name>.md` for the surface's **mode**, the single judgement that changes the output most; without one each command re-infers it, which the skill's docs name as the source of generic advice. Three surfaces — the contact sheet, the open view, the empty table — and all three are **Operate**. ⚠️ Writing a brief records a chosen direction, so it is design work with the user's fingerprints on it: offered, never done unasked.
-
-### `[P1 · S · Sonnet5-High]` The design detector ran DEGRADED with no banner, and its deps live in `/tmp` *(filed 2026-09-06)*
-
-`CLAUDE.md` makes the detector a gate: *exactly one finding, `repeating-stripes-gradient`, and an empty result only counts when the header does not say DEGRADED.* Found 2026-09-06: `htmlparser2`, `css-select`, `css-tree` and `domutils` were **missing** from `~/.claude/skills/impeccable/node_modules`, and on a **CSS-only** invocation the tool printed a bare `[]` with **no DEGRADED banner at all** — the banner appears only once HTML is in the argument list. So the documented safeguard does not cover the most common invocation shape.
-
-⚠️ **Every detector result quoted before that install is unverified**, including several in this session's own reports. Deps were installed into the skill directory (outside this repo), which is not durable: the skill has no `package.json` listing them, and `node_modules` there has been observed as a symlink into `/tmp`.
-
-**Concrete next action:** do not trust a bare `[]`. Either pin the four packages in the skill's own `package.json`, or add a wrapper in `scripts/` that runs the detector over a file **known** to contain a finding and fails loudly if that returns empty. This project's own rule — prove the instrument can report presence before trusting an absence.
-
-### `[P1 · XS · Sonnet5-Med]` `scripts/fetch-fonts.py` silently reverts the font fix *(filed 2026-09-06)*
-
-`web/fonts.css` was corrected so the declared axes match what the `.woff2` files carry (Archivo `wght 100 900`, Spline Sans Mono one variable face at `300 700`). `scripts/fetch-fonts.py` regenerates that file wholesale from a Google Fonts query still pinned to `wdth,wght@62..125,400..700` and `wght@400;500` — **exactly the clamped ranges that were removed.** Running it undoes the fix without a word.
-
-**Concrete next action:** widen the query string in the script. `scripts/check_font_axes.py` catches the regression today, so this is a footgun rather than a silent loss — but a gate that catches a self-inflicted revert is worse than a script that does not cause one.
 
 ### `[P3 · XS · Sonnet5-Low]` An exact-key-set assertion made a contract addition a test failure *(filed 2026-09-06)*
 

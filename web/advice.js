@@ -26,28 +26,38 @@
   var STYLE_ID = "devoid-advice-style";
   var RAIL_CLASS = "devoid-advice-rail";
 
+  /* ⚠️ NO `var(--token, fallback)` FALLBACKS HERE (2026-09-07 00:55 EDT). Every token
+     this file names is defined in app.css, so the fallback half never painted
+     -- it was a second palette nobody maintained, a generation behind the
+     first (#E7EDEB/#9DAEAA were the previous --graphite pair) and invisible to
+     every review because it never rendered. The detector saw it, which is the
+     only reason it was found. The one that DID paint was the dismiss button's
+     radius, off the --r scale unconditionally (the literal is deliberately not
+     repeated here: the detector reads comments, and naming it re-created the
+     finding this sentence is about). If a token here ever stops existing,
+     the right failure is a visible one. */
   var CSS = [
     "." + RAIL_CLASS + "{display:flex;flex-direction:column;gap:6px;align-items:flex-start}",
     ".devoid-advice{display:inline-flex;align-items:center;gap:10px;",
-    "  max-width:100%;padding:7px 8px 7px 12px;border-radius:8px;",
-    "  background:var(--cyan-bg,#0B2C33);color:var(--graphite,#E7EDEB);",
-    "  border:1px solid var(--score-2,rgba(255,255,255,.19));",
+    "  max-width:100%;padding:7px 8px 7px 12px;border-radius:var(--r);",
+    "  background:var(--cyan-bg);color:var(--graphite);",
+    "  border:1px solid var(--score-2);",
     "  font:inherit;font-size:12px;line-height:1.35;",
-    "  transition:opacity 160ms var(--ease,cubic-bezier(.23,1,.32,1))}",
-    ".devoid-advice[data-applied='true']{background:var(--ok-bg,#12332A)}",
+    "  transition:opacity 160ms var(--ease)}",
+    ".devoid-advice[data-applied='true']{background:var(--ok-bg)}",
     ".devoid-advice__text{flex:1 1 auto;min-width:0}",
     ".devoid-advice__action{flex:0 0 auto;cursor:pointer;",
-    "  padding:3px 9px;border-radius:6px;font:inherit;font-size:12px;",
-    "  color:var(--graphite,#E7EDEB);background:transparent;",
-    "  border:1px solid var(--mark,rgba(255,255,255,.34))}",
-    ".devoid-advice__action:hover{background:var(--score,rgba(255,255,255,.09))}",
+    "  padding:3px 9px;border-radius:var(--r-sm);font:inherit;font-size:12px;",
+    "  color:var(--graphite);background:transparent;",
+    "  border:1px solid var(--mark)}",
+    ".devoid-advice__action:hover{background:var(--score)}",
     ".devoid-advice__dismiss{flex:0 0 auto;cursor:pointer;",
-    "  width:20px;height:20px;padding:0;border:0;border-radius:5px;",
-    "  background:transparent;color:var(--graphite-2,#9DAEAA);",
+    "  width:20px;height:20px;padding:0;border:0;border-radius:var(--r-xs);",
+    "  background:transparent;color:var(--graphite-2);",
     "  font:inherit;font-size:14px;line-height:1}",
-    ".devoid-advice__dismiss:hover{color:var(--graphite,#E7EDEB)}",
+    ".devoid-advice__dismiss:hover{color:var(--graphite)}",
     ".devoid-advice__action:focus-visible,.devoid-advice__dismiss:focus-visible{",
-    "  outline:2px solid var(--cyan,#22D3EE);outline-offset:2px}",
+    "  outline:2px solid var(--cyan);outline-offset:2px}",
     "@media (prefers-reduced-motion:reduce){.devoid-advice{transition:none}}"
   ].join("");
 

@@ -15,7 +15,8 @@
     "check:contrast": "python3 scripts/check_contrast.py --check",
     "check:greyscale": ".venv/bin/python scripts/check_greyscale.py --check",
     "refresh:index": "bash scripts/refresh-index.sh",
-    "test:hooks": "bash .claude/hooks/hooks.test.sh"
+    "test:hooks": "bash .claude/hooks/hooks.test.sh",
+    "check:detector": "node scripts/check_detector.mjs"
   },
   "author": "Harkirat Mangat",
   "repository": {

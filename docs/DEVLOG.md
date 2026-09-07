@@ -194,6 +194,14 @@ The desktop app runs a `PreToolUse` deny whose predicate is `isUnattendedSession
 
 ---
 
+### The comment trap caught the person who had just written it down — 2026-09-07 01:00 EDT
+
+An hour after `DEVLOG.md` gained the note that **map signals match comments**, the design detector flagged `design-system-radius` in `web/advice.js` — on the COMMENT that explained why a `border-radius` literal had been removed. The prose named the value, the rule read the prose, and the finding the comment described came back.
+
+**A scanner that reads a file does not know which lines are code.** This applies to every text-matching gate here: the map's signals, `detect.mjs`, `check_contrast.py`'s parser (which strips comments FIRST, deliberately, and says so). When writing a comment about a defect, describe it — do not spell it.
+
+---
+
 ## Decisions, and what was tried first
 
 ### The world: the ground is the void, the tools stay the matte world

@@ -579,7 +579,16 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .qwarn{margin:var(--s2) 0 0;font-size:var(--t-meta);color:var(--ruby-ink)}
 .qfoot{display:flex;align-items:center;gap:var(--s3)}
 .qhint{font-family:"Spline Sans Mono",monospace;font-size:var(--t-micro);color:var(--graphite-3)}
-.btn:disabled{opacity:.45;cursor:not-allowed}
+/* ⚠️ NOT `opacity`, 2026-09-07 00:56 EDT. `opacity:.45` fades the WHOLE element, so
+   the disabled primary shipped as white on a washed cyan -- measured 1.82:1
+   emitting, 3.00:1 collapsed -- and `check_contrast.py` could not see it,
+   because a composited-by-opacity pair has no tokens to name. The button is
+   disabled for the entire time a question is open, which is exactly when it
+   is being read. An explicit recessed pair is measurable, and the pair below
+   is in PAIRS. Disabled controls are exempt from SC 1.4.3; PRODUCT.md commits
+   to contrast in both states anyway, and presents this gate as the proof. */
+.btn:disabled{opacity:1;cursor:not-allowed;
+  background:var(--bench);border-color:var(--score);color:var(--graphite-2)}
 
 /* ── the ledger's blank IS the not-checked state, so it gets the mark too ─ */
 .lmark{width:15px;height:15px;flex:none}

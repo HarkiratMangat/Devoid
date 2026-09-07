@@ -212,6 +212,13 @@ app.whenReady().then(async () => {
   await shot('01-contact-sheet');
   await shot('02-open-question', `openAsset(${JSON.stringify(megaId)})`);
   await shot('03-emitting', `document.getElementById('lamp').click()`);
+  // ⚠️ MOVED ABOVE THE EMPTY-TABLE SHOTS, 2026-09-07 00:55 EDT. 04 sets
+  // S.assets=[] and nothing put them back, so 06 and 08 both photographed the
+  // SAME empty table 04 and 05 had already photographed -- four of ten captures
+  // of one state, and the drawer this shot exists for was force-hidden by
+  // renderTabs on an empty table. It still runs before the arrival shot, which
+  // is the ordering constraint the comment above protects.
+  await shot('06-history', `S.drawer='what you did';S.history=null;render()`, 1800);
   await shot('04-empty-emitting', 'S.assets=[];S.sel=new Set();render()');
   await shot('05-empty-void', `document.getElementById('lamp').click()`);
   // The history drawer -- PLAN.md 5.2's "load a line". It reads the REAL
@@ -220,7 +227,6 @@ app.whenReady().then(async () => {
   // ⚠️ BEFORE the arrival shot on purpose: that one fires six ~18s analyses,
   // and the first capture taken after it caught this drawer still reading
   // "Reading the log…" 2s in. Ordering is not cosmetic in this file.
-  await shot('06-history', `S.drawer='what you did';S.history=null;render()`, 1800);
 
   // ⚠️ closeAsset() and S.drawer=null are load-bearing. Without them this shot
   // inherited the open asset from step 02 and the drawer from step 06, so the
@@ -240,7 +246,11 @@ app.whenReady().then(async () => {
     await win.webContents.debugger.sendCommand('Emulation.setEmulatedMedia', {
       features: [{ name: 'prefers-reduced-motion', value: 'reduce' }],
     });
-    await shot('08-reduced-motion', `S.drawer=null;S.assets=[];S.sel=new Set();render()`);
+    // ⚠️ It used to empty the table here too, so the one capture that verifies
+    // five @media blocks did it on the single screen with no wash, no arrival
+    // stagger and no seam -- the states those blocks are written for. The
+    // populated sheet from the arrival shot is the honest subject.
+    await shot('08-reduced-motion', `S.drawer=null;closeAsset();render()`);
   } catch (e) {
     failures.push(`reduced-motion: ${e.message}`);
   }

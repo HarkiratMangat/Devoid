@@ -40,6 +40,13 @@ SURFACE_MIN = 3.0   # ΔL* units between adjacent planes
 
 # (label, foreground token or literal, background token or literal, target, criterion)
 PAIRS: list[tuple[str, str, str, float, str]] = [
+    # --- the DISABLED primary, which this file was blind to until 2026-09-07 00:56 EDT -
+    # it tested only `btn.go ink on cyan`, the ENABLED pair, and passed green
+    # over a shipped 1.82:1. The button is disabled the whole time a question
+    # is open. `.btn:disabled` now sets real tokens instead of fading the
+    # element, so there is something to name here.
+    ("disabled button ink on its recessed fill",
+                                "--graphite-2", "--bench",    4.5, "F-disabled"),
     # --- surface ladder: measured in ΔL*, see SURFACE_MIN --------------------
     ("well vs void",            "--well",      "--void",      0.0, "F21 surface"),
     ("void vs sprocket",        "--void",      "--sprocket",  0.0, "F21 surface"),

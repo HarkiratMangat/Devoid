@@ -19,6 +19,83 @@ Heading shape, matching the engine repo's archive:
 
 ## Closed items
 
+## ✅ Six map nodes assert LESS than they appear to, because `signal_present` is ANY — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: fixed for all sixteen lists, and the fix was falsified before it was believed.** Every `signal_present` in `map.yaml` now carries exactly ONE string, in a form live code can contain — `function foo`, `def foo`, `const foo`, a full selector. The `ANY not ALL` mechanism and the comment-matching trap are recorded at the top of `map.yaml` and in `CLAUDE.md`. **Proof it is a check at all:** renaming `function resolvePython` in `main.js` turns `launch` red (`✗ code implements: function resolvePython`, verdict `drift`) and restoring it turns it green; `main.js` was compared byte-for-byte after restore. `map status` reports **17/17 verified** on one signal each, where before it reported the same on the easiest term of each list.
+
+### `[P1 · S · Sonnet5-High]` Six map nodes assert LESS than they appear to, because `signal_present` is ANY *(filed 2026-09-07, found while closing the P0)*
+
+`map-reconcile.js:171` is `const found = hit != null` over the FIRST match in the signal list, so a `signal_present` check with N strings passes when **any one** of them is present. Every extra string makes such a check WEAKER, not stronger — the exact opposite of the natural reading, and the opposite of `signal_absent`, where more strings forbid more.
+
+Nodes whose `signal_present` lists more than one string are therefore asserting only their easiest term: `launch` (3), `contact-sheet` (2), `region-mark` (2), `seam`'s first check (4), `question`'s first check (2), and any single-kind shorthand with a list. **`answer-bar`, `ledger` and the rest need auditing the same way.**
+
+⚠️ **And a signal matches COMMENTS.** `seamToGroup` passed by matching prose on `web/app.js:74` while the function sat at `1579`. This is the same false-positive class that made `question`'s check fire on a comment recording the string it was forbidding.
+
+**Concrete next action:** for every `signal_present` in `map.yaml`, keep exactly ONE string, and make it something only live code can contain (`function foo`, a full selector, a template expression) rather than a bare identifier. **Verify:** delete the implementation of one node's subject and confirm its check goes red — a check that cannot fail is not a check.
+
+## ✅ The disabled primary is unreadable and `check_contrast.py` is blind to it — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: fixed, and the numbers moved from 1.82:1 to 6.78:1.** `.btn:disabled` no longer fades the element with `opacity:.45` — a composited pair has no tokens to name, which is precisely why the gate could not see it. It now sets `--bench` / `--score` / `--graphite-2` explicitly, and `PAIRS` carries the pair: **6.78:1 collapsed** (`#A6A6BC` on `#221D37`) and **8.31:1 emitting** (`#4E4C60` on `#FFFFFF`), both against a 4.5 target, both measured by `npm run check:contrast` rather than asserted here.
+
+### `[P1 · S · Sonnet5-High]` The disabled primary is unreadable and `check_contrast.py` is blind to it *(filed 2026-09-06, from `/impeccable critique`)*
+
+Measured from the captured window: emitting `#FFFFFF` on `#A6C5CF` = **1.82:1**; collapsed `#181E30` on `#406E87` = **3.00:1**. `scripts/check_contrast.py:76` tests only `btn.go ink on cyan` — the **enabled** pair — so `npm run check:contrast` passes green over the shipped pixel, and the button is disabled for the entire time the question is open.
+
+⚠️ Disabled controls are exempt from SC 1.4.3, but `PRODUCT.md` commits to contrast in both states as chosen rigour and presents the gate as proof. **Concrete next action:** an explicit disabled token pair, measured in both states, added to the script's `PAIRS`.
+
+## ✅ `web/advice.js` carries a whole stale palette generation — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: fixed — every fallback deleted, and the file now returns ZERO findings.** All ten `var(--token, fallback)` fallbacks are gone (`#E7EDEB`, `#9DAEAA`, `#12332A`, three rgba pairs, the easing curve), and the three raw radii are tokens. The four-file detector run went from **6 findings to 1**, and that one is the accepted checkerboard in `index.html`. ⚠️ **A detail worth keeping: the first fix left a finding behind, and it was in the COMMENT explaining the fix** — writing *border-radius:5px* in prose re-created `design-system-radius`, one hour after the comment-matching trap was written into `DEVLOG.md`. The literal is deliberately not repeated in that comment now.
+
+### `[P1 · S · Sonnet5-Med]` `web/advice.js` carries a whole stale palette generation *(filed 2026-09-06, from Assessment B)*
+
+Six detector findings — `#E7EDEB` ×3 and `#9DAEAA` are a previous generation of `--graphite`/`--graphite-2`; `#12332A` matches `--ok-bg` which `DESIGN.md` does not document; `border-radius:5px` is off the scale and **unconditional**. Plus three rgba fallbacks the rule cannot see: `--score-2` `.19` vs `.42`, `--mark` `.34` vs `.62`, `--score` `.09` vs `.16`.
+
+⚠️ **Every flagged colour is the fallback half of `var(--token, …)` and every token is defined**, so none paints — except the radius. **Concrete next action:** delete the fallbacks; a `var()` fallback for a token that always exists is a second palette nobody maintains.
+
+## ✅ Four of ten captures are the same empty table, and the drawers have never been seen — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: fixed by ordering, which is the cheapest half; the drawer sweep is not done.** `06-history` now runs BEFORE `04-empty-emitting` empties the table, so it photographs the drawer over a populated sheet instead of a state `renderTabs` force-hides; `08-reduced-motion` keeps the arrival shot's assets instead of clearing them, so the five `@media` blocks are finally exercised on a screen that has a wash, a stagger and a seam. Two captures of the empty table remain and that is deliberate — it is a real surface. All ten digests are distinct and `gate:ui` PASSES. ⚠️ **Still open elsewhere:** the six-drawer surface carrying all 63 flags has still never been visually reviewed; that half belongs to the impeccable-setup item.
+
+### `[P1 · S · Opus5-Med]` Four of ten captures are the same empty table, and the drawers have never been seen *(filed 2026-09-06)*
+
+`04-empty-emitting`, `05-empty-void`, `06-history` and `08-reduced-motion` all render the empty table. `06-history` runs `S.drawer='what you did'` **after** `04` set `S.assets=[]`, and `renderTabs` force-hides the rail and drawer on an empty table (`app.js:1336`). All four `.boxes.json` sidecars are `{}` — confirmed.
+
+**So the six-drawer surface carrying all 63 flags has never been visually reviewed**, and `08-reduced-motion` verifies the motion rules on the one screen with no wash, no arrival stagger and no seam. ⚠️ `PRODUCT.md`'s Evidence table cites these ten as evidence of the real window. **Concrete next action:** populate the table before the history and reduced-motion shots, and assert the drawer's own bounding box is non-zero.
+
+
+*Ordered by priority, P1 first.*
+
+## ✅ The design detector ran DEGRADED with no banner, and its deps live in `/tmp` — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: closed, and the durable half was already true.** All four parsers — `htmlparser2`, `css-select`, `css-tree`, `domutils` — are present AND listed in `~/.claude/skills/impeccable/package.json`, and `node_modules` there is a real directory, not the `/tmp` symlink the filing feared. The remaining risk was the one the filing named as the real defect: a bare `[]` on a CSS-only invocation with no banner. `npm run check:detector` now runs the three design-system rules against `scripts/fixtures/detector-canary.css` — a repeating gradient, `#FF00FF`, `border-radius:17px` and Comic Sans — and **exits 1 on an empty result or on DEGRADED**. It reports 4 findings across all three rules. ⚠️ **And it produced a finding of its own:** `repeating-stripes-gradient` does NOT fire on that CSS fixture while the other three do, so that rule appears to read HTML only — which retires a standing prediction in `DESIGN.md`.
+
+### `[P1 · S · Sonnet5-High]` The design detector ran DEGRADED with no banner, and its deps live in `/tmp` *(filed 2026-09-06)*
+
+`CLAUDE.md` makes the detector a gate: *exactly one finding, `repeating-stripes-gradient`, and an empty result only counts when the header does not say DEGRADED.* Found 2026-09-06: `htmlparser2`, `css-select`, `css-tree` and `domutils` were **missing** from `~/.claude/skills/impeccable/node_modules`, and on a **CSS-only** invocation the tool printed a bare `[]` with **no DEGRADED banner at all** — the banner appears only once HTML is in the argument list. So the documented safeguard does not cover the most common invocation shape.
+
+⚠️ **Every detector result quoted before that install is unverified**, including several in this session's own reports. Deps were installed into the skill directory (outside this repo), which is not durable: the skill has no `package.json` listing them, and `node_modules` there has been observed as a symlink into `/tmp`.
+
+**Concrete next action:** do not trust a bare `[]`. Either pin the four packages in the skill's own `package.json`, or add a wrapper in `scripts/` that runs the detector over a file **known** to contain a finding and fails loudly if that returns empty. This project's own rule — prove the instrument can report presence before trusting an absence.
+
+## ✅ `scripts/fetch-fonts.py` silently reverts the font fix — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: fixed at the source rather than left to the gate.** The query is now `Archivo:wdth,wght@62..125,100..900` and `Spline+Sans+Mono:wght@300..700`, matching what the `.woff2` files carry; the header comment says why the ranges are the fix rather than a detail. `python3 scripts/check_font_axes.py --check` reports *OK — every declared range is exactly the range its file carries*. ⚠️ It also still warns that Spline Sans Mono has **no `wdth` axis**, so every `font-stretch` aimed at it anywhere in the app is inert — that is a separate, pre-existing observation, not part of this item.
+
+### `[P1 · XS · Sonnet5-Med]` `scripts/fetch-fonts.py` silently reverts the font fix *(filed 2026-09-06)*
+
+`web/fonts.css` was corrected so the declared axes match what the `.woff2` files carry (Archivo `wght 100 900`, Spline Sans Mono one variable face at `300 700`). `scripts/fetch-fonts.py` regenerates that file wholesale from a Google Fonts query still pinned to `wdth,wght@62..125,400..700` and `wght@400;500` — **exactly the clamped ranges that were removed.** Running it undoes the fix without a word.
+
+**Concrete next action:** widen the query string in the script. `scripts/check_font_axes.py` catches the regression today, so this is a footgun rather than a silent loss — but a gate that catches a self-inflicted revert is worse than a script that does not cause one.
+
+
+## ✅ Three detector rules have never fired, and the contract does not say so — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: closed by `/impeccable document`, and now protected by a canary.** `docs/DESIGN.md` gained the frontmatter and the canonical `## Colors` / `## Typography` sections the parser reads, which unlocked `design-system-font`, `design-system-color` and `design-system-radius`; turning them on immediately found 15 real violations in the shipped surface. `npm run check:detector` runs the three rules against `scripts/fixtures/detector-canary.css` and **fails loudly on an empty result**, so "the rules are live" is now asserted rather than remembered — it reports 4 findings across all three rules.
+
+⚠️ **A finding the closure produced: `repeating-stripes-gradient` does not fire on a CSS-only argument list.** The canary carries a `repeating-linear-gradient` and that rule stayed silent, while the other three fired. This retires `DESIGN.md`'s standing prediction — *"expect one finding, and a second when the hatch lands"* — which could never have come true: the hatch is in `app.css` and the rule appears to read HTML.
+
+ Closed items
 ## ✅ The hatch is painted over the exact rectangle the seam exists to reveal — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
 
 **Outcome: fixed, and proved by a red-green cycle rather than by a string search.** The fill moved from `.qregion`'s own background to a `.qregion:before` clipped at `--qseam`, a per-element conversion of the seam's position into that region's own basis; `syncRegionSeams()` rewrites it on every drag and `seamToGroup()` opens the seam on the mean centre of the disputed bbox instead of a constant. `setSeam(50)` is gone from `openAsset`; `SEAM_NEUTRAL` is used only when nothing is disputed.

@@ -24,6 +24,10 @@ What shipped, when, and why. Newest first.
 
 ⚠️ **The commit count was hard-coded here as 28 and had drifted to 67 by 2026-09-07.** Derive it — `git rev-list --count main..HEAD` — rather than reading a number out of prose, which is this repo's own standing rule.
 
+### Six P1s in one pass — 2026-09-07 01:00 EDT
+
+The disabled primary went from **1.82:1** to **6.78:1** and is measured in both lighting states instead of being invisible to the gate. `web/advice.js` lost a whole generation of `var()` fallbacks and now returns zero detector findings. `scripts/fetch-fonts.py` stopped regenerating the clamped font axes it was fixed to remove. The captures stopped photographing the same empty table four times. `npm run check:detector` proves the detector can report presence before any absence it gives is believed. And every `signal_present` in `map.yaml` was narrowed to one live-code string, then falsified by renaming a function and watching the node go red.
+
 ### The seam can finally show a difference — 2026-09-07 00:37 EDT
 
 The disputed region's fill was painted over the rectangle identically on both halves, so the comparison the product exists for could not differ in the one place it was about. The fill is now clipped at the seam, in each region's own coordinate basis, and the seam opens on the disputed bbox instead of at 50%. Two assertions in `npm run gate:ui` cover it and were shown to fail on the old code.

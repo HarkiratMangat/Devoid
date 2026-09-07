@@ -3,9 +3,16 @@ W = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FONTDIR = os.path.join(W, "web", "fonts")
 os.makedirs(FONTDIR, exist_ok=True)
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+# ⚠️ THE RANGES HERE ARE THE FIX, NOT A DETAIL (2026-09-07 00:55 EDT). This script
+# regenerates web/fonts.css wholesale, and the query used to be pinned to
+# wght@400..700 / wght@400;500 -- exactly the clamped ranges that were removed
+# when the declared axes were corrected to match what the .woff2 files carry.
+# Running it silently undid the fix. scripts/check_font_axes.py catches the
+# regression, but a gate that catches a self-inflicted revert is worse than a
+# script that does not cause one.
 URL = ("https://fonts.googleapis.com/css2?"
-       "family=Archivo:wdth,wght@62..125,400..700"
-       "&family=Spline+Sans+Mono:wght@400;500&display=swap")
+       "family=Archivo:wdth,wght@62..125,100..900"
+       "&family=Spline+Sans+Mono:wght@300..700&display=swap")
 css = subprocess.run(["curl","-sS","-m","30","-A",UA,URL], capture_output=True, text=True, check=True).stdout
 assert "@font-face" in css and "Archivo" in css and "Spline Sans Mono" in css, "unexpected CSS payload"
 
@@ -35,7 +42,7 @@ header = (
     "/* Self-hosted Archivo + Spline Sans Mono — Stage 6, PLAN.md edge case \"Offline\".\n"
     "   Generated from Google Fonts' css2 API and rewritten to local files under web/fonts/.\n"
     "   Regenerate with scripts/fetch-fonts.py. Axes match what index.html used to request:\n"
-    "   Archivo variable wdth 62..125 / wght 400..700, Spline Sans Mono 400 and 500. */\n\n"
+    "   Archivo variable wdth 62..125 / wght 100..900, Spline Sans Mono variable wght 300..700. */\n\n"
 )
 with open(os.path.join(W, "web", "fonts.css"), "w") as f:
     f.write(header + out)

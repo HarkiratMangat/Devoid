@@ -13,6 +13,16 @@
 #   edge type  realizes | supports | must-stay-consistent-with | should-align-with | mentions | reflux
 #   strength   hard | soft | watch
 #   reality.kind  signal_present | signal_absent | file_present | file_absent | external
+# ⚠️ ONE SIGNAL PER `signal_present`, AND ONLY FORMS LIVE CODE CAN CONTAIN.
+# `map-reconcile.js:171` is `const found = hit != null` over the FIRST match in
+# the list, so a `signal_present` with N strings passes on ANY ONE of them --
+# every extra string makes it WEAKER. `signal_absent` is the reverse: each
+# extra string forbids one more thing, so there a list is a strengthening.
+# ⚠️ And a signal matches COMMENTS: "seamToGroup" passed against prose on
+# web/app.js:74 while the function sat at 1579. Prefer `function foo`, `def
+# foo`, `const foo`, a full selector or a template expression over a bare
+# identifier. Sixteen lists were narrowed on 2026-09-07 00:57 EDT; before that
+# every one of them asserted only its easiest term.
 project: devoid
 product_status: pre-release, one user, never pushed
 job: >-
@@ -50,7 +60,7 @@ nodes:
     reality:
       kind: signal_present
       path: main.js
-      signal: [requestSingleInstanceLock, waitForServer, resolvePython]
+      signal: ["function resolvePython"]
 
   - id: empty-table
     layer: surface
@@ -76,7 +86,7 @@ nodes:
     reality:
       kind: signal_present
       path: web/app.js
-      signal: [renderSheet, "data-few"]
+      signal: ["const renderSheet"]
 
   - id: question
     layer: surface
@@ -93,7 +103,7 @@ nodes:
         - claim: the question panel renders
           kind: signal_present
           path: web/app.js
-          signal: [renderQuestions, "The marked place on the artwork"]
+          signal: ["function renderQuestions"]
         - claim: the abolished string is not RENDERED
           kind: signal_absent
           path: web/app.js
@@ -116,7 +126,7 @@ nodes:
     reality:
       kind: signal_present
       path: web/app.js
-      signal: [renderQuestionRegions, "Devoid.wipe.sides"]
+      signal: ["function renderQuestionRegions"]
 
   - id: seam
     layer: surface
@@ -135,7 +145,7 @@ nodes:
         - claim: the pair mounts through one decode path
           kind: signal_present
           path: web/wipe.js
-          signal: [mountPair, loadPair, loadUrls, seamCanHelp]
+          signal: ["function mountPair"]
         - claim: the region overlay is clipped by the seam, so the two halves can differ
           kind: signal_present
           path: web/app.css
@@ -182,7 +192,7 @@ nodes:
     reality:
       kind: signal_present
       path: web/app.js
-      signal: [renderAnswerBar, seamGroup]
+      signal: ["function renderAnswerBar"]
 
   - id: ledger
     layer: surface
@@ -195,7 +205,7 @@ nodes:
     reality:
       kind: signal_present
       path: web/wipe.js
-      signal: [renderLedger, redrawLedger, ledgerHas]
+      signal: ["function renderLedger"]
 
   - id: labels-log
     layer: surface
@@ -219,7 +229,7 @@ nodes:
     reality:
       kind: signal_present
       path: server/jobs.py
-      signal: [append_job, read_jobs, recover_orphans]
+      signal: ["def append_job"]
 
   - id: packaging
     layer: surface
@@ -234,11 +244,11 @@ nodes:
         - claim: the builder is configured and signs
           kind: signal_present
           path: electron-builder.yml
-          signal: [afterPack, "identity: DEVOID", hardenedRuntime]
+          signal: ["identity: DEVOID"]
         - claim: the escaping-symlink guard exists
           kind: signal_present
           path: build/afterPack.js
-          signal: [dereferenced, "still escapes the bundle"]
+          signal: ["dereferenced"]
 
   # ── the machinery that keeps the chain honest ─────────────────────────────
   - id: engine-boundary
@@ -251,7 +261,7 @@ nodes:
     reality:
       kind: signal_present
       path: server/validate.py
-      signal: [parse_recommend, suggested_flag_tokens, _fail]
+      signal: ["def parse_recommend"]
 
   - id: tri-state
     layer: implementation
@@ -264,7 +274,7 @@ nodes:
     reality:
       kind: signal_present
       path: server/cli.py
-      signal: [build_argv, auto]
+      signal: ["def build_argv"]
 
   - id: preview-route
     layer: implementation
@@ -277,7 +287,7 @@ nodes:
     reality:
       kind: signal_present
       path: server/preview.py
-      signal: [_answer_argv, _extract_one_frame, sample_frame_index]
+      signal: ["def _answer_argv"]
 
   - id: render-job
     layer: implementation
@@ -286,7 +296,7 @@ nodes:
     reality:
       kind: signal_present
       path: server/render.py
-      signal: [build_render_argv, _journalled, _settle_lock]
+      signal: ["def build_render_argv"]
 
   - id: advice
     layer: implementation
@@ -298,7 +308,7 @@ nodes:
     reality:
       kind: signal_present
       path: web/advice.js
-      signal: [suggest, "needs both an apply and an undo"]
+      signal: ["function suggest"]
 
   - id: gates
     layer: implementation
@@ -312,7 +322,7 @@ nodes:
         - claim: the window gate drives real input
           kind: signal_present
           path: scripts/capture-window.mjs
-          signal: [sendInputEvent, leftButtonDown, CANVAS_HASH]
+          signal: ["sendInputEvent"]
         - claim: contrast is measured in both lighting states
           kind: signal_present
           path: scripts/check_contrast.py
