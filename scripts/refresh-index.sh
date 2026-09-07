@@ -37,6 +37,15 @@ echo "── prose ────────────────────�
 context-mode index "$ROOT/docs" --source project:devoid-docs  --project "$ROOT" --ext .md --max-files 60 --max-depth 4 | sed 's/^/  /'
 context-mode index "$ROOT"      --source project:devoid-rules --project "$ROOT" --ext .md --max-files 40 --max-depth 1 | sed 's/^/  /'
 
+echo "── product map ───────────────────────────────────────────"
+# The map's verdicts go stale the same way: `reconcile` re-runs every node's
+# reality checks against the code and OVERRIDES the hand-declared status.
+if [ -f "$ROOT/map.yaml" ] && command -v linksee-memory >/dev/null 2>&1; then
+  linksee-memory map status 2>&1 | sed -n '1,6p' | sed 's/^/  /'
+else
+  echo "  (no map.yaml, or linksee-memory not on PATH)"
+fi
+
 echo "── verify by QUERY, never by the lines above ─────────────"
 echo "  the indexer reports success for a badly-labelled or stale index."
 echo "  run one search whose answer you already know:"

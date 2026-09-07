@@ -158,6 +158,20 @@ linksee-memory map reconcile           # re-run every check
 
 **The North Star is anchor #10** (`declare_anchor`, `node_type: north_star`), and the `question` and `tri-state` nodes link to it by id. ⚠️ Anchors **8** and **9** are superseded: a malformed parameter tag in the calling syntax was absorbed into the statement text, twice. Read back what an anchor actually stored before trusting it.
 
+### The hooks that make the routing above actually happen
+
+*Added 2026-09-06 22:41 EDT. Prose does not change behaviour — measured on this machine: `grep` **788x** against `rg` **4x** on a rule written down for months, and this file's own author broke two written context-mode rules while both were loaded.*
+
+| hook | fires on | does |
+|---|---|---|
+| `ctx-index-refresh.sh` | PreToolUse, `ctx_search` | re-indexes both prose corpora, content-hash gated, **before the read**. Freshness only matters at the instant of a read |
+| `ctx-search-nudge.sh` | PreToolUse, Bash | a multi-word `rg` at `docs/` — the one case measured as `ctx_search` winning |
+| `codebase-memory-nudge.sh` | PreToolUse, Bash | a symbol-shaped `rg` at `web/`, `server/`, `scripts/`. ⚠️ **UNMEASURED**, and its own message says so |
+
+**All three carry the conventions in their message text**, so the correction arrives at the moment of the mistake rather than in a file that gets skimmed. **None blocks.** `npm run test:hooks` asserts both directions — a nudge that cannot stay silent is noise; one that cannot fire is decoration.
+
+⚠️ **A hook that emits `hookSpecificOutput` WITHOUT `hookEventName` is silently discarded** — it runs, exits 0, prints valid JSON, and reaches nobody. The tests assert the field.
+
 ### What this repo still does NOT have
 
 - **No index-refresh HOOK.** `npm run refresh:index` exists and must be run deliberately; Diors-Builds fires the equivalent on `PreToolUse`. Registering one here edits `.claude/settings.json`.

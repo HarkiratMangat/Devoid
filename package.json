@@ -14,7 +14,8 @@
     "test:versions": "node --test tests/test_versions.mjs",
     "check:contrast": "python3 scripts/check_contrast.py --check",
     "check:greyscale": ".venv/bin/python scripts/check_greyscale.py --check",
-    "refresh:index": "bash scripts/refresh-index.sh"
+    "refresh:index": "bash scripts/refresh-index.sh",
+    "test:hooks": "bash .claude/hooks/hooks.test.sh"
   },
   "author": "Harkirat Mangat",
   "repository": {
