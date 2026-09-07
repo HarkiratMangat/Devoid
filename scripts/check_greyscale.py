@@ -41,6 +41,30 @@ PAIRS = [
     # ⚠️ `10-ledger`, not `09-seam`: the bar only renders for a finished job, and
     # pointing this at a state that cannot show it made the check unfailable.
     ("10-ledger", ".lseg-bg", ".lseg-total", "F30 — the ledger bar's two segments"),
+    # ⚠️ CONTROLS, NOT STATES — the gap this file had, closed 2026-09-07 01:08 EDT.
+    # The eight region tools were one row of identical geometry whose verdict
+    # was a 2px coloured edge, so in greyscale Keep and Cut were the same
+    # button. This file covered states and never looked at a control, which is
+    # why a rule DESIGN.md calls impossible shipped anyway. Each verdict button
+    # now carries a mark — solid for stays, hatch for goes — and these are the
+    # two marks measured against each other. A MISSING BOX FAILS, which is the
+    # point: if the toolbar is not on screen in this capture, the check says so
+    # rather than passing over nothing.
+    # ⚠️ `10-ledger`, not `09-seam`: the toolbar is only on screen once a region
+    # tool has been armed, and 09 never arms one. Pointing this at a capture
+    # that cannot show the control is how a control check becomes unfailable —
+    # the same mistake the ledger-bar pair above records one line up.
+    # ⚠️ A MARGIN OF ITS OWN, AND THE NUMBER CAME FROM A FALSIFIER (2026-09-07 01:19 EDT).
+    # Making both marks the same glyph in the same colour still measured
+    # Δ 6.0 — exactly PAIR_MARGIN — so at the default this check PASSES on two
+    # identical controls and would not have failed on the defect it was written
+    # for. 6.0 is this pair's noise floor, not its signal: the boxes average
+    # over three buttons a side, and the two groups sit on different parts of
+    # the row. The real marks measure 19.3. 12.0 sits clear of the floor and
+    # well under the signal, and the falsifier now goes red.
+    ("10-ledger", '.rt-tool[data-keeps="true"] .rt-mark',
+                  '.rt-tool[data-keeps="false"] .rt-mark',
+                  "the region tools' keep mark against their cut mark", 12.0),
 ]
 
 
@@ -125,7 +149,12 @@ def main() -> int:
         print(f"{name:20} {sel:34} {mean(img, box):7.1f} {ring(img, box):7.1f} {d:6.1f}  "
               f"{MARK_MARGIN}{'' if ok else '  ✗'}")
 
-    for name, a_sel, b_sel, why in PAIRS:
+    for name, a_sel, b_sel, why, *rest in PAIRS:
+        # ⚠️ An optional fifth element is this pair's own margin. PAIR_MARGIN is
+        # a default, not a law: a pair whose boxes average over several elements
+        # has a higher noise floor, and a threshold at or below that floor makes
+        # the check unfailable. Each override says where its number came from.
+        need = rest[0] if rest else PAIR_MARGIN
         img, boxes = load(name)
         a, b = boxes.get(a_sel), boxes.get(b_sel)
         if not a or not b:
@@ -133,12 +162,12 @@ def main() -> int:
             continue
         da, db = mean(img, a[0]), mean(img, b[0])
         d = abs(da - db)
-        ok = d >= PAIR_MARGIN
+        ok = d >= need
         if not ok:
             failures.append(f"{name}: `{a_sel}` and `{b_sel}` are {d:.1f}/255 apart in greyscale, "
-                            f"needs {PAIR_MARGIN} ({why})")
+                            f"needs {need} ({why})")
         print(f"{name:20} {a_sel + ' vs ' + b_sel:34} {da:7.1f} {db:7.1f} {d:6.1f}  "
-              f"{PAIR_MARGIN}{'' if ok else '  ✗'}")
+              f"{need}{'' if ok else '  ✗'}")
 
     # --- F36: the squint test, as a measurement -----------------------------
     # `DESIGN.md` claims the contact sheet's hierarchy survives a desaturated

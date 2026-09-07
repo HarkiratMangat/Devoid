@@ -135,8 +135,18 @@
         </div><!-- /.stagecol -->
         <aside class="decide" id="decide" aria-label="The decision">
           <div class="questions" id="questions" hidden></div>
-          <div id="advice-host"></div>
+          <!-- ⚠️ THE LEDGER SITS DIRECTLY UNDER THE QUESTION, 2026-09-07 01:12 EDT.
+               The filing asked for it under the answer pair in the stage
+               column, and that was MEASURED AND REJECTED: `.wipe` is
+               height-constrained there, so the artwork fell 1037 -> 455px, and
+               compacting the ledger to 92px then 56px only reached 517 and 531
+               against `gate:ui`'s 550 floor. Buying the numbers with the focal
+               element is the trade the artwork item was closed to prevent.
+               Moving them to the TOP of this column fixes the actual complaint
+               — they were ~600px below the heading, under the advice host —
+               and costs the artwork nothing. -->
           <div class="ledger" id="ledger"></div>
+          <div id="advice-host"></div>
         </aside>
         </div><!-- /.openbody -->
       </div>

@@ -89,7 +89,7 @@ const REGION_KINDS = [
   { type: 'protect',      label: 'Keep',           hint: 'this part stays, even where it matches the background', keeps: true },
   { type: 'remove',       label: 'Cut',            hint: 'take this out',                                          keeps: false },
   { type: 'remove-track', label: 'Cut and follow', hint: 'take this out, and follow it as it moves',               keeps: false, tracked: true },
-  { type: 'unprotect',    label: 'Cut it after all', hint: 'let this go even though it looks worth keeping',       keeps: false },
+  { type: 'unprotect',    label: 'Cut anyway',      hint: 'let this go even though it looks worth keeping',       keeps: false },
   { type: 'translucent',  label: 'Make it see-through', hint: 'this part is meant to be see-through',              keeps: true },
   { type: 'fade-protect', label: 'Keep the fade',  hint: 'a glow or sparkle here — keep it fading, not flattened', keeps: true },
 ];
@@ -563,8 +563,17 @@ function start() {
   }
 
   function toolButton(id, label, hint, keeps) {
-    const b = el('button', 'btn rt-tool', label);
+    const b = el('button', 'btn rt-tool', keeps === undefined ? label : null);
     b.type = 'button';
+    /* ⚠️ A SHAPE, NOT ONLY A COLOUR (2026-09-07 01:08 EDT). The verdict was a
+       2px coloured edge and nothing else, so in greyscale Keep and Cut were
+       indistinguishable — which DESIGN.md declares impossible, and
+       check:greyscale missed because it covers states, not controls. The mark
+       is the app's own notation: a solid block for material that stays, the
+       diagonal hatch for material that goes. */
+    if (keeps !== undefined) {
+      b.append(el('span', 'rt-mark', keeps ? '\u25AE' : '\u2593'), el('span', 'rt-name', label));
+    }
     // the verdict, as a 2px edge -- eight fully-coloured buttons would be a
     // carnival, but eight UNMARKED ones make you read every label to find the
     // one that cuts. Move and Take a colour carry no verdict, so no mark.
@@ -619,10 +628,24 @@ function start() {
     tools.setAttribute('role', 'toolbar');
     tools.setAttribute('aria-label', 'Drawing on the artwork');
 
+    /* ⚠️ TWO GROUPS ON ONE ROW, NOT TWO ROWS (2026-09-07 01:15 EDT). The first
+       attempt stacked them and `gate:ui` measured the cost: three toolbar rows
+       took the artwork from 1037px to 840px on ready. The filing asked for a
+       divider, and a divider is what this is — the grouping is horizontal, the
+       row count is unchanged, and the arrow-key scope stays one row, which is
+       what `role="toolbar"` promises. */
     const row = el('div', 'rt-row');
     row.append(toolButton('move', 'Move', 'pick a region up and move or resize it'));
-    for (const k of REGION_KINDS) row.append(toolButton(k.type, k.label, k.hint, k.keeps));
     row.append(toolButton('colour', 'Take a colour', 'read the colour under the crosshair'));
+    for (const [keeps, lab] of [[true, 'keeping'], [false, 'cutting']]) {
+      const grp = el('span', 'rt-grp');
+      grp.append(el('span', 'rt-lab', lab));
+      for (const k of REGION_KINDS) {
+        if (k.keeps !== keeps) continue;
+        grp.append(toolButton(k.type, k.label, k.hint, k.keeps));
+      }
+      row.append(grp);
+    }
     tools.append(row);
 
     const shapes = el('div', 'rt-row rt-sub');

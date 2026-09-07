@@ -19,18 +19,6 @@ The project-local tracker for open work, real TODOs, and reminders specific to t
 
 ## 🐞 Open — real TODOs with an available fix, not yet done
 
-### `[P1 · M · Opus5-High]` The decision is scattered across four zones and its evidence is exiled *(filed 2026-09-06, from `/impeccable critique`)*
-
-Measured off `09-seam.png`: question heading top-right, "answer it under the seam", buttons bottom-left, submit back top-right, and the two numbers that price both answers **~600px below the heading**. Eye travel for one binary: right → left → right → down. The `Answer` button is the only `btn go` in the column, so it is the loudest control there — and it is not the decision, it is a second commit step behind it.
-
-**Concrete next action:** move the ledger directly under the answer pair, and delete the `Answer` button — `noteAnswer` commits on pick and ⌘Z already undoes (`app.js:800`, `:1946`). Surface the undo as a visible affordance instead.
-
-### `[P1 · S · Sonnet5-Med]` Eight region tools, with keep and cut separated by colour alone *(filed 2026-09-06, from `/impeccable critique`)*
-
-`web/canvas.js` — one row, identical geometry and weight, distinguished by a tinted left border. **In greyscale Keep and Cut are indistinguishable**, which `DESIGN.md` declares impossible; `check:greyscale` misses it because it covers states, not controls. "Cut it after all" also names no action a user can guess.
-
-**Concrete next action:** two labelled groups with a divider, each button carrying its grease-pencil mark. Extend `check_greyscale.py` to controls.
-
 ### `[P2 · S · Opus5-Med]` The impeccable skill has never been set up here, only its detector *(filed 2026-09-06)*
 
 `.impeccable/` does not exist: no config, no `design.json`, **no surface briefs**. The detector CLI works without them, which is why three sessions did not notice. `doctor.mjs`'s other finding is that `docs/PRODUCT.md` has no schema stamp and none of the sections the current record adds — Positioning, Operating Context, Evidence on Hand, Product Principles — so it predates this version and `init` is the named fix. ⚠️ `init` is an **interview**; it needs Harkirat, and it preserves confirmed answers rather than rewriting from inference.

@@ -184,7 +184,11 @@ app.whenReady().then(async () => {
       const boxes = await probe(`
         const dpr = window.devicePixelRatio || 1;
         const want = ['.omark', '#openstate b', '.lseg-bg', '.lseg-total',
-                      '.frame[data-state="needs-you"]', '.frame', '.st', '.bword', '.bmark'];
+                      '.frame[data-state="needs-you"]', '.frame', '.st', '.bword', '.bmark',
+                      // the region tools' verdict marks -- controls, not states,
+                      // which is the gap check:greyscale had
+                      '.rt-tool[data-keeps="true"] .rt-mark',
+                      '.rt-tool[data-keeps="false"] .rt-mark'];
         const out = {};
         for (const sel of want) {
           const els = [...document.querySelectorAll(sel)].filter(e => e.getClientRects().length);

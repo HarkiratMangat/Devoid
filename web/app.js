@@ -699,7 +699,7 @@ function renderAnswerBar(a) {
   bar.replaceChildren(...answerPair(a, [
     ['Keep it', 'protect', ans.byColour[g.hex] === 'protect'],
     ['Cut it',  'remove',  ans.byColour[g.hex] === 'remove'],
-  ], v => { noteAnswer(a, g.hex, v); ans.byColour[g.hex] = v; S.blocked.delete(a.id); S.qerror = null; render(); }).childNodes);
+  ], v => pickAnswer(a, g.hex, v)).childNodes);
 }
 
 function renderQuestions(a) {
@@ -740,7 +740,7 @@ function renderQuestions(a) {
       q.append(answerPair(a, [
         ['Keep it', 'protect', ans.byColour[g.hex] === 'protect'],
         ['Cut it',  'remove',  ans.byColour[g.hex] === 'remove'],
-      ], v => { noteAnswer(a, g.hex, v); ans.byColour[g.hex] = v; S.blocked.delete(a.id); S.qerror = null; render(); }));
+      ], v => pickAnswer(a, g.hex, v)));
     } else {
       q.append(el('p', 'qhint', 'answer it under the seam'));
     }
@@ -757,7 +757,7 @@ function renderQuestions(a) {
          binary. Same verbs as every other answer in the app. */
       ['Keep the fade',  'artwork',     ans.fade === 'artwork'],
       ['Cut the fade',   'not-artwork', ans.fade === 'not-artwork'],
-    ], v => { noteAnswer(a, 'fade', v); ans.fade = v; S.blocked.delete(a.id); S.qerror = null; render(); }));
+    ], v => pickAnswer(a, 'fade', v)));
     /* ⚠️ Answering "it is artwork" forces an 8-bit-alpha container. Say so
        BEFORE the person picks a format, rather than discovering it later. */
     if (ans.fade === 'artwork' && S.goal.format === 'gif') {
@@ -768,14 +768,39 @@ function renderQuestions(a) {
 
   if (S.qerror) box.append(el('p', 'qwarn', S.qerror));
 
-  const submit = el('button', 'btn go', 'Answer');
-  submit.disabled = !!outstanding(a).length;
-  submit.addEventListener('click', () => submitAnswers(a));
+  /* ⚠️ THE `Answer` BUTTON IS GONE, 2026-09-07 01:08 EDT. It was the only `btn go`
+     in this column, so it was the loudest control there — and it was not the
+     decision, it was a second commit step behind one that had already been
+     made. Picking a side IS the answer; pickAnswer() sends it the moment the
+     last question is answered. What replaces it is the undo, which used to be
+     reachable only by knowing that ⌘Z existed. */
   const foot = el('div', 'qfoot');
-  foot.append(submit, el('span', 'qhint', outstanding(a).length
+  const undo = el('button', 'btn', 'Undo that');
+  undo.disabled = !S.answerUndo.length;
+  undo.title = 'put the last answer back (⌘Z)';
+  undo.addEventListener('click', () => undoAnswer());
+  foot.append(undo, el('span', 'qhint', outstanding(a).length
     ? `${outstanding(a).length} still to answer`
     : (colourGroups(a).length + (hasFade(a) ? 1 : 0)) > 1 ? 'every answer is in' : 'answered'));
   box.append(foot);
+}
+
+/* ── one pick, one answer ─────────────────────────────────────────────────
+   Every place a side is chosen goes through here, so the three call sites
+   cannot drift apart — they had already been copied three times with the same
+   five statements. Choosing IS answering: when nothing is outstanding the
+   answer goes to the server on the spot, which is what let the `Answer` button
+   be deleted (2026-09-07 01:08 EDT). ⚠️ submitAnswers() renders on its own,
+   so this must NOT render again afterwards or an applied advice chip is
+   rebuilt mid-apply. */
+function pickAnswer(a, key, value) {
+  const ans = S.answers[a.id] || (S.answers[a.id] = { byColour: {}, fade: null });
+  noteAnswer(a, key, value);
+  if (key === 'fade') ans.fade = value; else ans.byColour[key] = value;
+  S.blocked.delete(a.id);
+  S.qerror = null;
+  if (!outstanding(a).length) { submitAnswers(a); return; }
+  render();
 }
 
 function answerPair(a, opts, pick) {
@@ -833,7 +858,8 @@ async function submitAnswers(a) {
 /* Every answer is snapshotted before it changes, so ⌘Z can put back exactly
    what was there. ⚠️ This reverts the LOCAL choice. If the answer already went
    to the server the asset is `ready`, and taking the choice back re-opens the
-   question — pressing the answer button again is what re-submits. */
+   question — picking a side again is what re-submits, now that there is no
+   button between the choice and the send. */
 function noteAnswer(a, key, next) {
   const cur = S.answers[a.id] || { byColour: {}, fade: null };
   /* ⚠️ Re-picking the side that is already chosen changes nothing, and an undo

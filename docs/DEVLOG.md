@@ -202,6 +202,24 @@ An hour after `DEVLOG.md` gained the note that **map signals match comments**, t
 
 ---
 
+### A threshold at the noise floor is not a threshold — 2026-09-07 01:22 EDT
+
+`check_greyscale.py` gained its first CONTROL pair: the region tools' keep mark against their cut mark. It passed at Δ 19.3 with the default 6.0 floor, and that looked like a result. Then the falsifier: both marks set to the same glyph in the same colour still measured **Δ 6.0** — exactly the floor. The check would have passed on two identical buttons.
+
+**The 6.0 was noise, not signal.** These boxes average over three buttons a side and the two groups sit on different parts of the row, so the pair has a higher floor than a two-segment bar does. `PAIR_MARGIN` is a sensible default for a pair of adjacent segments and a meaningless one here.
+
+**Any pass whose margin you have not measured against a deliberately broken input is a number, not evidence.** `PAIRS` now takes a per-pair margin and each override says where its number came from.
+
+---
+
+### The filing's own fix was measured and rejected — 2026-09-07 01:22 EDT
+
+`devoid-deferred-list.md` said to move the ledger under the answer pair. Doing it took the artwork from **1037px to 455px**, and compacting the ledger to 92px then 56px only reached 517 and 531 against `gate:ui`'s 550 floor. A separate, already-closed item exists precisely because the artwork stopped being the focal element once.
+
+**A concrete next action in a tracker is a hypothesis with a filing date, not an instruction.** The complaint was real — the numbers were ~600px below the heading — and the top of the decision column fixes it for free. A stashed A/B measured 840px both ways.
+
+---
+
 ## Decisions, and what was tried first
 
 ### The world: the ground is the void, the tools stay the matte world

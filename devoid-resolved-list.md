@@ -19,6 +19,37 @@ Heading shape, matching the engine repo's archive:
 
 ## Closed items
 
+## ✅ The decision is scattered across four zones and its evidence is exiled — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: the `Answer` button is deleted and the reading path is fixed — but NOT the way the filing asked, because the filing's own action was measured and rejected.**
+
+**What shipped.** Picking a side IS the answer: all three pick sites go through one `pickAnswer()`, which sends the moment nothing is outstanding. The loudest control in the column — the only `btn go` there, and a second commit step behind a decision already made — is gone, replaced by a visible **Undo that**, which is the affordance ⌘Z had without anyone being told it existed.
+
+⚠️ **The ledger did NOT move under the answer pair, and the numbers say why.** `gate:ui` asserts the artwork is ≥550px with a question open. Moving the ledger into the stage column took it from **1037 → 455px**; compacting it to 92px then 56px only reached **517** and **531**. Buying the evidence with the focal element is exactly the trade the artwork item was closed to prevent. The ledger now sits at the TOP of the decision column, directly under the question it prices, which addresses the actual complaint — *"~600px below the heading"* — and a stashed A/B measured it at **840px either way**, so it costs the artwork nothing.
+
+### `[P1 · M · Opus5-High]` The decision is scattered across four zones and its evidence is exiled *(filed 2026-09-06, from `/impeccable critique`)*
+
+Measured off `09-seam.png`: question heading top-right, "answer it under the seam", buttons bottom-left, submit back top-right, and the two numbers that price both answers **~600px below the heading**. Eye travel for one binary: right → left → right → down. The `Answer` button is the only `btn go` in the column, so it is the loudest control there — and it is not the decision, it is a second commit step behind it.
+
+**Concrete next action:** move the ledger directly under the answer pair, and delete the `Answer` button — `noteAnswer` commits on pick and ⌘Z already undoes (`app.js:800`, `:1946`). Surface the undo as a visible affordance instead.
+
+## ✅ Eight region tools, with keep and cut separated by colour alone — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: fixed, and the check that was blind to it now fails when it should.** Each verdict button carries a mark as well as an edge — a solid block for material that stays, the diagonal hatch for material that goes, which is the app's own notation. The eight tools are two labelled groups, `keeping` and `cutting`, divided by a rule. `Cut it after all` — which named no action anyone could guess — is now **`Cut anyway`**.
+
+**`check_greyscale.py` covers controls for the first time**, measuring the two marks against each other in `10-ledger`: **Δ 19.3 against a 12.0 floor**.
+
+⚠️ **That floor came from a falsifier, not from taste, and the first version of the check was worthless.** Making both marks the same glyph in the same colour still measured **Δ 6.0 — exactly the default `PAIR_MARGIN`** — so at the default this check PASSED on two identical controls and would not have failed on the defect it was written for. 6.0 is the pair's noise floor: the boxes average over three buttons a side. `PAIRS` entries now take an optional per-pair margin; with 12.0 the falsifier goes red (exit 1) and the real marks pass.
+
+⚠️ **A measured cost, recorded rather than hidden:** stacking the two groups as separate rows took the artwork from **1037 → 840px** on ready. Putting them on one row with a divider recovered it to **959**. The grouping is not free, and 959 is the honest number.
+
+### `[P1 · S · Sonnet5-Med]` Eight region tools, with keep and cut separated by colour alone *(filed 2026-09-06, from `/impeccable critique`)*
+
+`web/canvas.js` — one row, identical geometry and weight, distinguished by a tinted left border. **In greyscale Keep and Cut are indistinguishable**, which `DESIGN.md` declares impossible; `check:greyscale` misses it because it covers states, not controls. "Cut it after all" also names no action a user can guess.
+
+**Concrete next action:** two labelled groups with a divider, each button carrying its grease-pencil mark. Extend `check_greyscale.py` to controls.
+
+
 ## ✅ Six map nodes assert LESS than they appear to, because `signal_present` is ANY — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
 
 **Outcome: fixed for all sixteen lists, and the fix was falsified before it was believed.** Every `signal_present` in `map.yaml` now carries exactly ONE string, in a form live code can contain — `function foo`, `def foo`, `const foo`, a full selector. The `ANY not ALL` mechanism and the comment-matching trap are recorded at the top of `map.yaml` and in `CLAUDE.md`. **Proof it is a check at all:** renaming `function resolvePython` in `main.js` turns `launch` red (`✗ code implements: function resolvePython`, verdict `drift`) and restoring it turns it green; `main.js` was compared byte-for-byte after restore. `map status` reports **17/17 verified** on one signal each, where before it reported the same on the easiest term of each list.
