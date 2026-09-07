@@ -48,6 +48,17 @@ SQUINTS = ["01-contact-sheet", "11-sheet-emitting"]
 MARKS = [
     ("09-seam", ".omark", "F29 — the open view's state mark"),
     ("01-contact-sheet", ".st", "the tile's state word"),
+    # ⚠️ THE TWO COMPONENTS THE EMITTING ITEM NAMES, 2026-09-07 10:20 EDT, in
+    # BOTH lighting states. The filing came from an eyeballed interface-design
+    # pass and nothing had ever measured either component in either state, so
+    # "emitting is weaker here" could be neither confirmed nor retired. The
+    # current rail button and the current film frame are the ones that carry a
+    # state; if they do not stand off their own strip under a desaturated blur,
+    # the strip is one block.
+    ("09-seam", '.edge button[aria-current="true"]', "the open asset in the edge rail (void)"),
+    ("03-emitting", '.edge button[aria-current="true"]', "the open asset in the edge rail (EMITTING)"),
+    ("09-seam", '.frames button[aria-current="true"]', "the current frame in the film strip (void)"),
+    ("03-emitting", '.frames button[aria-current="true"]', "the current frame in the film strip (EMITTING)"),
     ("11-sheet-emitting", ".st", "the tile's state word, in the LIGHT state"),
 ]
 PAIRS = [

@@ -24,6 +24,10 @@ What shipped, when, and why. Newest first.
 
 ⚠️ **The commit count was hard-coded here as 28 and had drifted to 67 by 2026-09-07.** Derive it — `git rev-list --count main..HEAD` — rather than reading a number out of prose, which is this repo's own standing rule.
 
+### The light state can be looked at again — 2026-09-07 10:26 EDT
+
+The edge rail and the film strip lost their current element entirely in emitting: **2.6/255** and **1.5** against a floor of 8.0, where the void reads 114.3 and 45.0. Both now read **14.5** and **16.2**, on the light state's own shadow scale rather than a border. Three surface briefs and a label bring-back path landed with them.
+
 ### Three P2s answered with numbers, and the light state's squint fixed — 2026-09-07 01:59 EDT
 
 `measure_scale.mjs` puts the contact sheet through 8, 20, 60 and 200 real assets: first paint and settle are flat, the tile is 262px at every size, RSS grows about 1.06 MB per asset. `/api/history` stays under 16ms against six concurrent analyses, so the drawer's two-second stall is not the route. And the emitting sheet lost the squint by **8.4** where the void leads by 72.8 — the field was receding by darkening on a light ground, which makes it louder; it washes out now and separates by **25.8**.

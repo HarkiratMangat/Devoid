@@ -207,7 +207,13 @@ app.whenReady().then(async () => {
                       // the region tools' verdict marks -- controls, not states,
                       // which is the gap check:greyscale had
                       '.rt-tool[data-keeps="true"] .rt-mark',
-                      '.rt-tool[data-keeps="false"] .rt-mark'];
+                      '.rt-tool[data-keeps="false"] .rt-mark',
+                      // ⚠️ 2026-09-07 10:20 EDT. The edge rail and the film strip are the
+                      // two components a filed item names as losing tile
+                      // separation in the emitting state, and nothing measured
+                      // either of them in either state.
+                      '.edge button[aria-current="true"]', '.edge button',
+                      '.frames button[aria-current="true"]', '.frames button'];
         const out = {};
         for (const sel of want) {
           const els = [...document.querySelectorAll(sel)].filter(e => e.getClientRects().length);

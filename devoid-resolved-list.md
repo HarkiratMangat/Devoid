@@ -19,6 +19,62 @@ Heading shape, matching the engine repo's archive:
 
 ## Closed items
 
+## ✅ The impeccable skill has never been set up here, only its detector — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: set up, and the expensive half was the briefs.** `.impeccable/` now holds `config.json`, `config.local.json`, a critique snapshot and — the part the filing called expensive — **three surface briefs**: `contact-sheet`, `open-view`, `empty-table`. `surface-brief.mjs list` reads all three. Every impeccable command reads a brief for the surface's MODE before anything else, and without one each command re-infers it, which the skill's docs name as the source of generic advice. All three are **Operate**, which `PRODUCT.md` already settled.
+
+Each brief points at the document that owns a decision rather than restating it, and carries the constraint easiest to break: the sheet's hierarchy is set by STATE and its field recedes in **opposite directions** in the two lighting states; the open view's artwork has a **550px floor** the gate asserts; the empty table's geometry is **off limits** under D2.
+
+`doctor.mjs` reported `product-schema-legacy` and `design-md-coverage` when this was filed; both are gone — `init` stamped `PRODUCT.md` and `document` gave `DESIGN.md` the sections the parser reads, which is what turned on three detector rules that had never fired.
+
+⚠️ **One doctor finding remains and it is a question, not a defect:** `config-build-path-unset` — whether new surfaces are built comp-first or code-first. The skill says to offer that choice once and only where image generation exists. Put to Harkirat 2026-09-07.
+
+### `[P2 · S · Opus5-Med]` The impeccable skill has never been set up here, only its detector *(filed 2026-09-06)*
+
+`.impeccable/` does not exist: no config, no `design.json`, **no surface briefs**. The detector CLI works without them, which is why three sessions did not notice. `doctor.mjs`'s other finding is that `docs/PRODUCT.md` has no schema stamp and none of the sections the current record adds — Positioning, Operating Context, Evidence on Hand, Product Principles — so it predates this version and `init` is the named fix. ⚠️ `init` is an **interview**; it needs Harkirat, and it preserves confirmed answers rather than rewriting from inference.
+
+**The briefs are the expensive half.** Every command reads `.impeccable/surfaces/<name>.md` for the surface's **mode**, the single judgement that changes the output most; without one each command re-infers it, which the skill's docs name as the source of generic advice. Three surfaces — the contact sheet, the open view, the empty table — and all three are **Operate**. ⚠️ Writing a brief records a chosen direction, so it is design work with the user's fingerprints on it: offered, never done unasked.
+
+## ✅ A packaged run writes its labels somewhere the tracked log cannot see — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: there is a way back, and it is append-only by construction rather than by care.** `python3 scripts/import_labels.py` reads `$DEVOID_DATA_DIR` (or `~/Library/Application Support/Devoid`) and appends rows the tracked log does not already hold, matched by exact line, so a second run adds nothing. `--check` reports and exits 1 without writing.
+
+**The append-only guarantee is asserted, not asserted-in-prose.** `tests/test_import_labels.py` (6 tests) covers each failure separately, including one that no diff would catch: **the pre-existing bytes must be a PREFIX of the file afterwards**, so a merge that rewrote history while getting longer still fails.
+
+⚠️ **A torn FINAL line is dropped** — that is what a crash mid-append looks like against an `O_APPEND` line-atomic writer. A torn line **anywhere else refuses to touch the tracked log at all**, because that is not a shape the writer can produce and the file is the only corpus in existence for this decision.
+
+**Not built:** the "export labels" menu item the filing offered as an alternative. A script is testable and a menu item is not, and this is a labelling-session tool — a scene `PRODUCT.md` records as explicitly declined.
+
+### `[P2 · S · Opus5-Med]` A packaged run writes its labels somewhere the tracked log cannot see *(filed 2026-09-05)*
+
+`labels/protection.jsonl` is **tracked evidence**, pointed at from the engine repo, and the whole reason `PLAN.md` 5.1 says to design it in early. A packaged app now writes to `~/Library/Application Support/Devoid/labels/protection.jsonl`, so those rows never reach the checkout.
+
+Writing inside the bundle instead is strictly worse — it breaks under signing and the next install deletes it — so this is the better of two bad options, not a good one. **What it needs is a way to bring the rows back**: an "export labels" menu item, or a configured `$DEVOID_DATA_DIR` pointing into the repo for anyone doing labelling work. ⚠️ Whichever is chosen, it must **append**, never overwrite — this is an append-only log with one writer, and a merge that rewrites it breaks that guarantee.
+
+## ✅ Emitting mode is the weaker of the two states — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: fixed, and the filing understated it — the two components were not weaker, they were absent.** Measured under a desaturated blur, current element against its own surroundings, floor 8.0/255:
+
+| | void | emitting, before | emitting, after |
+|---|---|---|---|
+| the open asset in the edge rail | **114.3** | **2.6** | **14.5** |
+| the current frame in the film strip | **45.0** | **1.5** | **16.2** |
+
+**The tokens were never the problem** — the surface ladder passes at 3 ΔL* in both states. But 3 ΔL* was set for adjacent PLANES, and a rail button's neighbours are other buttons, so on a light ground the whole strip read as one block.
+
+**Shadow, not a border,** as the filing insisted: two depth strategies coexist here on purpose and adding a border back on light is what that split exists to avoid. The rail also needed its field to recede — its neighbours wash toward the ground, the same treatment the contact sheet's field gets in this state and for the same reason.
+
+⚠️ **The first attempt changed the measurement by NOTHING, to a tenth of a unit.** A stronger rule was added earlier in the file and lost at equal specificity to one that already existed at line 930 — which was the original light-mode shadow fix, too quiet at `0 1px 3px` and 10%. The filing said that fix "did not reach" these components; it reached the rail and was simply inaudible. **Strengthen the rule that wins; never add a second one and assume.**
+
+### `[P2 · M · Opus5-High]` Emitting mode is the weaker of the two states *(filed 2026-09-05, from the interface-design squint test)*
+
+The void (dark) state is the designed one. Emitting (light) passes every measurement — contrast, focus-ring, hit targets — and still **loses tile separation under a squint** in the places the shadow fix did not reach: the edge rail and the film strip. Two depth strategies coexist by design here (borders on dark, shadows on light, recorded in `.interface-design/system.md`), which is a deliberate exception to "choose one and commit"; this item is that exception not being carried all the way through.
+
+**Concrete next action:** run the squint test on the real window, both states, and extend the light-mode shadow scale to the two components that were missed rather than adding borders back — borders on light is the thing the strategy split exists to avoid.
+
+⚠️ **MEASURED AND HALF-FIXED 2026-09-07 02:10 EDT, and the half that remains is the item.** The gate now captures `11-sheet-emitting` and `check_greyscale.py` squints both lighting states. Emitting was **inverted**: the needs-you tile read 219.1 against a field at 227.4, losing by **8.4**, because the field recedes with `brightness(.55)` and on a light ground darker is louder. It washes toward the ground now and separates positively — but at **10.7 to 25.8 across runs against a floor of 8.0, where the void reads 72.8 every time**. The inversion is gone; the weakness is exactly what was filed. ⚠️ The squint also had a dark-mode assumption in its arithmetic (`mine - theirs`, signed), so a real inversion and no separation failed the same way; it measures `abs()` now. **Next: the edge rail and the film strip, which this pair still does not cover.**
+
+
 ## ✅ The history drawer can sit on "Reading the log…" while analyses run — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
 
 **Outcome: closed — it is NOT the route, and the filing was right to refuse to name a cause.** `/api/history` was timed against six analyses that were **asserted** to be running, not assumed: all six returned HTTP 200 and the slowest took **7,360ms**, so the load was real. The route read **1/3/5ms idle**, **4/5/16ms with the six in flight**, and **0/2/2ms after**. It never left single-digit milliseconds under the load that was supposed to starve it, so threadpool contention and the GIL are both off the list.

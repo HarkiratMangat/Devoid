@@ -856,6 +856,32 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
    while the rest move to the edge" is a movement, in this design's own words.
    The rail carries the movement (it slides in from where the sheet was), the
    stage settles in behind it. Transform and opacity only. */
+/* ⚠️ THE LIGHT STATE'S SHADOW SCALE, EXTENDED TO THE TWO COMPONENTS IT MISSED
+   (2026-09-07 10:21 EDT). A filed item said emitting "loses tile separation
+   under a squint" in the edge rail and the film strip. Measured: the current
+   rail button stood **2.6/255** off its surroundings and the current film frame
+   **1.5**, against a floor of 8.0 — while the void reads **114.3** and **45.0**.
+   Not weaker: absent.
+   The tokens are not the problem — the surface ladder passes at 3 ΔL* in both
+   states — but 3 ΔL* was set for adjacent PLANES and the neighbours here are
+   other buttons, so on a light ground the whole strip reads as one block.
+   ⚠️ SHADOW, NOT A BORDER. Two depth strategies coexist here on purpose —
+   borders on dark, shadows on light (`.interface-design/system.md`) — and
+   adding a border back on light is exactly what that split exists to avoid.
+   A raised surface on a light ground is lighter AND casts; both channels move
+   here, which is why this clears the floor rather than scraping it. */
+.emitting .frames button[aria-current="true"]{
+  background:var(--bench);box-shadow:inset 0 0 0 1.5px var(--cyan),var(--float)}
+/* ⚠️ AND THE RAIL NEEDED ITS FIELD TO RECEDE TOO (2026-09-07 10:22 EDT). The
+   shadow alone took the rail from 2.6 to 5.1 and the film strip from 1.5 to
+   16.2 — the strip's frames are thin, so the raised fill is most of what they
+   show, while a rail button is mostly its own thumbnail and the fill barely
+   registers. The neighbours wash toward the ground, exactly as the contact
+   sheet's field does in this state, and for the same reason: on a light ground
+   a surface recedes by lightening, never by darkening. */
+.emitting .edge button:not([aria-current="true"]) img{
+  filter:brightness(1.16) saturate(.5) opacity(.55)}
+
 .edge[data-anim]{animation:devoid-rail .34s cubic-bezier(.77,0,.175,1) backwards}
 @keyframes devoid-rail{from{transform:translateX(-100%);opacity:0}to{transform:none;opacity:1}}
 .open[data-anim]{animation:devoid-stage .3s var(--ease) 60ms backwards}
@@ -900,8 +926,17 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .emitting .frame:hover{background:#FFFFFF;
   box-shadow:0 0 0 1px rgba(18,17,26,.12),0 2px 4px -1px rgba(18,17,26,.12),
     0 6px 14px rgba(18,17,26,.07)}
-.emitting .edge button[aria-current="true"]{box-shadow:inset 0 0 0 1.5px var(--cyan),
-  0 1px 3px rgba(18,17,26,.10)}
+/* ⚠️ THIS RULE ALREADY EXISTED AND WAS ALREADY WINNING (2026-09-07 10:25 EDT).
+   The filed item says the light-mode shadow fix "did not reach" the edge rail
+   and the film strip. It reached the rail — this rule — and was simply too
+   quiet: `0 1px 3px` at 10% measured the current asset **2.6/255** off its
+   surroundings, against a floor of 8.0 and the void's **114.3**. A first
+   attempt at the fix added a stronger rule EARLIER in the file, which lost to
+   this one at equal specificity and changed the measurement by nothing at all
+   — the numbers came back identical to a tenth. Strengthen the rule that wins;
+   never add a second one and assume. */
+.emitting .edge button[aria-current="true"]{background:var(--bench);
+  box-shadow:inset 0 0 0 1.5px var(--cyan),var(--float)}
 
 /* ══ THE QUESTION, DRAWN ON THE ARTWORK ════════════════════════════════════
    PRODUCT.md: "Nobody can answer 'is the region at bbox [230,135,406,359]

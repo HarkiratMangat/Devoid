@@ -285,6 +285,16 @@ A filed item said emitting *"loses tile separation under a squint"*, from an eye
 
 ---
 
+### A fix that changed the measurement by nothing, to a tenth — 2026-09-07 10:26 EDT
+
+The emitting rail read **2.6/255** off its surroundings under a blur. A stronger rule was added at line 873; the measurement came back **5.1 then 5.1 again** — the same inside and around values to a tenth across two captures with different digests.
+
+**The rule was losing.** `.emitting .edge button[aria-current="true"]` already existed at line **930**, at identical specificity, later in the file. It was the original light-mode shadow fix — `0 1px 3px` at 10% — and the filed item's phrase for it was that the fix *"did not reach"* the rail. It reached it. It was inaudible.
+
+**An identical measurement across a changed capture is the tell.** Rendering moved (the digest changed) and the number did not, which cannot happen if the rule you edited is the rule that paints. Strengthen the rule that wins, and when a CSS change produces no measurable difference, suspect specificity before suspecting the measurement.
+
+---
+
 ## Decisions, and what was tried first
 
 ### The world: the ground is the void, the tools stay the matte world
