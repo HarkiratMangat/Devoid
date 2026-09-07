@@ -26,6 +26,7 @@ import io
 import json
 import logging
 import os
+import pathlib
 import shutil
 import sys
 import threading
@@ -171,6 +172,47 @@ def _call_quietly(fn, *args, **kwargs):
     if any(noise):
         log.debug("devoid: engine noise captured: %r", noise)
     return value
+
+
+def supports_analysis_handoff() -> bool:
+    """Does the resolved engine accept ``--analysis-json``?
+
+    ⚠️ A CAPABILITY, never a version string -- the same rule as
+    :func:`avif_available`. Devoid runs against whatever engine
+    ``skill_path()`` resolves to, and one that predates this flag would fail
+    EVERY render with an argparse error if we passed it blind. So the question
+    is asked of the engine's own parser, which is the thing that will refuse it.
+    """
+    mod = load_skill()
+    if not callable(getattr(mod, "write_analysis_json", None)):
+        return False
+    factory = getattr(mod, "build_parser", None)
+    if not callable(factory):
+        return False
+    return any("--analysis-json" in a.option_strings for a in factory()._actions)  # noqa: SLF001
+
+
+def write_analysis_handoff(path, input_path, tolerance, report) -> bool:
+    """Persist an analysis for the render subprocess to reuse. True if written.
+
+    ⚠️ **THE ENGINE OWNS THE FORMAT AND DEVOID NEVER RE-IMPLEMENTS IT.** The
+    document carries an identity check -- script SHA, the input's mtime and
+    size, the tolerance -- and a Devoid-side copy of that shape would be one
+    engine edit away from writing a document the engine silently refuses. This
+    calls the engine's own writer with the report we already hold.
+    """
+    if not supports_analysis_handoff():
+        return False
+    if not isinstance(report, dict):
+        return False
+    try:
+        pathlib.Path(path).parent.mkdir(parents=True, exist_ok=True)
+        _call_quietly(load_skill().write_analysis_json,
+                      os.fspath(path), os.fspath(input_path), tolerance, report)
+    except Exception:  # noqa: BLE001 -- a handoff is an optimisation; it may never fail a run
+        log.warning("devoid: could not write the analysis handoff", exc_info=True)
+        return False
+    return True
 
 
 def analyze(input_path: str | os.PathLike, **kwargs):

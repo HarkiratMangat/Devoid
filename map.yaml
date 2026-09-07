@@ -117,6 +117,18 @@ nodes:
           kind: signal_present
           path: web/app.css
           signal: ["grid-column:span 2"]
+        - claim: the crowd's span is drawn only while it is a minority
+          kind: signal_present
+          path: web/app.css
+          signal: ['[data-demand="minority"] .frame[data-state="needs-you"]']
+          # ⚠️ ADDED 2026-09-07 14:25 EDT. ONE signal, and a full selector rather
+          # than a word, because signal_present is ANY-of and a bare "data-demand"
+          # matches the prose above it. The rule this guards: a landmark every tile
+          # carries is not a landmark, and 200 spanning tiles double the scroll.
+        - claim: the bucket does not flip while a drop is still arriving
+          kind: signal_present
+          path: web/app.js
+          signal: ["settleTimer = setTimeout"]
 
   - id: question
     layer: surface

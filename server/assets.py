@@ -43,6 +43,10 @@ class Asset:
     ledger: dict | None = None
     took_ms: int | None = None
     engine_version: str | None = None
+    #: Path to the analysis document handed to the render subprocess, so
+    #: ``--auto``'s pass 1 does not recompute what ``/analyze`` already paid
+    #: for. ``None`` when the resolved engine cannot accept one.
+    analysis_json: str | None = None
     error: str | None = None
 
     def public(self, *, full: bool = False) -> dict:

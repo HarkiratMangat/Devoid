@@ -818,10 +818,20 @@ app.whenReady().then(async () => {
      real asset object so `tile()` renders the same shape it always does. */
   const density = await probe(`
     const real = S.assets.slice();
-    const pad = (n) => {
+    /* ⚠️ SETTING state:'needs-you' ON A CLONE DOES NOTHING, and this probe did
+       exactly that until 2026-09-07. stateOf() derives needs-you from
+       outstanding(a) -- the asset's own unanswered colour groups -- and never
+       reads a.state for it. The assertion below still passed, by accident: the
+       clones cycle through the real corpus, which contains an asset that really
+       does have outstanding questions, so roughly one clone in eight was
+       demanding whatever this line said. Templates, not flags. */
+    const demTpl = real.find((a) => stateOf(a) === 'needs-you');
+    const setTpl = real.find((a) => stateOf(a) !== 'needs-you');
+    const pad = (n, demanding = 1) => {
       const out = [];
-      for (let i = 0; i < n; i++) out.push({ ...real[i % real.length], id: 'pad-' + i });
-      if (out[0]) out[0] = { ...out[0], state: 'needs-you' };
+      for (let i = 0; i < n; i++) {
+        out.push({ ...(i < demanding ? demTpl : setTpl), id: 'pad-' + i });
+      }
       return out;
     };
     const at = (n) => {
@@ -836,7 +846,8 @@ app.whenReady().then(async () => {
         demanding: demanding ? Math.round(demanding.getBoundingClientRect().width) : null,
       };
     };
-    const out = { few: at(4), many: at(20), crowd: at(60) };
+    const out = { few: at(4), many: at(20), crowd: at(60),
+                  templates: { demanding: !!demTpl, settled: !!setTpl } };
     S.assets = real; S.sel = new Set(); render();
     return out;
   `);
@@ -858,6 +869,98 @@ app.whenReady().then(async () => {
      docs with its numbers. */
   console.log(`  density few ${density.few.tile}px · many ${density.many.tile}px`
     + ` · crowd ${density.crowd.tile}px · needs-you in a crowd ${density.crowd.demanding}px`);
+
+  /* ── the density rule's THREE UNSEEN EDGES ──────────────────────────────
+     ⚠️ 2026-09-07. Every assertion above seeds EXACTLY ONE demanding tile, so
+     all three test the rule's happy path. Falsifying the CHECK (break the CSS,
+     watch the gate go red) proves the gate works and says nothing about these:
+     a crowd where NOTHING needs you, one where EVERYTHING does, and the 40/41
+     bucket flip arriving mid-drop. Each is now a decision with a check. */
+  const edges = await probe(`
+    const real = S.assets.slice();
+    /* Two real assets as templates -- one that genuinely has unanswered colour
+       groups and one that does not. A state field on a clone is inert; see the
+       probe above. */
+    const demTpl = real.find((a) => stateOf(a) === 'needs-you');
+    const setTpl = real.find((a) => stateOf(a) !== 'needs-you');
+    const pad = (n, demanding) => {
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        out.push({ ...(i < demanding ? demTpl : setTpl), id: 'e-' + i });
+      }
+      return out;
+    };
+    const shape = () => {
+      const sheet = document.getElementById('sheet');
+      const tiles = [...sheet.querySelectorAll('.frame')];
+      const w = (t) => Math.round(t.getBoundingClientRect().width);
+      const dem = tiles.filter((t) => t.dataset.state === 'needs-you').map(w);
+      const set = tiles.filter((t) => t.dataset.state !== 'needs-you').map(w);
+      return {
+        density: sheet.dataset.density,
+        demand: sheet.dataset.demand,
+        widths: [...new Set(tiles.map(w))].sort((a, b) => a - b),
+        demW: dem.length ? Math.max(...dem) : null,
+        setW: set.length ? Math.max(...set) : null,
+      };
+    };
+    const at = (n, demanding) => {
+      S.assets = pad(n, demanding); S.sel = new Set(); render();
+      return shape();
+    };
+
+    const out = { templates: { demanding: !!demTpl, settled: !!setTpl } };
+    out.none = at(60, 0);          // a crowd where nothing needs you
+    out.all  = at(60, 60);         // a crowd where everything does
+    out.under = at(60, 19);        // 2*19 = 38 < 41 settled -> still a minority
+    out.over  = at(60, 20);        // 2*20 = 40, not < 40    -> the majority
+    out.beforeDrop = at(40, 1);    // the boundary, approached as a drop
+
+    return new Promise((res) => {
+      // one more file lands: the bucket must NOT move under the cursor
+      S.assets = [...S.assets, { ...setTpl, id: 'e-drop' }];
+      render();
+      out.midDrop = shape();
+      setTimeout(() => {
+        out.afterSettle = shape();
+        S.assets = real; S.sel = new Set(); render();
+        res(out);
+      }, 1100);
+    });
+  `);
+
+  /* ⚠️ WITHOUT BOTH TEMPLATES EVERY CHECK BELOW IS VACUOUS -- a corpus with no
+     demanding asset would make `none`, `all`, `under` and `over` the same sheet
+     and all four would agree with each other about nothing. */
+  check('the corpus supplies a demanding AND a settled template to build the edges from',
+        edges.templates.demanding && edges.templates.settled,
+        `demanding=${edges.templates.demanding} settled=${edges.templates.settled}`);
+  check('a crowd where NOTHING needs you draws no landmark, and says so',
+        edges.none.demand === 'none' && edges.none.widths.length === 1,
+        `demand=${edges.none.demand}, ${edges.none.widths.length} distinct width(s): `
+        + `${edges.none.widths.join('/')}px`);
+  check('a crowd where EVERYTHING needs you drops the span instead of doubling the scroll',
+        edges.all.demand === 'majority' && edges.all.widths.length === 1
+          && edges.all.widths[0] === edges.none.widths[0],
+        `demand=${edges.all.demand}, widths ${edges.all.widths.join('/')}px `
+        + `against a settled crowd's ${edges.none.widths.join('/')}px`);
+  check('the span survives at a minority and is gone one asset later',
+        edges.under.demand === 'minority' && edges.under.demW > edges.under.setW
+          && edges.over.demand === 'majority' && edges.over.demW === edges.over.setW,
+        `19 demanding: ${edges.under.demand}, ${edges.under.demW}px vs ${edges.under.setW}px`
+        + ` · 20 demanding: ${edges.over.demand}, ${edges.over.demW}px vs ${edges.over.setW}px`);
+  check('the 40/41 bucket flip WAITS for the drop to stop, then lands once',
+        edges.beforeDrop.density === 'many' && edges.midDrop.density === 'many'
+          && edges.afterSettle.density === 'crowd',
+        `40 -> ${edges.beforeDrop.density}, +1 -> ${edges.midDrop.density} (held),`
+        + ` after the settle window -> ${edges.afterSettle.density}`);
+
+  console.log(`  edges: none=${edges.none.widths.join('/')}px`
+    + ` · all-demanding=${edges.all.widths.join('/')}px`
+    + ` · minority ${edges.under.demW}/${edges.under.setW}px`
+    + ` · majority ${edges.over.demW}/${edges.over.setW}px`
+    + ` · flip 40=${edges.beforeDrop.density} 41=${edges.midDrop.density}`
+    + `->${edges.afterSettle.density}`);
 
   /* ⚠️ CAPTURES LAST, ASSERTIONS FIRST, 2026-09-07 02:09 EDT. These two shots
      close the open asset to photograph the sheet, and every attempt to put it

@@ -19,6 +19,71 @@ Heading shape, matching the engine repo's archive:
 
 ## Closed items
 
+## ✅ Every render pays for a second full analysis the app already ran — CLOSED 2026-09-07 14:21 EDT (branch `feat/devoid-v1`; engine branch `feat/analysis-reuse-across-processes`, commit `63447a4`)
+
+**What happened, and the filing understated it.** The item said the engine recomputes ONE analysis per render. Measured on `galaxy.gif` (743 KB, 8 frames) by wrapping the engine's own `analyze()` and counting real calls under Devoid's exact render argv: **two**. Pass 1's `recommend()` and pass 3's `verify()`, 2.80s and 2.93s of a 10.15s run — **56%**, not the 39–47% filed.
+
+| run | `analyze()` | wall |
+|---|---|---|
+| before | **2** | 9.84s |
+| engine parameter only | **1** | 7.93s |
+| parameter + Devoid's handoff | **0** | 4.28s |
+
+Output sha `354fcb04b142` identical across all three.
+
+**The fix Harkirat approved, after the one I proposed was falsified.** I recommended wiring the engine's existing `scripts/harness/analysis_cache.py` into the product — it already implements the fingerprint-and-fall-back mechanism. He asked whether the repo had already considered caching. It had: `references/lessons.md` §24 forbids disk-cache behaviour in the shipped skill (the deployment sandbox is ephemeral and 1-core), `scripts/audit_docs.py` **rejects** a packaged file that even points at `scripts/harness/`, and a module-level memo sits on that repo's "Rejected, with evidence — do not re-derive" table. ⚠️ **The recommendation would have shipped a change the target repo forbids in two independent places, and the check that caught it was one question.**
+
+**What landed instead:** the engine gained `--analysis-json <path>` — Task 1's parameter carried across a process boundary, writing nothing the caller did not name — plus the engine's own filed Task 1 (`verify(input_analysis=)`). Devoid writes the analysis it already holds after `/analyze` and passes the path at render time. `server/engine.py` asks the ENGINE'S PARSER whether the flag exists rather than assuming, so an older engine simply gets no flag. `tests/test_analysis_handoff.py`, 11 tests. ⚠️ **Two of them were vacuous on the first pass and are recorded in `docs/DEVLOG.md`**: one compared a function with itself, and one never reached the branch it named.
+
+**Original entry, struck through:**
+
+> ~~### `[P1 · S · Sonnet5-High]` Every render pays for a second full analysis the app already ran *(filed 2026-09-05)*~~
+>
+> ~~`server/render.py:143` builds every render argv through `cli.build_argv(..., auto=True)`, which always emits `--auto`. `--auto`'s pass 1 is `recommend()`, which is the same analysis `POST /api/assets/{id}/analyze` already ran and stored on the asset. **So the engine recomputes, per render, an answer Devoid is holding in memory** — measured in the engine repo at 39–47% of a run's cost, ~18s on a corpus asset here.~~
+>
+> ~~⛔ **Do not fix this by dropping `--auto`.** `--auto` is what makes the tri-state controls mean anything — `CLAUDE.md`'s rule is that a UI which sends all 63 flags turns `--auto` into a no-op and the tool stops thinking. The saving has to come from the engine accepting a precomputed analysis, not from the app declining to ask for one.~~
+>
+> ~~**Cross-repo:** the engine-side item is `[P1 · S · Opus5-High]` "`--auto` recomputes pass 1's analysis in pass 3" in `gif-deferred-list.md`, with a ready-to-build plan (`docs/plans/2026-09-01-analysis-cost-and-observability.md` Task 1). That fix is internal to one process; **this item is the cross-process version of it and needs its own surface** — most likely `--auto --analysis-json <path>`, symmetrical with the `--verify-json` already filed there.~~
+>
+> ~~## ✅ Considered and NOT fixed — a real decision, not an oversight~~
+
+## ✅ The density rule has three edges nobody has seen — CLOSED 2026-09-07 14:21 EDT (branch `feat/devoid-v1`)
+
+**What happened.** All three decided, built and asserted; `npm run gate:ui` carries four new checks.
+
+| edge | decision | measured |
+|---|---|---|
+| a crowd where NOTHING needs you | no landmark, and `data-demand="none"` says so — the commonest end state has nothing to find, and a focal point there would point at nothing | 60 tiles, **one** width, 154px |
+| a crowd where EVERYTHING needs you | the span is dropped and every tile shrinks equally. The threshold is DERIVED, not picked: a spanning tile holds 2 cells and a settled one holds 1, so spanning tiles hold under half the grid exactly while `2 × demanding < settled` | 19 demanding → **325/154px**; 20 → **154/154px** |
+| the 40/41 flip mid-drop | the bucket is a property of the finished batch, so it waits for one. A growth of ≤4 restarts a 700ms settle window; a bulk arrival re-buckets at once, because one change is not a flicker | 40 → `many`, +1 → `many` (held), after the window → `crowd` |
+
+⚠️ **And the gate that was going to prove it was itself broken.** Its `pad()` set `state: 'needs-you'` on a cloned asset — and `stateOf()` never reads `a.state` for that verdict; it derives it from `outstanding(a)`. The existing crowd assertion passed anyway, because the clones cycle the real corpus and one real asset genuinely has unanswered colour groups. **A check that has been green for a day was passing by accident of the corpus.** Both probes now build from two real templates, and a new check fails if the corpus stops supplying one.
+
+**Original entry, struck through:**
+
+> ~~### `[P2 · S · Opus5-Med]` The density rule has three edges nobody has seen *(filed 2026-09-07, from the deep pass that followed building it)*~~
+>
+> ~~The rule ships and is asserted at 4, 20 and 60 assets with **exactly one** `needs-you` tile. All three assertions test its happy path. ⚠️ **Falsifying the CHECK is not testing the RULE's edges** — breaking the CSS makes the gate go red, which proves the gate works and says nothing about these:~~
+>
+> ~~1. **A crowd where NOTHING needs you.** Two hundred settled assets: every tile 147px, no span, no landmark. The rule's whole justification is findability and in the commonest end state it provides none. That may be correct — nothing needs finding — but it is undecided rather than decided.~~ ~~2. **A crowd where EVERYTHING needs you.** Two hundred `needs-you` tiles all spanning two columns degenerates to a uniform grid at double size, which is *worse* than uniform 147px because it doubles the scroll. Nothing caps the span.~~ ~~3. **The 40/41 boundary, mid-drop.** One arriving asset flips every tile from 282px to 147px — a 48% jump while the person is watching. Assets arrive one at a time from a drop, and `07-arrival` captures 12, nowhere near it.~~
+>
+> ~~**Concrete next action:** decide each one before writing CSS — a floor on the span count, a different landmark when the crowd is uniform, and whether the bucket change should be animated or deferred until the drop settles. Then extend the gate: it currently seeds one demanding tile, so give it a zero-demanding and an all-demanding case.~~
+
+## ✅ The engine repo's pointer to this one is wrong, and only Devoid knows — CLOSED 2026-09-07 14:21 EDT (engine branch `feat/analysis-reuse-across-processes`, commit `63447a4`)
+
+**What happened.** Corrected in the engine repo, on a branch there, with the gap filed in that repo's own tracker so it is visible from inside it. `scripts/harness/labels/README.md` now says plainly that nothing collects protection labels, why (the writer was removed at Harkirat's instruction on 2026-09-07), and what the honest count is — zero, against 981 `edge_hardness` judgements. The follow-on decision — whether that corpus is worth collecting at all — is filed there as `[P2 · S]`, because that repo is what would consume it. Push and merge there are asked separately, as here.
+
+**Original entry, struck through:**
+
+> ~~### `[P2 · XS · Sonnet5-Med]` The engine repo's pointer to this one is wrong, and only Devoid knows *(filed 2026-09-07)*~~
+>
+> ~~`scripts/harness/labels/README.md` in `/Applications/Claude Code/Gif-Background-Remover` says Devoid *"records every answer as a labelled row"* at `labels/protection.jsonl`. **That stopped being true 2026-09-07 12:03 EDT** when the writer was removed.~~
+>
+> ~~⚠️ **The correction is flagged in this repo's `CLAUDE.md` and filed NOWHERE in that repo** — so a session working on the engine's autonomy reads a confident sentence and believes it. That repo has already had to clean up exactly this shape once: `gif-deferred-list.md:185` reads *"This was previously described in Devoid's HANDOFF.md as already filed here. It was not."* **Filing it there is the fix; flagging it here is what caused that entry.**~~
+>
+> ~~**Concrete next action:** branch in the engine repo, correct the README's claim, and file the item in `gif-deferred-list.md` so the correction is visible from inside that repo. Push and merge are asked separately, there as here.~~
+
+
 ## ✅ The contact sheet is one fixed tile size for every batch — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
 
 **Outcome: the sheet has a density rule, and it is asserted at three counts.** The old rule had two buckets — six or fewer, everything else — so the tile measured **262px at 8, 20, 60 and 200**.

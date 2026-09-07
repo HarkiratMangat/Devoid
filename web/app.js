@@ -274,6 +274,18 @@ function tile(a, big) {
   b.addEventListener('click', e => onTileClick(e, a.id));
   return b;
 }
+/* The states that ask something of the person -- the same three the crowd's span
+   rule draws, kept in one place so the CSS selector and the count cannot drift. */
+const DEMANDS = new Set(['needs-you', 'refused', 'blocked']);
+/* ⚠️ 700ms, and it is a HUMAN number rather than a network one: it is how long a
+   drop's arrivals may pause before the batch reads as finished. Shorter and a slow
+   copy re-buckets mid-drop, which is the defect; longer and a finished small drop
+   sits at the wrong size while the person is already looking at it. */
+const SETTLE_MS = 700;
+/* Files landing this few at a time is a drop in progress; more at once is a batch. */
+const TRICKLE = 4;
+let lastGrowth = 0, lastCount = 0, settleTimer = null;
+
 const renderSheet = () => {
   /* ⚠️ F36. Sort by STATE, not by arrival: the ones that need you first, then
      the refused, then everything else. Hierarchy was being set by the source
@@ -301,8 +313,51 @@ const renderSheet = () => {
      in a crowd, so it is findable by shape at any zoom, in greyscale, and
      without reading a word. */
   const n = S.assets.length;
-  $('#sheet').dataset.density = n <= 6 ? 'few' : n <= 40 ? 'many' : 'crowd';
-  $('#sheet').replaceChildren(...order.map(a => tile(a, true)));
+  const sheet = $('#sheet');
+  const bucket = n <= 6 ? 'few' : n <= 40 ? 'many' : 'crowd';
+
+  /* ⚠️ EDGE 2 — THE SPAN IS A LANDMARK ONLY WHILE IT IS RARE (2026-09-07).
+     Two hundred needs-you tiles all spanning two columns is not a sheet with
+     landmarks; it is a uniform grid at double size, which is WORSE than a
+     uniform 148px grid because it doubles the scroll. The threshold is derived,
+     not picked: a spanning tile occupies 2 cells and a settled one occupies 1,
+     so spanning tiles hold less than half the grid's cells exactly while
+     `2 x demanding < settled`. Past that the wide shape is the norm and stops
+     pointing at anything, so it is dropped and every tile shrinks equally.
+     ⚠️ EDGE 1 — AND WHEN NOTHING DEMANDS ANYTHING, THERE IS NO LANDMARK TO
+     DRAW. `demand="none"` is a decision, not an omission: the commonest end
+     state of a big batch is every asset settled, and a sheet that invents a
+     focal point there would be pointing at nothing. Finding YOUR asset among
+     200 settled ones is a different problem (search, not size) and the density
+     rule is deliberately not answering it. */
+  const demanding = order.filter(a => DEMANDS.has(stateOf(a))).length;
+  sheet.dataset.demand = demanding === 0 ? 'none'
+    : (2 * demanding < n - demanding ? 'minority' : 'majority');
+
+  /* ⚠️ EDGE 3 — DO NOT RE-BUCKET WHILE ASSETS ARE STILL ARRIVING (2026-09-07).
+     Assets land one at a time from a drop, so the 41st arrival used to flip
+     every tile from 228px to 148px — a 35% jump under a cursor that is still
+     dropping. The bucket is a property of the finished batch, so it waits for
+     the batch to finish: a growth restarts the settle window, and the change
+     lands once in the quiet afterwards instead of mid-drop. A FIRST render
+     always buckets immediately — an app that opened with 200 assets must not
+     spend the settle window at the wrong size. */
+  /* ⚠️ A TRICKLE, NOT ANY GROWTH. The defect is a bucket flipping repeatedly
+     under a cursor while files land ONE AT A TIME; a batch that arrives whole
+     re-buckets once, which is a change of size, not a flicker. So only a small
+     step arms the settle window -- which also means a test or a bulk load gets
+     the honest immediate answer rather than a deferred one. */
+  const grew = n - lastCount;
+  if (grew > 0 && grew <= TRICKLE) lastGrowth = performance.now();
+  lastCount = n;
+  const arriving = performance.now() - lastGrowth < SETTLE_MS;
+  if (!sheet.dataset.density || sheet.dataset.density === bucket || !arriving) {
+    sheet.dataset.density = bucket;
+  } else if (!settleTimer) {
+    settleTimer = setTimeout(() => { settleTimer = null; renderSheet(); }, SETTLE_MS);
+  }
+
+  sheet.replaceChildren(...order.map(a => tile(a, true)));
 };
 const renderEdge  = () => $('#edge').replaceChildren(...S.assets.map(a => tile(a, false)));
 

@@ -168,6 +168,14 @@ def build_render_argv(
 ) -> list[str]:
     """The full argv for one render, tri-state enforced."""
     argv = [sys.executable, os.fspath(engine.skill_path()), input_path, tmp_output]
+    # ⚠️ NOT AN OVERRIDE, so it does not go through cli.build_argv(). The tri-state
+    # layer exists to keep --auto thinking about options nobody expressed an opinion
+    # about; this expresses no opinion at all. It hands --auto the analysis /analyze
+    # already computed, and --auto's own recommendation is unchanged by it -- proven
+    # in the engine repo by a byte-identical render with and without the document.
+    doc = settings.get("analysis_json")
+    if doc and os.path.exists(doc):
+        argv += ["--analysis-json", doc]
     argv += cli.build_argv(settings.get("overrides"), auto=True)
     argv += cli.answer_argv(settings.get("answers"))
     argv += cli.region_argv(settings.get("regions"))

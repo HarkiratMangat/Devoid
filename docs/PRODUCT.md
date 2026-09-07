@@ -81,7 +81,7 @@ These are not preferences. Each was measured, and each has already cost somethin
 
 ## The shape: there is no mode
 
-**The strip is the app.** Nothing selected and it fills the space as a contact sheet; select one and it opens while the rest stay along the edge; panels are drawers summoned at the edge and opened beside what they affect. **Selection is the only state**, which is what makes density need no *structural* policy — one asset, twelve and two hundred are the same LAYOUT.
+**The strip is the app.** Nothing selected and it fills the space as a contact sheet; select one and it opens while the rest stay along the edge; panels are drawers summoned at the edge and opened beside what they affect. **Selection is the only state**, which is what makes density need no *structural* policy — one asset, twelve and two hundred are the same LAYOUT. ⚠️ **SIZE is a separate question with its own policy**, and it now has two axes (2026-09-07 14:25 EDT): three tile buckets by count (**365 / 282 / 154px** measured), and, in a crowd, whether the demanding tiles span two columns at all — they do only while they are a minority (`2 × demanding < settled`), because a landmark every tile carries is not a landmark and doubles the scroll.
 
 ⚠️ **It does need a SIZING policy, and this sentence used to deny it (2026-09-07 12:02 EDT).** Measured: the tile was **262px at 8, 20, 60 and 200 assets**. Harkirat's reframe was the correction — *"the question isn't 'does it look right', the question is 'how can it be improved to work in all situations regardless of sheet size?'"* Three buckets now (365 / 282 / 147px) and, past forty, the demanding states keep two columns so the one that needs you is findable by shape. The structure is unchanged; only the scale responds.
 

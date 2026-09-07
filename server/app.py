@@ -17,9 +17,14 @@ static path while it runs.
 """
 from __future__ import annotations
 
+import atexit
 import contextlib
 import logging
+import os
+import shutil
+import tempfile
 import time
+from functools import lru_cache
 from pathlib import Path
 
 from starlette.applications import Starlette
@@ -109,6 +114,38 @@ def asset_source(request: Request):
     return FileResponse(path)
 
 
+#: Where the per-asset analysis handoffs live for this process. A TEMP directory,
+#: not ``DATA_DIR``: the registry is in-memory and session-scoped, so a document
+#: outlives nothing that could use it. ``CLAUDE.md``'s rule is that ``jobs.jsonl``
+#: is the durable record and a new on-disk store does not appear casually -- this is
+#: a handoff between two runs of one session, not state anybody reads later.
+_ANALYSIS_DIR: Path | None = None
+
+
+def _analysis_doc(asset_id: str) -> Path:
+    global _ANALYSIS_DIR
+    if _ANALYSIS_DIR is None:
+        _ANALYSIS_DIR = Path(tempfile.mkdtemp(prefix="devoid-analysis-"))
+        atexit.register(shutil.rmtree, _ANALYSIS_DIR, ignore_errors=True)
+    return _ANALYSIS_DIR / f"{asset_id}.json"
+
+
+@lru_cache(maxsize=1)
+def _engine_tolerance() -> int:
+    """The engine's OWN ``--tolerance`` default, never a number typed here.
+
+    ⚠️ ``/analyze`` calls ``recommend()`` with no tolerance, so the engine uses its
+    default; the handoff records the tolerance it was computed at and the engine
+    refuses a document whose tolerance differs from the run's. A literal ``15``
+    here would be a second copy of the engine's default, and the day the engine
+    changed it every handoff would be refused -- loudly, and for no reason.
+    """
+    try:
+        return int(flags.defaults_by_dest().get("tolerance", 15))
+    except Exception:  # noqa: BLE001 -- an old engine has no build_parser(); 15 is its value
+        return 15
+
+
 def analyze_asset(request: Request) -> JSONResponse:
     asset = registry.get(request.path_params["id"])
     if asset is None:
@@ -136,6 +173,16 @@ def analyze_asset(request: Request) -> JSONResponse:
     asset.result = result
     asset.state = result.state
     asset.engine_version = engine.engine_version()
+    # ⚠️ MEASURED, 2026-09-07: a render used to analyse the same file TWICE more --
+    # once in --auto's pass 1 and once inside its pass-3 verify -- 5.73s of a 10.15s
+    # run, on top of the analysis this route just paid 3.0s for. The engine now takes
+    # both as inputs; this hands it the one we are holding. It is plumbing, not a
+    # control: it maps onto no decision the person makes, so CLAUDE.md's "never add a
+    # control that maps 1:1 onto a flag" does not reach it.
+    if engine.write_analysis_handoff(
+            _analysis_doc(asset.id), asset.path, _engine_tolerance(),
+            result.analysis):
+        asset.analysis_json = os.fspath(_analysis_doc(asset.id))
     asset.frames = (result.analysis or {}).get("n_frames_total")
     asset.took_ms = int((time.monotonic() - started) * 1000)
     return JSONResponse(
@@ -282,6 +329,10 @@ async def start_render(request: Request) -> JSONResponse:
     except registry.ConflictingColour as exc:
         return _error("conflicting_colour", 400, outline_color=exc.outline_color)
     settings = {
+        # The document is keyed on the input's mtime and size, so a file edited
+        # between analysing and rendering is REFUSED by the engine, loudly, and
+        # that run analyses normally. Nothing here has to detect it.
+        "analysis_json": asset.analysis_json,
         "overrides": body.get("overrides") or {},
         "regions": body.get("regions") or [],
         "goal": body.get("goal") or {},

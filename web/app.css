@@ -4,7 +4,12 @@
    Nothing selected, the strip fills the space as a contact sheet. Select one and
    it expands while the rest stay along the edge. Panels are drawers summoned at
    the table's edge, never a column you pay for permanently. Selection is the only
-   state, so density needs no policy — 1 asset, 12 or 200 are the same layout.
+   state, so density needs no STRUCTURAL policy — 1 asset, 12 or 200 are the
+   same LAYOUT.
+   ⚠️ SIZE IS A DIFFERENT QUESTION AND THIS SENTENCE USED TO SWALLOW IT. The tile
+   measured 262px at 8, 20, 60 and 200 assets. Three buckets now, and since
+   2026-09-07 14:25 EDT a second axis: data-demand decides whether the crowd's span
+   is drawn at all, because a landmark every tile carries is not one.
 
    TWO load-bearing colours, and they are the two answers to the only question.
    Rubylith = this goes. Cyan = this stays / the path / focus. Rubylith doubles as
@@ -213,9 +218,14 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
    at any zoom, in greyscale, without reading a word. It is the surface's own
    rule (state sets the hierarchy, never the artwork's colours) extended from
    appearance to geometry. */
-.sheet[data-density="crowd"] .frame[data-state="needs-you"],
-.sheet[data-density="crowd"] .frame[data-state="refused"],
-.sheet[data-density="crowd"] .frame[data-state="blocked"]{grid-column:span 2}
+/* ⚠️ AND ONLY WHILE THE SPAN IS RARE (2026-09-07). `data-demand` is minority
+   exactly while spanning tiles hold under half the grid's cells (2 x demanding <
+   settled); past that every tile spanning is a uniform grid at double size, which
+   doubles the scroll and points at nothing. app.js derives the threshold. */
+.sheet[data-density="crowd"][data-demand="minority"] .frame[data-state="needs-you"],
+.sheet[data-density="crowd"][data-demand="minority"] .frame[data-state="refused"],
+.sheet[data-density="crowd"][data-demand="minority"] .frame[data-state="blocked"]{
+  grid-column:span 2}
 /* the caption is unreadable at 148px and the artwork is the point there */
 .sheet[data-density="crowd"] .frame{padding:var(--s1)}
 .sheet[data-density="crowd"] .frame .cap{padding-top:var(--s1)}

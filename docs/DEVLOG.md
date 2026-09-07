@@ -21,6 +21,27 @@ The **story** behind the app: the traps, the reasoning behind decisions, the thi
 
 ## ⚠️ Traps — each of these cost real time, and none is obvious
 
+### A slice that stops at `^### ` walks past a `## ` heading — SECOND time (2026-09-07 14:22 EDT)
+
+Closing three tracker items with a script that finds each heading and cuts to the next `\n### ` removed the `## ✅ Considered and NOT fixed` heading with the last one, because that heading sits BETWEEN the item and the next `###`. Six standing decisions — **including the three Harkirat retired permanently** — were reparented under "Open". ⚠️ **The size assert passed**: the extra content is one line, well under the limit. This exact trap is already in this file's history from 2026-09-07 (a 13-line slice where 9 were meant); the fix that time was `^#{2,3} `, and it was applied to that script and not learned as a rule. **A deletion asserts what SURVIVES, not only what goes** — the assert that would have caught it is `assert '## ✅ Considered' in t` after the write, not a line count.
+
+### `state` on a cloned asset is inert, and the gate had been green on that for a day (2026-09-07 14:22 EDT)
+
+`scripts/capture-window.mjs`'s density probe padded the sheet with `{ ...realAsset, id: 'pad-N', state: 'needs-you' }`. `stateOf()` never reads `a.state` for that verdict — it derives `needs-you` from `outstanding(a)`, the asset's own unanswered colour groups. **The assertion passed anyway**, because the clones cycle the real corpus and one real asset genuinely has outstanding questions, so roughly one clone in eight was demanding whatever the line said. It surfaced only when a NEW check needed zero demanding tiles and got seven. Both probes now build from two real templates found by `stateOf`, and a check fails if the corpus stops supplying one. ⚠️ **A green check whose lever is disconnected is indistinguishable from a working one until you ask it for a different answer.**
+
+### A backtick inside a probe's template literal ends the string (2026-09-07 14:22 EDT)
+
+The probes in `capture-window.mjs` are template literals evaluated in the page. This repo's prose style quotes identifiers in backticks everywhere — and a comment written in that style INSIDE a probe terminated the literal, producing `SyntaxError: missing ) after argument list`. Caught by `node --check` before it ran. **Inside a probe, quote identifiers plainly.** The file now asserts it: the batch that fixed it scans both probe bodies and fails if a backtick appears between the delimiters.
+
+### Two of the eleven new tests were vacuous, and both looked like assertions (2026-09-07 14:22 EDT)
+
+`tests/test_analysis_handoff.py` shipped, in its first draft, with (1) `assert d["tolerance"] == server_app._engine_tolerance()` — which compares that function with itself, so replacing its body with `return 999` passed; and (2) a capability test whose fake engine had no writer at all, so it short-circuited before reaching the parser check it was named for, and replacing that check with `return True` passed. Both were found by running the suite against the injected defects, not by reading it. The first now reads the default off the engine's parser independently; the second gained a fake that HAS the writer and lacks the flag. ⚠️ **A test that passes against its own defect is worse than no test** — it is a claim with evidence attached to nothing.
+
+### The cache I was about to build was forbidden in two places, and one question found both (2026-09-07 14:22 EDT)
+
+Devoid's second-analysis item looked like it wanted a cache: the engine already ships `scripts/harness/analysis_cache.py`, with exactly the fingerprint-and-fall-back mechanism Harkirat had chosen. I recommended wiring it into the product script. He asked whether the repo had already considered caching. It had — `references/lessons.md` §24 forbids disk-cache behaviour in the shipped skill (ephemeral, 1-core sandbox), `scripts/audit_docs.py` **rejects** any packaged file that points at `scripts/harness/`, and a module-level memo is on that repo's "Rejected, with evidence — do not re-derive" table. ⚠️ **Reading the target repo's rejected list is cheaper than the design it saves you from**, and "the mechanism already exists here" is not evidence that it is allowed HERE.
+
+
 ### A browser pane is not the app, and it lies quietly
 
 The pane used for most of the first build session reports `document.visibilityState === 'hidden'` **permanently** and fires **zero** `requestAnimationFrame` callbacks. Nothing errors. Nothing warns. Anything built on a rAF loop simply does not run, and anything mid-transition samples at whatever value it happened to be at.
