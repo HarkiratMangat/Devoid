@@ -19,6 +19,44 @@ Heading shape, matching the engine repo's archive:
 
 ## Closed items
 
+## ✅ The history drawer can sit on "Reading the log…" while analyses run — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: closed — it is NOT the route, and the filing was right to refuse to name a cause.** `/api/history` was timed against six analyses that were **asserted** to be running, not assumed: all six returned HTTP 200 and the slowest took **7,360ms**, so the load was real. The route read **1/3/5ms idle**, **4/5/16ms with the six in flight**, and **0/2/2ms after**. It never left single-digit milliseconds under the load that was supposed to starve it, so threadpool contention and the GIL are both off the list.
+
+⚠️ **The first version of the measurement was worthless and would have looked identical.** It fired the six and timed 600ms later without checking they were still running; a latency measured against no load is a number with a caption. The script prints the slowest analysis beside the latency now, and says out loud that a small number there invalidates the row below it.
+
+**What is left is not this item.** If the drawer stalls again the next place to look is the client — `S.history=null` then `render()` — and it needs its own filing with its own observation, not this one's.
+
+### `[P2 · S · Sonnet5-Med]` The history drawer can sit on "Reading the log…" while analyses run *(filed 2026-09-05)*
+
+Observed in a real window: with six ~18s analyses in flight, the drawer stayed on its loading text for over two seconds, while `/api/history` on an idle server answers in milliseconds. Every route that touches the engine is a plain `def` and runs in Starlette's threadpool by design (`server/app.py`'s header, and the 1,290x stall it exists to prevent) — but the *log reader*, which touches no engine at all, queues behind them.
+
+⚠️ **Not yet diagnosed, and do not assume the cause.** It could be threadpool contention, the GIL, or something on the client. **Measure `/api/history` latency against concurrent analyses before changing anything** — this repo's own history is that plausible attributions are wrong about a third of the time.
+
+## ✅ 200 assets decoding at once, and the loading state does not mean anything yet — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
+
+**Outcome: closed by measurement — the panic does not survive contact with the numbers, and the real finding is a different one.** `scripts/measure_scale.mjs`, one size per process:
+
+| n | first paint | settle | tile | decoded | JS heap | RSS |
+|---|---|---|---|---|---|---|
+| 8 | 340ms | 1096ms | 262px | 0.5 MPx | 1.7 MB | 452 MB |
+| 20 | 339ms | 1093ms | 262px | 1.4 MPx | 1.7 MB | 486 MB |
+| 60 | 315ms | 1070ms | 262px | 4.1 MPx | 1.7 MB | 533 MB |
+| 200 | 326ms | 1100ms | 262px | 13.5 MPx | 1.8 MB | 656 MB |
+
+**First paint and settle are flat across a 25x change in count.** RSS grows about **1.06 MB per asset**.
+
+⚠️ **And the number that hides the limit of this test.** 13.5 MPx over 200 tiles is **0.0675 MPx each — about 260x260** — because the corpus assets are already tile-sized, so "full source resolution" IS the tile here. A batch of 1024px sources would decode at **16x** this and has still never been tried. The measurement retires the fear for this corpus and says nothing about that one.
+
+⚠️ **`loading="lazy"` is absent on every tile at every size** — 0 of 200. That is real, it is cheap, and it is the honest successor to this item rather than a decode queue or a thumbnail route.
+
+### `[P2 · M · Opus5-High]` 200 assets decoding at once, and the loading state does not mean anything yet *(filed 2026-09-05, `PLAN.md`'s edge-case table, owner 2.2)*
+
+The contact sheet renders every asset as a looping `<img>` at full source resolution. At corpus size that is fine; the layout claim above was written about **layout** and has been read as a **performance** claim. Two hundred concurrent decoders at source resolution is a different question and has never been measured.
+
+**Concrete next action:** measure first — 200 real assets, real window, memory and first-paint — before building anything. The fix if one is needed is a `loading` state that does something (`loading="lazy"`, a decode queue, or thumbnails, which is the same missing route as item 1).
+
+
 ## ✅ The decision is scattered across four zones and its evidence is exiled — CLOSED 2026-09-07 (branch `feat/devoid-v1`, unreleased in v1.0.0)
 
 **Outcome: the `Answer` button is deleted and the reading path is fixed — but NOT the way the filing asked, because the filing's own action was measured and rejected.**

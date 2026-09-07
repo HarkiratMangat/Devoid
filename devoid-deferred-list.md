@@ -31,12 +31,6 @@ The project-local tracker for open work, real TODOs, and reminders specific to t
 
 **Worth keeping because the shape recurs:** an exact-key-set assertion on a public payload converts every additive change into a failure, which trains people to edit the test rather than read it. **Assert the keys you depend on, not the absence of keys you do not.** Sweep `tests/` for other exact-shape assertions before the next contract change.
 
-### `[P2 · S · Sonnet5-Med]` The history drawer can sit on "Reading the log…" while analyses run *(filed 2026-09-05)*
-
-Observed in a real window: with six ~18s analyses in flight, the drawer stayed on its loading text for over two seconds, while `/api/history` on an idle server answers in milliseconds. Every route that touches the engine is a plain `def` and runs in Starlette's threadpool by design (`server/app.py`'s header, and the 1,290x stall it exists to prevent) — but the *log reader*, which touches no engine at all, queues behind them.
-
-⚠️ **Not yet diagnosed, and do not assume the cause.** It could be threadpool contention, the GIL, or something on the client. **Measure `/api/history` latency against concurrent analyses before changing anything** — this repo's own history is that plausible attributions are wrong about a third of the time.
-
 ### `[P1 · S · Opus5-Med]` `content_type` is permanently `"unknown"` in every label row *(filed 2026-09-05)*
 
 `labels/protection.jsonl` is framed in `docs/PRODUCT.md` as a training dataset for the engine's hardest decision, and its schema allows `icon|sticker|emoji|unknown`. Nothing in the flow ever classifies one: `server/labels.py:158` defaults `content_type="unknown"` and no caller overrides it. **A corpus where one column is always the same value is measurably weaker than its schema implies.**
@@ -82,6 +76,8 @@ The void (dark) state is the designed one. Emitting (light) passes every measure
 
 **Concrete next action:** run the squint test on the real window, both states, and extend the light-mode shadow scale to the two components that were missed rather than adding borders back — borders on light is the thing the strategy split exists to avoid.
 
+⚠️ **MEASURED AND HALF-FIXED 2026-09-07 02:10 EDT, and the half that remains is the item.** The gate now captures `11-sheet-emitting` and `check_greyscale.py` squints both lighting states. Emitting was **inverted**: the needs-you tile read 219.1 against a field at 227.4, losing by **8.4**, because the field recedes with `brightness(.55)` and on a light ground darker is louder. It washes toward the ground now and separates positively — but at **10.7 to 25.8 across runs against a floor of 8.0, where the void reads 72.8 every time**. The inversion is gone; the weakness is exactly what was filed. ⚠️ The squint also had a dark-mode assumption in its arithmetic (`mine - theirs`, signed), so a real inversion and no separation failed the same way; it measures `abs()` now. **Next: the edge rail and the film strip, which this pair still does not cover.**
+
 ### `[P2 · S · Sonnet5-High]` Notarisation is configured and has never run *(filed 2026-09-06, successor to "Signing and notarisation are configured and have never run")*
 
 **Signing now runs and the entitlements are proven** — a self-signed `DEVOID` identity, `mac.identity` in `electron-builder.yml`, verified 2026-09-06 17:29 EDT. What remains is the half a self-signed certificate cannot reach. `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD` and `APPLE_TEAM_ID` stay unset and `notarize: false` stays, because notarisation requires an Apple Developer account and a Developer ID Application certificate, neither of which exists.
@@ -96,17 +92,13 @@ The void (dark) state is the designed one. Emitting (light) passes every measure
 
 **Concrete next action:** capture the sheet at 8, 20 and 60 real assets through `scripts/capture-window.mjs` and look. This is a judgement call that needs an image, not a measurement.
 
+⚠️ **THE IMAGES NOW EXIST, 2026-09-07 02:10 EDT — the judgement does not.** `npx electron scripts/measure_scale.mjs <n>` writes `local/scale-shots/sheet-{008,020,060,200}.png` from the real window with real files. **The tile is 262px at every size**, so "one, twelve and two hundred are the same layout" holds as a layout claim. Whether 262px is waste at twenty is the part that needs an eye, and all four captures were sent to Harkirat on 2026-09-07. This stays open until he says.
+
 ### `[P2 · S · Sonnet5-High]` No screen reader has ever run against this app *(filed 2026-09-05)*
 
 Every accessibility finding — six were fixed — came from **markup and computed accessible names**, never from an actual AT run. Roles, names and states are present and correct as written; whether VoiceOver announces the eleven states, the roving-tabindex region tools and the seam usefully is unknown.
 
 **Concrete next action:** a VoiceOver pass on the three flows that matter — open an asset, answer a question, save — and record what it says, not whether it "works".
-
-### `[P2 · M · Opus5-High]` 200 assets decoding at once, and the loading state does not mean anything yet *(filed 2026-09-05, `PLAN.md`'s edge-case table, owner 2.2)*
-
-The contact sheet renders every asset as a looping `<img>` at full source resolution. At corpus size that is fine; the layout claim above was written about **layout** and has been read as a **performance** claim. Two hundred concurrent decoders at source resolution is a different question and has never been measured.
-
-**Concrete next action:** measure first — 200 real assets, real window, memory and first-paint — before building anything. The fix if one is needed is a `loading` state that does something (`loading="lazy"`, a decode queue, or thumbnails, which is the same missing route as item 1).
 
 ### `[P3 · S · Sonnet5-Med]` This file's conservation rule is unenforced *(filed 2026-09-05)*
 

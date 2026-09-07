@@ -707,6 +707,7 @@ app.whenReady().then(async () => {
     render();
   `);
   await shot('10-ledger', null, 900);
+
   const bar = await probe(`return { segs: document.querySelectorAll('.ledger .lseg').length,
                                     bar: !!document.querySelector('.ledger-bar') }`);
   check('a finished job renders the ledger bar', bar.bar && bar.segs === 2,
@@ -799,6 +800,25 @@ app.whenReady().then(async () => {
 
   console.log(`  rAF ${raf.frames}f/500ms · plotter ${plot.w}x${plot.h} on ${opened.state || 'nothing'}`
     + ` · history ${hist.rows} row(s) · reduced-motion ${rm.reduce}`);
+
+  /* ⚠️ CAPTURES LAST, ASSERTIONS FIRST, 2026-09-07 02:09 EDT. These two shots
+     close the open asset to photograph the sheet, and every attempt to put it
+     back afterwards broke something else — the artwork assertion, then the
+     ledger bar, which does not survive a reopen. Nothing reads these captures
+     during the run, so they belong after the last assertion rather than in the
+     middle of a sequence whose state they disturb.
+
+     A deferred item says emitting "loses tile separation under a squint" in the
+     edge rail and the film strip — an eyeballed claim, and `check_greyscale.py`
+     could not test it because it squinted only at `01-contact-sheet`, which is
+     always dark. The lamp is CLICKED rather than the class set, so this
+     exercises the real control, and only when the state is not already
+     emitting: a blind toggle would silently measure the dark sheet twice. */
+  await shot('11-sheet-emitting', `closeAsset(); S.drawer = null; render();
+    if (!document.documentElement.classList.contains('emitting'))
+      document.getElementById('lamp').click();`, 900);
+  await shot('12-sheet-void', `if (document.documentElement.classList.contains('emitting'))
+      document.getElementById('lamp').click();`, 900);
 
   /* ⚠️ THE REDIRECT ABOVE IS ONLY WORTH WHAT THIS ASSERTS (2026-09-07 01:29 EDT).
      Pointing the server at a scratch dir is a line of setup that a later edit

@@ -240,6 +240,51 @@ Writing `.claude/settings.local.json` by hand fixed it, and a **live** test prov
 
 ---
 
+### The contact sheet at 8, 20, 60 and 200 — the numbers, and what they do not cover — 2026-09-07 01:59 EDT
+
+`scripts/measure_scale.mjs`, one size per process because `registry.register()` mints a fresh uuid per call and there is no delete route.
+
+| n | first paint | settle | tile | decoded | JS heap | RSS | `loading="lazy"` |
+|---|---|---|---|---|---|---|---|
+| 8 | 340ms | 1096ms | 262px | 0.5 MPx | 1.7 MB | 452 MB | 0 |
+| 20 | 339ms | 1093ms | 262px | 1.4 MPx | 1.7 MB | 486 MB | 0 |
+| 60 | 315ms | 1070ms | 262px | 4.1 MPx | 1.7 MB | 533 MB | 0 |
+| 200 | 326ms | 1100ms | 262px | 13.5 MPx | 1.8 MB | 656 MB | 0 |
+
+**First paint and settle are flat across a 25x change in asset count**, and the tile is 262px at every size — `PRODUCT.md`'s "one, twelve and two hundred are the same layout" holds as a layout claim. RSS grows about **1.06 MB per asset**.
+
+⚠️ **What this does NOT measure, and the number that hides it.** 13.5 MPx over 200 tiles is **0.0675 MPx each — about 260x260**, because the corpus assets are already tile-sized. The filed worry was *"every asset as a looping `<img>` at full source resolution"*, and at this corpus's dimensions full source resolution IS the tile. A 1024px asset would decode at **16x** this. So the measurement retires the panic for THIS corpus and says nothing about a batch of large sources. `loading="lazy"` is absent everywhere, which is a real and separate finding.
+
+---
+
+### The history drawer's stall is not the route — 2026-09-07 01:59 EDT
+
+The filing said the drawer sat on *"Reading the log…"* for over two seconds and — correctly — refused to name a cause. Measured against six real analyses, **all returning HTTP 200, the slowest running 7,360ms, genuinely concurrent**:
+
+| | min | median | max |
+|---|---|---|---|
+| idle | 1ms | 3ms | 5ms |
+| six analyses in flight | 4ms | 5ms | 16ms |
+| after they finish | 0ms | 2ms | 2ms |
+
+**`/api/history` never left single-digit milliseconds under the load that was supposed to starve it.** Threadpool contention and the GIL are both off the list. Whatever the drawer was doing for two seconds, it was not waiting for this route.
+
+⚠️ **The load had to be asserted before the latency meant anything.** The first version fired the six and timed 600ms later without checking they were still running; a latency measured against no load is a number with a caption. The script now prints the slowest analysis next to the latency, and says out loud that a small number there invalidates the row below it.
+
+---
+
+### The squint had a dark-mode assumption baked into its arithmetic — 2026-09-07 01:59 EDT
+
+A filed item said emitting *"loses tile separation under a squint"*, from an eyeballed pass. `check_greyscale.py` could not test it: the squint ran only on `01-contact-sheet`, which is always dark. Capturing the sheet in the light state and squinting it measured the needs-you tile at **219.1 against a field at 227.4 — losing by 8.4**, where the dark state leads by **72.8**. The filing was right.
+
+**The cause is that the fix for the dark state was applied to both.** The field recedes via `filter:brightness(.55)`, and on a light ground darker is *louder*: the field became denser than the tile it was supposed to yield to. On the emitting ground a surface recedes by washing toward it — `brightness(1.16) saturate(.5) opacity(.55)` — and the separation is positive again.
+
+⚠️ **One run said 25.8 and the next said 10.7, and the first number was written down before the second existed.** The squint depends on which states the sheet happens to be holding, so emitting reads somewhere between **10.7 and 25.8** against a floor of 8.0, while the void reads **72.8** run after run. The inversion is fixed; **the weakness the item filed is not** — emitting still separates three to seven times less than the void, and 10.7 is a thin pass by this file's own standard that a pass with no margin is a fail wearing a tick. That is why the item stays open with numbers rather than closing.
+
+⚠️ **And the check itself carried the same assumption.** `mine - theirs` is signed, so a real inversion and no separation at all produce the same kind of failure. Separation has no sign; it is `abs()` now. Two depth strategies coexist here by deliberate design — borders on dark, shadows on light — and this is what it costs when a measurement only knows one of them.
+
+---
+
 ## Decisions, and what was tried first
 
 ### The world: the ground is the void, the tools stay the matte world

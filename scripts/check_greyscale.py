@@ -32,10 +32,23 @@ SHOTS = ROOT / "local" / "window-shots"
 MARK_MARGIN = 8.0          # 0-255; a mark must stand off its own background
 PAIR_MARGIN = 6.0          # two segments of one bar must not read as one block
 SQUINT_MARGIN = 8.0        # the focal tile must lead the field, not tie with it
+# ⚠️ BOTH LIGHTING STATES. The squint ran only on the dark sheet, so a filing
+# that emitting loses tile separation could not be tested by the one check
+# written to test exactly that.
+SQUINTS = ["01-contact-sheet", "11-sheet-emitting"]
 
+# ⚠️ THE SQUINT, IN BOTH LIGHTING STATES (2026-09-07 01:48 EDT). A deferred item
+# says emitting "loses tile separation under a squint" in the edge rail and the
+# film strip, from an eyeballed interface-design pass. It was never measured,
+# and this file only ever squinted at the dark state. `03-emitting` is the same
+# window in the light state, so the same pair measured there either confirms
+# the filing or retires it. ⚠️ If it passes, that is not proof the filing was
+# wrong — it is proof the filing was about a component this pair does not cover,
+# which is itself the next thing to find out.
 MARKS = [
     ("09-seam", ".omark", "F29 — the open view's state mark"),
     ("01-contact-sheet", ".st", "the tile's state word"),
+    ("11-sheet-emitting", ".st", "the tile's state word, in the LIGHT state"),
 ]
 PAIRS = [
     # ⚠️ `10-ledger`, not `09-seam`: the bar only renders for a finished job, and
@@ -177,32 +190,42 @@ def main() -> int:
     # at all. Blur hard enough that only mass and value survive, then ask which
     # tile wins.
     from PIL import Image, ImageFilter
-    img, boxes = load("01-contact-sheet")
-    blurred = img.filter(ImageFilter.GaussianBlur(radius=12))
-    want = boxes.get('.frame[data-state="needs-you"]') or []
-    # ⚠️ Compare against EVERY other tile, not against two hand-picked states.
-    # The corpus does not always contain a `ready` and a `done`, and a check
-    # that silently has nothing to compare against is a check that cannot fail.
-    wanted = {tuple(b) for b in want}
-    others = [b for b in (boxes.get('.frame') or []) if tuple(b) not in wanted]
-    if not want:
-        failures.append("01-contact-sheet: no needs-you tile was on the sheet (F36 squint test)")
-    elif not others:
-        failures.append("01-contact-sheet: nothing to compare the needs-you tile against (F36 squint test)")
-    else:
-        mine = max(mean(blurred, b) for b in want)
-        theirs = max(mean(blurred, b) for b in others)
-        # ⚠️ `> 0` is not a squint test. The first run of this check passed by
-        # 0.4/255, which no eye can separate — a pass with no margin is a fail
-        # wearing a tick. SQUINT_MARGIN is what a blurred, desaturated glance
-        # can actually pick out.
-        ok = (mine - theirs) >= SQUINT_MARGIN
-        if not ok:
-            failures.append(f"01-contact-sheet: under a desaturated blur the needs-you tile reads "
-                            f"{mine:.1f} against {theirs:.1f}, a margin of {mine - theirs:.1f} — state is not setting the "
-                            f"hierarchy (F36 squint test)")
-        print(f"{'01-contact-sheet':20} {'squint: needs-you vs the rest':34} "
-              f"{mine:7.1f} {theirs:7.1f} {mine - theirs:6.1f}  {SQUINT_MARGIN}{'' if ok else '  ✗'}")
+    for squint_capture in SQUINTS:
+      img, boxes = load(squint_capture)
+      blurred = img.filter(ImageFilter.GaussianBlur(radius=12))
+      want = boxes.get('.frame[data-state="needs-you"]') or []
+      # ⚠️ Compare against EVERY other tile, not against two hand-picked states.
+      # The corpus does not always contain a `ready` and a `done`, and a check
+      # that silently has nothing to compare against is a check that cannot fail.
+      wanted = {tuple(b) for b in want}
+      others = [b for b in (boxes.get('.frame') or []) if tuple(b) not in wanted]
+      if not want:
+          failures.append(f"{squint_capture}: no needs-you tile was on the sheet (F36 squint test)")
+      elif not others:
+          failures.append(f"{squint_capture}: nothing to compare the needs-you tile against (F36 squint test)")
+      else:
+          mine = max(mean(blurred, b) for b in want)
+          theirs = max(mean(blurred, b) for b in others)
+          # ⚠️ `> 0` is not a squint test. The first run of this check passed by
+          # 0.4/255, which no eye can separate — a pass with no margin is a fail
+          # wearing a tick. SQUINT_MARGIN is what a blurred, desaturated glance
+          # can actually pick out.
+          # ⚠️ SEPARATION, NOT BRIGHTNESS (2026-09-07 01:51 EDT). `mine - theirs`
+          # encodes a dark-mode assumption: that the focal tile LEADS by being
+          # lighter. On a light ground the opposite is true — the field recedes
+          # by washing out and the focal tile leads by staying dense — so the
+          # signed form measured emitting at -8.4 and called a real inversion
+          # by the same name it would use for no separation at all. The claim
+          # DESIGN.md makes is that the focal tile is separable under a blur;
+          # separation has no sign.
+          sep = abs(mine - theirs)
+          ok = sep >= SQUINT_MARGIN
+          if not ok:
+              failures.append(f"{squint_capture}: under a desaturated blur the needs-you tile reads "
+                              f"{mine:.1f} against {theirs:.1f}, a separation of {sep:.1f} — state is not setting the "
+                              f"hierarchy (F36 squint test)")
+          print(f"{squint_capture:20} {'squint: needs-you vs the rest':34} "
+                f"{mine:7.1f} {theirs:7.1f} {sep:6.1f}  {SQUINT_MARGIN}{'' if ok else '  ✗'}")
 
     if failures:
         print(f"\nFAILURES ({len(failures)}):")

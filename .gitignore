@@ -32,3 +32,8 @@ jobs.jsonl
 # the UI gate runs the server against a scratch data dir so it can never write
 # to labels/protection.jsonl, which is tracked evidence
 local/gate-data/
+
+# measurement scratch — real files copied under distinct names, and its own data dir
+local/scale-corpus/
+local/scale-data/
+local/scale-shots/

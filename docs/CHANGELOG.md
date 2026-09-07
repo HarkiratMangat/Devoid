@@ -24,6 +24,10 @@ What shipped, when, and why. Newest first.
 
 ⚠️ **The commit count was hard-coded here as 28 and had drifted to 67 by 2026-09-07.** Derive it — `git rev-list --count main..HEAD` — rather than reading a number out of prose, which is this repo's own standing rule.
 
+### Three P2s answered with numbers, and the light state's squint fixed — 2026-09-07 01:59 EDT
+
+`measure_scale.mjs` puts the contact sheet through 8, 20, 60 and 200 real assets: first paint and settle are flat, the tile is 262px at every size, RSS grows about 1.06 MB per asset. `/api/history` stays under 16ms against six concurrent analyses, so the drawer's two-second stall is not the route. And the emitting sheet lost the squint by **8.4** where the void leads by 72.8 — the field was receding by darkening on a light ground, which makes it louder; it washes out now and separates by **25.8**.
+
 ### The gate stops seeding the corpus, and the design contract became a command — 2026-09-07 01:32 EDT
 
 `gate:ui` runs against a scratch data dir and asserts the tracked label log is byte-identical across the run; 24 synthetic rows it had already committed are removed. `/impeccable hooks on` is wired and verified live — and `npm run check:design` covers what its `Edit|Write` matcher cannot see, which is most of how this repo is edited.

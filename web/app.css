@@ -228,6 +228,16 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
    is a fail wearing a tick. Enumerate the exception, never the rule. */
 .sheet .frame:not([data-state="needs-you"]):not([data-state="refused"]):not([data-state="blocked"]) .win img{
   filter:brightness(.55) saturate(.65)}
+/* ⚠️ AND THE OPPOSITE DIRECTION IN THE LIGHT STATE, 2026-09-07 01:51 EDT. `brightness(.55)`
+   recedes on the void because darker is quieter there; on the emitting ground
+   it makes the field DENSER than the tile it is supposed to yield to, and the
+   squint measured the inversion — the needs-you tile read 219.1 against a
+   field at 227.4, losing by 8.4 where the dark state leads by 72.8. That is
+   the deferred item's "emitting loses tile separation", confirmed with a
+   number rather than an eye. On a light ground a surface recedes by washing
+   toward it. */
+.emitting .sheet .frame:not([data-state="needs-you"]):not([data-state="refused"]):not([data-state="blocked"]) .win img{
+  filter:brightness(1.16) saturate(.5) opacity(.55)}
 .sheet .frame:hover .win img{filter:none}
 .sheet .frame[data-state="needs-you"],.sheet .frame[data-state="refused"],
 .sheet .frame[data-state="blocked"]{background:var(--raise)}
