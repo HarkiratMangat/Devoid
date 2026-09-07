@@ -141,10 +141,25 @@ This is a standing preference, stated at the top of the first session here (*"As
 
 **The ADR is written** (`manage_adr`, 8 sections) from `get_architecture` plus the repo's own decisions. One finding in it is worth repeating here: Leiden clustering identifies `web/advice.js` as a **6-member cluster at cohesion 1.0** — perfectly isolated — which is why a stale palette shipped in it while three nightly detector runs scanned only `index.html`, `app.css` and `app.js`. **Scope a detector run by the graph's clusters, not by the files you happened to edit.**
 
+### The product map — `map.yaml`, and it is a gate
+
+Built 2026-09-06 21:44 EDT. `map.yaml` at the root declares how value reaches the person: **6 stages, 17 nodes, 18 typed edges**, each node carrying a `reality` block the reconciler runs against the code. **The verdict overrides the hand-declared status**, so a node cannot claim to work while the code says otherwise.
+
+```bash
+linksee-memory map status              # health, and what needs attention
+linksee-memory map where web/wipe.js   # which node owns this file + blast radius
+linksee-memory map explain seam        # declared vs reality, with file:line evidence
+linksee-memory map reconcile           # re-run every check
+```
+
+⚠️ **A node is reachable by file ONLY through `reality.path`.** ⚠️ **`where_am_i` needs `project: "devoid"`** — two maps are imported on this machine and the no-arg form cannot yet tell which repo you mean.
+
+⚠️ **A check is only as honest as its signal, and the first two drafts proved it both ways.** `question`'s `signal_absent` named the prose *"The place outlined in"* and fired on the **comment** that records what the string used to be — a true positive for the checker, a false one for the product; it now names the template expression, which only live code can contain. And `seam` was declared `suspect` while its check asked only whether `wipe.js`'s functions exist — so the reconciler **refuted the suspect status and returned convergence**, laundering a P0 into a green tick. Existence was never the question. Its checks now assert that `.qregion` is clipped by the seam and that the seam does not open at a constant, and it reports **divergence** with the evidence.
+
+**The North Star is anchor #10** (`declare_anchor`, `node_type: north_star`), and the `question` and `tri-state` nodes link to it by id. ⚠️ Anchors **8** and **9** are superseded: a malformed parameter tag in the calling syntax was absorbed into the statement text, twice. Read back what an anchor actually stored before trusting it.
+
 ### What this repo still does NOT have
 
-- **No `map.yaml`**, so `where_am_i` and `drift_status` are inert. It is a declaration of desired state, not something to infer.
-- **No linksee North Star.** `dream()` says so on every call. ⚠️ `declare_anchor`'s own contract is **`declare-don't-mine: anchors come ONLY from explicit human declaration, never from pattern extraction`** — so it cannot be written from `PRODUCT.md`, only proposed and confirmed.
 - **No index-refresh HOOK.** `npm run refresh:index` exists and must be run deliberately; Diors-Builds fires the equivalent on `PreToolUse`. Registering one here edits `.claude/settings.json`.
 
 *Setup completed 2026-09-06 21:18 EDT: prose indexed as `project:devoid-docs` and `project:devoid-rules`, code graph at 1,406 nodes, ADR written, `memory://caveats` read (143 protected), Devoid's four items drained from linksee's distill queue.*

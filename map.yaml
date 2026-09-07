@@ -1,0 +1,315 @@
+# Devoid — product map. How value reaches the person using it.
+#
+# The desired-state source of truth, git-tracked and reviewable.
+# `linksee-memory map reconcile` runs each node's `reality` checks against the
+# real code and overlays a verdict that OVERRIDES the hand-declared status —
+# so a node cannot claim to be working while the code says otherwise.
+#
+# ⚠️ `map where <file>` resolves a file ONLY through `reality.path`. A node
+# without one is invisible to it.
+# ⚠️ Schema read from dist/lib/map-import.js and map-reconcile.js, not guessed:
+#   layer      surface | implementation
+#   status     active | experiment | commitment | planned | paused | suspect | future_thesis
+#   edge type  realizes | supports | must-stay-consistent-with | should-align-with | mentions | reflux
+#   strength   hard | soft | watch
+#   reality.kind  signal_present | signal_absent | file_present | file_absent | external
+project: devoid
+product_status: pre-release, one user, never pushed
+job: >-
+  Remove the background from an animated image without learning 63 flags, by
+  answering the two or three questions the engine cannot answer itself.
+audience:
+  primary: Harkirat, usually mid-task on something else and wanting to be finished
+  secondary: the same person doing a deliberate batch, or testing the engine's own changes
+  explicitly_not: labelling sessions — offered as a scene and declined
+
+stages:
+  - id: discover
+    label: It launches and finds its engine
+  - id: understand
+    label: It says what it wants
+  - id: try
+    label: An asset goes on the table
+  - id: adopt
+    label: The question gets shown, and answered
+  - id: retain
+    label: The work is remembered
+  - id: expand
+    label: It runs outside the checkout
+
+nodes:
+  # ── the value chain ───────────────────────────────────────────────────────
+  - id: launch
+    layer: surface
+    stage: discover
+    status: active
+    statement: The app launches, spawns its server, and resolves the engine at runtime.
+    note: >-
+      The engine is never bundled — it is the source of truth and must not be
+      forked into a copy that silently drifts.
+    reality:
+      kind: signal_present
+      path: main.js
+      signal: [requestSingleInstanceLock, waitForServer, resolvePython]
+
+  - id: empty-table
+    layer: surface
+    stage: understand
+    status: active
+    statement: An empty table names what to drop, and nothing else.
+    note: >-
+      Emptiness is the subject, so it gets no illustration. D2 puts its GEOMETRY
+      off-limits; the copy may change, the shape may not.
+    reality:
+      kind: signal_present
+      path: web/index.html
+      signal: ["Drop a GIF, WebP, AVIF, APNG or PNG here"]
+
+  - id: contact-sheet
+    layer: surface
+    stage: try
+    status: active
+    statement: Assets arrive and STATE sets the hierarchy, not the source art's own colours.
+    note: >-
+      Sorted by state, and the field dims so the tile that needs you wins a
+      desaturated blur. Asserted at 8/255 by check:greyscale; measured at 73.0.
+    reality:
+      kind: signal_present
+      path: web/app.js
+      signal: [renderSheet, "data-few"]
+
+  - id: question
+    layer: surface
+    stage: adopt
+    status: active
+    anchor: 10
+    statement: The coin-flip question is SHOWN on the artwork, never described in hex and coordinates.
+    note: >-
+      THE NORTH STAR'S LOAD-BEARING NODE. PRODUCT.md line 31: nobody can answer
+      "is the region at bbox [230,135,406,359] outlined in 002864 design or
+      background?" by reading it. They have to see it.
+    reality:
+      checks:
+        - claim: the question panel renders
+          kind: signal_present
+          path: web/app.js
+          signal: [renderQuestions, "The marked place on the artwork"]
+        - claim: the abolished string is not RENDERED
+          kind: signal_absent
+          path: web/app.js
+          signal: ["The place outlined in ${g.hex}", "bbox_xyxy || []).join"]
+          # ⚠️ The template expression, not the prose. The first version matched
+          # "The place outlined in" and fired on the COMMENT that records what
+          # the string used to be — a true positive for the checker and a false
+          # one for the product. A signal_absent check must name something only
+          # live code can contain.
+
+  - id: region-mark
+    layer: surface
+    stage: adopt
+    status: active
+    statement: The disputed region is lit on the picture, sized from the decoded canvas.
+    note: >-
+      It read #before.naturalWidth, and wipe.js strips that element's src — so
+      the mark and the seam were mutually exclusive BY CONSTRUCTION and it had
+      never once drawn in the state it exists for.
+    reality:
+      kind: signal_present
+      path: web/app.js
+      signal: [renderQuestionRegions, "Devoid.wipe.sides"]
+
+  - id: seam
+    layer: surface
+    stage: adopt
+    status: suspect
+    statement: Two answers on one clock, compared by dragging the cut line between them.
+    note: >-
+      ⚠️ SUSPECT. The first version of this node checked only that wipe.js's
+      functions exist — and the reconciler duly REFUTED the suspect status and
+      declared convergence, laundering a P0 into a green tick. Existence was
+      never the question: `.qregion` carries no clip-path, so the hatch paints
+      identically on both halves and the comparison cannot differ inside the one
+      rectangle it exists to reveal. The checks below encode THAT.
+    reality:
+      checks:
+        - claim: the pair mounts through one decode path
+          kind: signal_present
+          path: web/wipe.js
+          signal: [mountPair, loadPair, loadUrls, seamCanHelp]
+        - claim: the region overlay is clipped by the seam, so the two halves can differ
+          kind: signal_present
+          path: web/app.css
+          signal: [".qregion{position:absolute;clip-path"]
+        - claim: the seam does not open at a constant unrelated to the disputed region
+          kind: signal_absent
+          path: web/app.js
+          signal: ["setSeam(50)"]
+
+  - id: answer-bar
+    layer: surface
+    stage: adopt
+    status: active
+    statement: The two answers sit under their own half of the seam.
+    note: The choice and the evidence for it are one object.
+    reality:
+      kind: signal_present
+      path: web/app.js
+      signal: [renderAnswerBar, seamGroup]
+
+  - id: ledger
+    layer: surface
+    stage: adopt
+    status: active
+    statement: Both answers are priced before either is chosen.
+    note: >-
+      Converts an unanswerable question about intent into a comparison. A blank
+      ledger IS the not-checked state and says so in words.
+    reality:
+      kind: signal_present
+      path: web/wipe.js
+      signal: [renderLedger, redrawLedger, ledgerHas]
+
+  - id: labels-log
+    layer: surface
+    stage: retain
+    status: active
+    statement: Every answer becomes a labelled data point for the decision the engine refuses.
+    note: >-
+      Tracked evidence, pointed at from the engine repo. A BYPRODUCT of
+      answering — not a workflow anyone sits down to do.
+      ⚠️ If this path moves, fix scripts/harness/labels/README.md in the engine repo.
+    reality:
+      kind: file_present
+      path: labels/protection.jsonl
+
+  - id: history
+    layer: surface
+    stage: retain
+    status: active
+    statement: A past run can be reloaded and re-run with a tweak.
+    note: Two append-only logs, two schemas, one writer each. Never merged.
+    reality:
+      kind: signal_present
+      path: server/jobs.py
+      signal: [append_job, read_jobs, recover_orphans]
+
+  - id: packaging
+    layer: surface
+    stage: expand
+    status: active
+    statement: A signed .app that runs outside the checkout.
+    note: >-
+      Self-signed only — no Gatekeeper on another Mac, no notarisation, and it
+      does NOT unblock Check for Updates.
+    reality:
+      checks:
+        - claim: the builder is configured and signs
+          kind: signal_present
+          path: electron-builder.yml
+          signal: [afterPack, "identity: DEVOID", hardenedRuntime]
+        - claim: the escaping-symlink guard exists
+          kind: signal_present
+          path: build/afterPack.js
+          signal: [dereferenced, "still escapes the bundle"]
+
+  # ── the machinery that keeps the chain honest ─────────────────────────────
+  - id: engine-boundary
+    layer: implementation
+    status: active
+    statement: The engine's JSON is asserted in exactly one place.
+    note: >-
+      Four call sites once sniffed the shape independently and three got it
+      wrong. This module is the only place it is validated.
+    reality:
+      kind: signal_present
+      path: server/validate.py
+      signal: [parse_recommend, suggested_flag_tokens, _fail]
+
+  - id: tri-state
+    layer: implementation
+    status: active
+    anchor: 10
+    statement: Only deliberately taken-over rows are sent, so --auto keeps applying its recommendation.
+    note: >-
+      Enforced here, not merely intended: an override equal to the parser's own
+      default is dropped before argv is built.
+    reality:
+      kind: signal_present
+      path: server/cli.py
+      signal: [build_argv, auto]
+
+  - id: preview-route
+    layer: implementation
+    status: active
+    statement: One frame per side, rendered by the real CLI, twice.
+    note: >-
+      Single-frame BY MEASUREMENT — the fidelity numbers are in the module
+      header. This is why the film strip cannot scrub while the seam is up, and
+      why the strip says so instead of moving a counter that points at nothing.
+    reality:
+      kind: signal_present
+      path: server/preview.py
+      signal: [_answer_argv, _extract_one_frame, sample_frame_index]
+
+  - id: render-job
+    layer: implementation
+    status: active
+    statement: A cancellable subprocess that never overwrites, and says where the file went.
+    reality:
+      kind: signal_present
+      path: server/render.py
+      signal: [build_render_argv, _journalled, _settle_lock]
+
+  - id: advice
+    layer: implementation
+    status: active
+    statement: Advice ships with an undo of exactly what it changed.
+    note: >-
+      The undo receives exactly what apply() returned, so it cannot drift from
+      what was changed. Two earned call sites and deliberately not a third.
+    reality:
+      kind: signal_present
+      path: web/advice.js
+      signal: [suggest, "needs both an apply and an undo"]
+
+  - id: gates
+    layer: implementation
+    status: active
+    statement: Nothing claims a verification the run did not earn.
+    note: >-
+      The gate asserts CONNECTION, not presence — presence is exactly what a
+      disconnected control has. Fourteen subsystems shipped wired to nothing.
+    reality:
+      checks:
+        - claim: the window gate drives real input
+          kind: signal_present
+          path: scripts/capture-window.mjs
+          signal: [sendInputEvent, leftButtonDown, CANVAS_HASH]
+        - claim: contrast is measured in both lighting states
+          kind: signal_present
+          path: scripts/check_contrast.py
+          signal: [SURFACE_MIN, lstar, RING_GROUNDS]
+        - claim: the greyscale rule is runnable
+          kind: signal_present
+          path: scripts/check_greyscale.py
+          signal: [SQUINT_MARGIN, MARK_MARGIN]
+
+edges:
+  - {from: question,       to: region-mark,     type: realizes,                   strength: hard}
+  - {from: question,       to: seam,            type: realizes,                   strength: hard}
+  - {from: question,       to: answer-bar,      type: realizes,                   strength: hard}
+  - {from: question,       to: ledger,          type: must-stay-consistent-with,  strength: hard}
+  - {from: question,       to: engine-boundary, type: supports,                   strength: hard}
+  - {from: seam,           to: preview-route,   type: must-stay-consistent-with,  strength: hard}
+  - {from: region-mark,    to: seam,            type: must-stay-consistent-with,  strength: hard}
+  - {from: ledger,         to: preview-route,   type: must-stay-consistent-with,  strength: hard}
+  - {from: labels-log,     to: question,        type: should-align-with,          strength: soft}
+  - {from: render-job,     to: tri-state,       type: must-stay-consistent-with,  strength: hard}
+  - {from: render-job,     to: question,        type: supports,                   strength: hard}
+  - {from: history,        to: render-job,      type: realizes,                   strength: soft}
+  - {from: advice,         to: tri-state,       type: should-align-with,          strength: soft}
+  - {from: gates,          to: question,        type: must-stay-consistent-with,  strength: hard}
+  - {from: gates,          to: seam,            type: must-stay-consistent-with,  strength: hard}
+  - {from: contact-sheet,  to: engine-boundary, type: supports,                   strength: soft}
+  - {from: empty-table,    to: launch,          type: supports,                   strength: watch}
+  - {from: packaging,      to: launch,          type: realizes,                   strength: watch}
