@@ -50,7 +50,7 @@ Two of them fail for reasons that are not about your code, so read the message r
 
 Where things go:
 
-| | |
+| what | where |
 |---|---|
 | open work, and decisions not to do something | `devoid-deferred-list.md` |
 | what shipped | `docs/CHANGELOG.md` |

@@ -5,6 +5,9 @@ const http = require('http');
 const net = require('net');
 const https = require('https');
 const { compareVersions } = require('./lib/versions');
+const { TOOL_DIRS, ENGINE_FLOOR, toolPath, brewFormulae, findBrew, engineVerdict, updateVerdict } =
+  require('./lib/deps.js');
+const { readPrefs, writePrefs, shouldCheckOnLaunch } = require('./lib/prefs.js');
 const fs = require('fs');
 
 const BASE_PORT = 8732;
@@ -210,6 +213,14 @@ function startServer(port, python) {
    * crash journal go to ~/Library/Application Support/Devoid; from a checkout
    * they stay in the repo, where labels/protection.jsonl is tracked evidence. */
   const env = { ...process.env };
+  /* ⚠️ A FINDER-LAUNCHED APP HAS NO SHELL, SO NO SHELL PATH (fixed 2026-09-07 18:56 EDT).
+   * It inherits /usr/bin:/bin:/usr/sbin:/sbin. Homebrew lives in
+   * /opt/homebrew/bin, which is on neither, so `shutil.which("gifsicle")` in
+   * server/engine.py answered None in the PACKAGED app on a Mac where gifsicle
+   * was installed and working -- Devoid called itself degraded for a reason
+   * that was not true. Invisible from a checkout: `npm start` runs under a
+   * shell that already fixed PATH. lib/deps.js carries the falsifiers. */
+  env.PATH = toolPath(process.env.PATH, fs.existsSync);
   if (PACKAGED) env.DEVOID_DATA_DIR = app.getPath('userData');
   /* ⚠️ ...and "never write inside its own bundle" includes BYTECODE, which is
    * the case the line above does not cover. Python byte-compiles site-packages
@@ -333,6 +344,17 @@ async function findFreePort() {
 // /api/engine/status does not exist until Stage 1, and a 404 is not a failure
 // worth stopping a launch for.
 
+/* The engine's own path, recorded when the status is first read, so the engine
+   update dialog can name the directory a `git pull` belongs in. */
+let enginePath = null;
+
+/** One read of /api/engine/status. Throws; every caller decides what that means. */
+async function fetchEngineStatus(port = activePort) {
+  const res = await fetch(`http://127.0.0.1:${port}/api/engine/status`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
 async function logEngineStatus(port, attempts = 20) {
   const url = `http://127.0.0.1:${port}/api/engine/status`;
   for (let i = 0; i < attempts; i += 1) {
@@ -349,6 +371,8 @@ async function logEngineStatus(port, attempts = 20) {
         status.skill_path || status.engine_path || status.resolved_path || 'unreported';
       console.log(`[devoid] engine_version=${version}`);
       console.log(`[devoid] skill path=${skillPath}`);
+      if (status.skill_path) enginePath = status.skill_path;
+      void reviewEngine(status);
       if (status.available === false) {
         console.log(`[devoid] engine unavailable — missing: ${(status.missing || []).join(', ')}`);
       }
@@ -396,24 +420,37 @@ function deliverPaths(filePaths) {
   console.log(`[devoid] opened ${filePaths.length} file(s)`);
 }
 
-/* ── Check for Updates (6.4) ───────────────────────────────────────────────
- * ⚠️ USER-INITIATED ONLY, NEVER ON LAUNCH. This app's whole premise is that it
- * works on your machine with your files and talks to nothing; a version ping
+/* ── Check for Updates ─────────────────────────────────────────────────────
+ * ⚠️ THIS RAN ONLY WHEN CLICKED UNTIL 2026-09-07 19:33 EDT. The comment here
+ * argued for that: "USER-INITIATED ONLY, NEVER ON LAUNCH ... a version ping
  * fired at startup would quietly break that promise for a feature nobody asked
- * for at that moment. It runs when the menu item is clicked and at no other time.
+ * for at that moment." Sound, and answering the wrong question. Harkirat:
+ * *"what if a user never clicks it themself?"* An update mechanism that only
+ * works for the person who remembers it exists serves nobody, and the people
+ * running a stale engine are exactly the ones not reading the menu bar.
  *
- * ⚠️ And it does NOT auto-update, deliberately. On macOS electron-updater goes
- * through Squirrel.Mac, which VALIDATES THE CODE SIGNATURE of what it downloads
- * — so an unsigned build cannot install its own update, and wiring one would
- * ship a path that fails at runtime. This tells you what exists and opens the
- * release page. See README's Packaging section for the signing story.
+ * The promise is kept differently rather than dropped: the launch check is
+ * THROTTLED to once a day (lib/prefs.js), SILENT when there is nothing to say,
+ * and one checkbox away from off in this same menu.
+ *
+ * ⚠️ AND IT IS ONE ITEM, NOT TWO. A separate "Check for Engine Updates..."
+ * asked the person to know that Devoid and its engine are different things
+ * versioned separately -- precisely the knowledge this app exists to spare them.
+ *
+ * ⚠️ It still does NOT auto-install. On macOS electron-updater goes through
+ * Squirrel.Mac, which VALIDATES THE CODE SIGNATURE of what it downloads, so an
+ * unsigned build cannot install its own update. This tells you what exists and
+ * opens the release page.
  */
 const RELEASES_API = 'https://api.github.com/repos/HarkiratMangat/Devoid/releases/latest';
+const ENGINE_RELEASES_API =
+  'https://api.github.com/repos/HarkiratMangat/gif-background-remover/releases/latest';
+const ENGINE_RELEASES_PAGE = 'https://github.com/HarkiratMangat/gif-background-remover/releases';
 
-function fetchLatestRelease() {
+function fetchLatestRelease(api = RELEASES_API) {
   return new Promise((resolve, reject) => {
     const req = https.get(
-      RELEASES_API,
+      api,
       { headers: { 'user-agent': `Devoid/${app.getVersion()}`, accept: 'application/vnd.github+json' } },
       (res) => {
         let body = '';
@@ -437,59 +474,154 @@ function fetchLatestRelease() {
   });
 }
 
-async function checkForUpdates() {
+function prefsDir() {
+  return PACKAGED ? app.getPath('userData') : __dirname;
+}
+
+let updatesMenuItem = null;
+
+/** Both versions and both newest releases; every failure is survivable. */
+async function collectUpdates() {
+  const out = { app: null, engine: null, errors: [] };
   const current = app.getVersion();
-  let release;
   try {
-    release = await fetchLatestRelease();
-  } catch (err) {
-    dialog.showMessageBox(mainWindow, {
-      type: 'warning',
-      message: 'Could not check for updates',
-      detail: `${err.message}.\n\nDevoid ${current} is what you are running. Nothing was changed.`,
-      buttons: ['OK'],
-    });
+    const rel = await fetchLatestRelease(RELEASES_API);
+    const latest = rel && rel.tag_name;
+    out.app = { current, latest, url: (rel && rel.html_url) || null,
+                verdict: latest ? updateVerdict(current, latest, compareVersions) : 'unknown' };
+  } catch (err) { out.errors.push(`Devoid: ${err.message}`); }
+
+  let installed = null;
+  try {
+    const status = await fetchEngineStatus();
+    /* 🔴 `engine_version` IS A CONTENT HASH, NOT A VERSION (2026-09-07 21:32 EDT). This read
+       it and handed `sha256:0ffc8a71b8b5` to compareVersions, which parses it as
+       0.0.0 -- so every check said the engine was BEHIND and offered an update
+       that was already installed, every day. It shipped hours after the update
+       check did, and the live check meant to prove that path worked passed a
+       hand-typed '6.4.1' instead of what the app actually reports. A test given
+       a fabricated input tests the fabrication. `engine_semver` is derived from
+       git tags or the bundled VERSION file, and is null when neither exists. */
+    installed = (status && status.engine_semver) || null;
+  } catch { /* no engine resolved; reviewEngine already said so at launch */ }
+
+  if (installed) {
+    try {
+      const rel = await fetchLatestRelease(ENGINE_RELEASES_API);
+      const latest = rel && rel.tag_name;
+      out.engine = { current: installed, latest, url: (rel && rel.html_url) || ENGINE_RELEASES_PAGE,
+                     verdict: latest ? updateVerdict(installed, latest, compareVersions) : 'unknown' };
+    } catch (err) { out.errors.push(`Engine: ${err.message}`); }
+  }
+  return out;
+}
+
+/**
+ * @param {{auto?: boolean}} opts `auto` is the launch check. ⚠️ It says NOTHING
+ *   unless something is actually newer -- a launch check that interrupts you to
+ *   report that nothing needs doing is worse than no launch check.
+ */
+async function checkForUpdates({ auto = false } = {}) {
+  const r = await collectUpdates();
+  if (auto) writePrefs(prefsDir(), { ...readPrefs(prefsDir()), lastCheck: Date.now() });
+
+  const appBehind = Boolean(r.app && r.app.verdict === 'behind');
+  const engineBehind = Boolean(r.engine && r.engine.verdict === 'behind');
+
+  if (!appBehind && !engineBehind) {
+    if (auto) return;                                     // silence is the point
+    const lines = [];
+    if (r.app) {
+      /* ⚠️ 404 IS AMBIGUOUS AND MUST NOT BE REPORTED AS ONE THING. GitHub
+         returns it both for "no releases published" and for "private, and you
+         asked anonymously" -- and HarkiratMangat/Devoid is private today, so
+         this branch is the NORMAL one for the app's own half, not an error.
+         Saying "GitHub has no release to show" reads as GitHub's fault and as
+         a claim that nothing was ever published; both are wrong. */
+      /* ⚠️ 404 IS AMBIGUOUS AND THIS MESSAGE MUST NOT PICK A CAUSE. GitHub
+         returns it for "nothing published" AND for "private, asked
+         anonymously", and the two are indistinguishable from here. A first
+         draft asserted "its repository is private" -- true when written, and
+         exactly the class of claim this session spent the evening removing:
+         a fact about one moment's configuration, frozen into shipped copy. */
+      lines.push(r.app.verdict === 'unknown'
+        ? `Devoid ${r.app.current} — GitHub returned no release. That happens when nothing has been published, and also when a repository is private and Devoid asks anonymously; the two look identical from here. Nothing was changed.`
+        : `Devoid ${r.app.current} is the newest release.`);
+    }
+    if (r.engine) {
+      /* ⚠️ NEVER OFFER A DOWNGRADE. The engine repo tags every merge and
+         publishes a release only sometimes, so being AHEAD of the newest
+         release is normal and is not a problem to solve. */
+      lines.push(r.engine.verdict === 'ahead'
+        ? `Engine ${r.engine.current} is ahead of the newest release (${r.engine.latest}). That is normal: the engine repository tags every merge and publishes a release only sometimes.`
+        : r.engine.verdict === 'unknown'
+          ? `Engine ${r.engine.current} — GitHub has no release to show.`
+          : `Engine ${r.engine.current} is the newest release.`);
+      } else if (!r.errors.length) {
+      /* ⚠️ Two different reasons and they must not read as one: no engine at
+         all, versus an engine whose version cannot be derived (not a git
+         checkout, no tags, no bundled VERSION). Neither is an error. */
+      lines.push(enginePath
+        ? 'The engine is here but its version cannot be read — it is not a git checkout with tags, and no version shipped beside it. Nothing to compare.'
+        : 'The engine could not be resolved, so there is nothing to compare it against.');
+    }
+    if (r.errors.length) lines.push('', `Could not reach GitHub for: ${r.errors.join('; ')}`);
+    dialog.showMessageBox(mainWindow, { type: r.errors.length ? 'warning' : 'info',
+      buttons: ['OK'], message: 'Everything is up to date', detail: lines.join('\n\n') });
     return;
   }
 
-  if (!release || !release.tag_name) {
-    dialog.showMessageBox(mainWindow, {
-      type: 'info',
-      message: 'GitHub has no release to show',
-      detail: `You are running Devoid ${current}.\n\n` +
-        'Either nothing has been published yet, or the repository is private — ' +
-        'Devoid asks anonymously and GitHub answers both cases identically, so ' +
-        'it cannot tell you which. This is not an error, and nothing was changed.',
-      buttons: ['OK'],
-    });
-    return;
+  const detail = [];
+  const buttons = [];
+  const urls = [];
+  if (appBehind) {
+    detail.push(`Devoid ${String(r.app.latest).replace(/^v/, '')} is available; you have ${r.app.current}.\n` +
+      'Devoid cannot install its own updates — the build is self-signed and the macOS updater only ' +
+      'accepts a signature the destination already trusts — so this opens the release page.');
+    buttons.push('Open Devoid releases'); urls.push(r.app.url);
   }
-
-  const latest = release.tag_name;
-  if (compareVersions(latest, current) <= 0) {
-    dialog.showMessageBox(mainWindow, {
-      type: 'info',
-      message: `Devoid ${current} is up to date`,
-      detail: `The newest published release is ${latest}.`,
-      buttons: ['OK'],
-    });
-    return;
+  if (engineBehind) {
+    const where = enginePath ? `\nYours is at: ${path.dirname(path.dirname(enginePath))}` : '';
+    detail.push(`Engine ${String(r.engine.latest).replace(/^v/, '')} is available; you have ${r.engine.current}.\n` +
+      `Devoid never writes to the engine — it is a repository you cloned, and a git pull there is the whole update.${where}`);
+    buttons.push('Open engine releases'); urls.push(r.engine.url);
   }
+  buttons.push('Later');
 
-  const { response } = await dialog.showMessageBox(mainWindow, {
+  const res = await dialog.showMessageBox(mainWindow, {
     type: 'info',
-    message: `Devoid ${latest.replace(/^v/, '')} is available`,
-    detail: `You are running ${current}.\n\n` +
-      'Devoid cannot install its own updates: the build is signed with a ' +
-      'self-signed certificate rather than an Apple Developer ID, and the macOS ' +
-      'updater only accepts a signature the destination machine already trusts. ' +
-      'Opening the release page downloads the new ' +
-      'disk image, which you drag into Applications the same way as the first one.',
-    buttons: ['Open the release page', 'Later'],
+    buttons,
     defaultId: 0,
-    cancelId: 1,
+    cancelId: buttons.length - 1,
+    message: appBehind && engineBehind ? 'Devoid and its engine both have newer releases'
+      : appBehind ? `Devoid ${String(r.app.latest).replace(/^v/, '')} is available`
+      : `Engine ${String(r.engine.latest).replace(/^v/, '')} is available`,
+    detail: detail.join('\n\n'),
+    /* ⚠️ The checkbox appears ONLY on the auto path — the one moment somebody
+       might want this off is while it is interrupting them. */
+    ...(auto ? { checkboxLabel: 'Check for updates when Devoid opens', checkboxChecked: true } : {}),
   });
-  if (response === 0 && release.html_url) shell.openExternal(release.html_url);
+  if (auto && res.checkboxChecked === false) {
+    writePrefs(prefsDir(), { ...readPrefs(prefsDir()), checkOnLaunch: false });
+    if (updatesMenuItem) updatesMenuItem.checked = false;
+  }
+  if (urls[res.response]) shell.openExternal(urls[res.response]);
+}
+
+/** On by default, once a day, silent when current. */
+function maybeCheckOnLaunch() {
+  if (!shouldCheckOnLaunch(readPrefs(prefsDir()))) return;
+  /* ⚠️ The comment here said "never block the window", which a setTimeout does
+     not do at any delay -- it is already async, so 0 would block nothing either.
+     The real reason is INTERRUPTION, not blocking: a dialog that can appear
+     while the window is still painting reads as a crash. Four seconds is a
+     judgement about that, not a measurement, and saying which it is costs one
+     line. */
+  setTimeout(() => { void checkForUpdates({ auto: true }); }, 4000);
+}
+
+function toggleCheckOnLaunch(item) {
+  writePrefs(prefsDir(), { ...readPrefs(prefsDir()), checkOnLaunch: item.checked });
 }
 
 // ── Menus, shortcuts, About panel (6.1) ──────────────────────────────────────
@@ -514,7 +646,12 @@ function buildMenu() {
     label: 'Devoid',
     submenu: [
       { label: 'About Devoid', click: () => app.showAboutPanel() },
-      { label: 'Check for Updates…', click: checkForUpdates },
+      { label: 'Check for Updates…', click: () => checkForUpdates() },
+      { id: 'check-on-launch',
+        label: 'Check for Updates on Launch',
+        type: 'checkbox',
+        checked: readPrefs(prefsDir()).checkOnLaunch,
+        click: toggleCheckOnLaunch },
       { type: 'separator' },
       { role: 'services' },
       { type: 'separator' },
@@ -591,6 +728,7 @@ function buildMenu() {
   ];
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  updatesMenuItem = Menu.getApplicationMenu().getMenuItemById('check-on-launch');
 }
 
 // ── End Stage 6 block ────────────────────────────────────────────────────────
@@ -666,7 +804,7 @@ app.whenReady().then(async () => {
   startServer(activePort, found.python);
   waitForServer(
     activePort,
-    () => { createWindow(); logEngineStatus(activePort); },
+    () => { createWindow(); logEngineStatus(activePort); maybeCheckOnLaunch(); },
     () => {
       dialog.showErrorBox(
         'Devoid could not start its server',

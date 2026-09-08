@@ -42,6 +42,9 @@ def test_engine_status_shape(client):
         "pngquant",
         "webpmux",
         "engine_version",
+        # additive, 2026-09-07 21:35 EDT -- a release number, where engine_version is
+        # a content hash. docs/API-CONTRACT.md carries why they are both here.
+        "engine_semver",
         "skill_path",
     }
 

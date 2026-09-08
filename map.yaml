@@ -26,7 +26,7 @@
 project: devoid
 product_status: pre-release, one user, never pushed
 job: >-
-  Remove the background from an animated image without learning 63 flags, by
+  Remove the background from an animated image without learning the engine's flags, by
   answering the two or three questions the engine cannot answer itself.
 audience:
   primary: Harkirat, usually mid-task on something else and wanting to be finished

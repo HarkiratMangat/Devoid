@@ -10,6 +10,11 @@ out/
 # The in-flight journal (PLAN.md 1.4). Machine state, not history:
 # what it holds is only meaningful to the run that wrote it.
 .devoid-journal.json
+
+# ⚠️ THE README TELLS YOU TO CREATE THIS. Following the install instructions wrote
+# an untracked file into a clean clone and left it dirty; the path inside it is
+# specific to one machine, so it must never be committed either.
+devoid.config.json
 .devoid-journal.json.lock
 .devoid-journal.json.tmp
 .claude/worktrees/
@@ -37,3 +42,11 @@ local/gate-data/
 local/scale-corpus/
 local/scale-data/
 local/scale-shots/
+
+# lib/prefs.js writes here when running from a checkout (packaged it goes to
+# ~/Library/Application Support/Devoid). Following the README must never dirty a clone.
+prefs.json
+
+# scripts/prepack-engine.mjs copies the engine here at build time. It is another
+# repository's source; this one does not vendor it into git.
+build/engine/

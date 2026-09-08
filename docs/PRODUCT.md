@@ -10,6 +10,23 @@ web
 
 ⚠️ **Electron is a desktop shell over web technologies, so the design language is `web`.** `init`'s own rule: a native wrapper around a website does not make it native. `live` and the bundled `detect.mjs` both apply here; the `ios`/`android` references do not.
 
+
+### The network promise, as it actually stands (2026-09-07 19:33 EDT)
+
+**Amended, deliberately.** The app shipped saying it *"talks to nothing"* and that **you start every network call** — `main.js` carried that as a comment arguing the update check must never run at launch. Harkirat: *"what if a user never clicks it themself?"*
+
+**An update mechanism that only works for the person who remembers it exists serves nobody**, and the people running a stale engine are exactly the ones not reading the menu bar. The constraint the promise was protecting — *your images and your work never leave this machine* — was never the same claim, and it is untouched.
+
+What is true now, and what the README says:
+
+| the promise | where it stands |
+|---|---|
+| **your files** | never sent anywhere, in any circumstance. Unchanged, and not negotiable |
+| **a version check** | once a day at launch, silent unless something is newer, one checkbox from off, and off is remembered |
+| **first-launch installs** | Homebrew tools and Python packages, each asked for, each declinable |
+
+⚠️ **A promise that has been amended must be amended in the copy too.** The README said *"you start every one"*; it no longer does, because that would now be false.
+
 ## What it is
 
 A desktop app for removing the background from animated images — GIF, WebP, AVIF, APNG, and static PNG/JPEG — and fitting the result to a size or format target.
@@ -18,7 +35,9 @@ It is a front end for the `gif-background-remover` skill, which lives in its own
 
 ## Who it is for
 
-Harkirat, primarily and by design. The working assumption is **built for him, but nothing that requires him** — no hardcoded paths, no assumptions about folder layout, a first run that finds or offers to install what is missing. The copy assumes competence and does not teach; a stranger could run it, but the project is not shaped around that stranger.
+⚠️ **AMENDED 2026-09-07 20:56 EDT, BECAUSE THIS DOCUMENT EXPIRED WHILE THE REST OF THE PROJECT MOVED.** It said *"a stranger could run it, but the project is not shaped around that stranger"* — written when the repository was private. The repository is **public** as of this evening, the README was rebuilt as a front door for exactly that stranger, and `CONTRIBUTING.md`, a code of conduct and an issue tracker link went with it. **This is the document every other decision is justified against, so it being stale about who the work is for makes every downstream justification unfalsifiable.**
+
+**Now: Harkirat first, strangers second and genuinely.** The working assumption is **built for him, but nothing that requires him** — no hardcoded paths, no assumptions about folder layout, a first run that finds or offers to install what is missing. The copy assumes competence and does not teach; a stranger could run it, but the project is not shaped around that stranger.
 
 The assets are icon, sticker and emoji art: antialiased vector work and hard-edged pixel art, usually destined for Discord.
 
@@ -75,7 +94,7 @@ These are not preferences. Each was measured, and each has already cost somethin
 
 **Never overwrite a delivered file.** The skill's convention escalates `<stem>_transparent.<ext>` → `_v2` → `_v3`. Devoid follows it, and additionally writes to a temporary path and moves on success — so a crashed or cancelled job leaves nothing behind. Without that, a partial file survives and the *next* run skips past it by writing `_v2`, silently accumulating garbage.
 
-**Every control is tri-state.** `--auto` applies its recommendation **only where an option was left at its default**. If the UI sends all 63 flags on every run, `--auto` silently becomes a no-op and the tool stops thinking. Every control therefore reads `auto · <value>` until it is deliberately taken over. This is forced by the engine, and it doubles as the best affordance in the app: the inspector is a live readout of the tool's own reasoning.
+**Every control is tri-state.** `--auto` applies its recommendation **only where an option was left at its default**. If the UI sends every flag on every run, `--auto` silently becomes a no-op and the tool stops thinking. Every control therefore reads `auto · <value>` until it is deliberately taken over. This is forced by the engine, and it doubles as the best affordance in the app: the inspector is a live readout of the tool's own reasoning.
 
 **Advice always ships with an undo.** The app may suggest ("the erosion ate a thin stroke — try 1?"), because a suggestion with a one-click revert of exactly what it changed costs nothing when wrong. A suggestion without one does not ship.
 
@@ -95,7 +114,7 @@ The engine asks *"is this enclosed interior design, or background showing throug
 
 The two answers differ by one flag, and a 1-frame preview is measured visually identical to an 8-bit-alpha render — 11 differing pixels of 409,600 at a max delta of 3. So render both and let the person **drag a seam between them**. That is a strictly easier judgement, and a measurably more accurate one: the skill's own history records a dog-tag icon where the region "looked plausible", `suggested_command` protected two chain-holes the user wanted removed, and **nobody looking at the two renders would have picked the wrong one.**
 
-It generalises to every flag with a visible consequence — erosion, feather band, fade recovery, dither mode. **That is what dissolves the tension between "usable by someone unacquainted" and "expose many more options": options presented as outcomes to choose between need no learning at all.** Most of the 63 flags do not need hiding or progressive disclosure. They need rendering.
+It generalises to every flag with a visible consequence — erosion, feather band, fade recovery, dither mode. **That is what dissolves the tension between "usable by someone unacquainted" and "expose many more options": options presented as outcomes to choose between need no learning at all.** Most of the engine's flags do not need hiding or progressive disclosure. They need rendering.
 
 ## Everything animates, and that is functional
 
@@ -175,7 +194,7 @@ Real, and measured — every number here has a script or a corpus behind it.
 
 1. **The question is visual; delivering it as text is the failure.** A hex string and a bbox array is precisely what this product exists to abolish.
 2. **Never report a verification the run did not earn.** `not-checked` is a first-class state with the same visual weight as done and failed.
-3. **Every control is tri-state, so `--auto` keeps thinking.** A UI that sends all 63 flags turns the engine's own reasoning off; absent means auto, and only a deliberate takeover is sent.
+3. **Every control is tri-state, so `--auto` keeps thinking.** A UI that sends every flag turns the engine's own reasoning off; absent means auto, and only a deliberate takeover is sent.
 4. **Every number is cited from a measurement, or it does not ship.** A plausible-sounding default is the exact failure this project was built against.
 5. **Advice ships with an undo of exactly what it changed** — including the answer itself, which is the most consequential decision in the app.
 

@@ -274,7 +274,7 @@
   "_note_tristate": [
     "`overrides` carries ONLY the rows deliberately taken over. Everything else",
     "is absent so --auto keeps applying its own recommendation. A request that",
-    "named all 63 flags would make --auto a no-op and the tool would stop",
+    "named every flag would make --auto a no-op and the tool would stop",
     "thinking; that is the failure this shape exists to prevent."
   ],
   "GET /api/jobs/j7": {

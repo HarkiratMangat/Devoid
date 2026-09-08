@@ -27,6 +27,8 @@ import json
 import logging
 import os
 import pathlib
+import re
+import subprocess
 import shutil
 import sys
 import threading
@@ -43,6 +45,16 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 FALLBACK_SKILL = Path(
     "/Applications/Claude Code/Gif-Background-Remover/scripts/remove_gif_background.py"
 )
+
+#: The copy inside the app, shipped from ``build/engine`` by ``scripts/prepack-engine.mjs``
+#: (2026-09-07 21:30 EDT). ⚠️ It is the LAST candidate, deliberately: a checkout, a config
+#: file and the documented path all beat it, so a developer testing an engine
+#: change never has to rebuild Devoid to see it. Bundling it means a `.dmg` user
+#: has a working app out of the box, which is the whole point.
+BUNDLED_SKILL = REPO_ROOT / "engine" / "remove_gif_background.py"
+#: Written beside it at build time -- the engine's real tag, so the update check
+#: has a semver to compare rather than a content hash.
+BUNDLED_VERSION = REPO_ROOT / "engine" / "VERSION"
 
 #: External binaries the skill shells out to. AVIF is deliberately NOT in here --
 #: it is a Pillow CAPABILITY, not a binary and not a package (PLAN.md 0.3).
@@ -83,9 +95,12 @@ def resolve_skill() -> tuple[Path, str]:
 
     if FALLBACK_SKILL.is_file():
         return FALLBACK_SKILL, "fallback"
+    if BUNDLED_SKILL.is_file():
+        return BUNDLED_SKILL, "bundled"
     raise EngineUnavailable(
-        "no engine: $DEVOID_SKILL unset, no devoid.config.json skill_path, and the "
-        f"documented fallback {FALLBACK_SKILL} does not exist"
+        "no engine: $DEVOID_SKILL unset, no devoid.config.json skill_path, the "
+        f"documented fallback {FALLBACK_SKILL} does not exist, and no copy is "
+        "bundled with this build"
     )
 
 
@@ -157,6 +172,52 @@ def engine_version() -> str:
     path = skill_path()
     h = hashlib.sha256(path.read_bytes()).hexdigest()[:12]
     return f"sha256:{h}"
+
+
+def engine_semver() -> str | None:
+    """The engine's own released version, or ``None`` when it cannot be known.
+
+    🔴 THIS EXISTS BECAUSE `engine_version()` ABOVE IS A CONTENT HASH, AND THE
+    UPDATE CHECK WAS COMPARING IT TO A GIT TAG (2026-09-07 21:30 EDT). ``sha256:0ffc8a71b8b5``
+    parses to ``0.0.0`` against ``v6.4.1``, so the comparison returned **behind**
+    every single time -- a daily dialog announcing an update that was already
+    installed. The bug shipped a few hours after the update check did, and the
+    live check that was supposed to prove it worked passed a hand-typed
+    ``'6.4.1'`` in place of the value the app actually reports. **A test fed a
+    fabricated input tests the fabrication.**
+
+    Three sources, no network, most-authoritative first:
+
+      1. ``git describe --tags`` in the resolved script's repository -- the true
+         answer for anyone running a clone, and AHEAD of the newest release more
+         often than not, because that repo tags every merge and publishes
+         releases only sometimes.
+      2. ``engine/VERSION``, written beside the bundled copy at build time.
+      3. ``None`` -- which callers must render as "cannot tell", never as 0.
+    """
+    try:
+        path = skill_path()
+    except EngineUnavailable:
+        return None
+
+    repo = path.parent.parent
+    if (repo / ".git").exists():
+        try:
+            out = subprocess.run(
+                ["git", "-C", os.fspath(repo), "describe", "--tags", "--abbrev=0"],
+                capture_output=True, text=True, timeout=5,
+            )
+            tag = out.stdout.strip()
+            if out.returncode == 0 and re.fullmatch(r"v?\d+(\.\d+)*", tag):
+                return tag
+        except Exception:  # noqa: BLE001 -- no git, no tags, a shallow clone
+            log.debug("devoid: git describe failed in %s", repo, exc_info=True)
+
+    if BUNDLED_VERSION.is_file():
+        tag = BUNDLED_VERSION.read_text().strip()
+        if re.fullmatch(r"v?\d+(\.\d+)*", tag):
+            return tag
+    return None
 
 
 def _call_quietly(fn, *args, **kwargs):
@@ -290,5 +351,9 @@ def status() -> dict:
         "pngquant": bins["pngquant"],
         "webpmux": bins["webpmux"],
         "engine_version": version,
+        # ⚠️ A SEMVER, separate from `engine_version`'s content hash. The update
+        # check needs something comparable to a tag; the hash is the identity
+        # recorded alongside every result and stays exactly as it was.
+        "engine_semver": engine_semver() if available else None,
         "skill_path": path,
     }

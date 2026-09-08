@@ -34,9 +34,17 @@
 #     this checkout. That is what the app depends on now, instead of the repo.
 #   • The engine itself is still resolved at runtime (server/engine.py): via
 #     $DEVOID_SKILL, devoid.config.json, or the documented path in
-#     /Applications/Claude Code/Gif-Background-Remover. It is deliberately NOT
-#     bundled — the skill is the source of truth and must not be forked into
-#     a copy that silently drifts.
+#     /Applications/Claude Code/Gif-Background-Remover.
+#
+#     ⚠️ NOT BUNDLED IS A GAP, NOT A DECISION (corrected 2026-09-07 20:38 EDT).
+#     This comment used to argue the skill "must not be forked into a copy
+#     that silently drifts" -- a limitation dressed as a principle. The engine
+#     is ONE 636 KB Python file whose only third-party imports (numpy, PIL,
+#     scipy) already ship inside this bundle, at 149 MB of ~170 MB. And the
+#     argument runs backwards: not bundling GUARANTEES drift, because the user
+#     runs whatever they happened to clone -- which is how a floor of v6.3.3
+#     came to sit above a newest release of v6.3.0. checkForUpdates is the
+#     mechanism for the drift it was worried about. Filed [P1 . M].
 
 appId: com.harkirat.devoid
 productName: Devoid
@@ -64,6 +72,13 @@ files:
   - '!dist/**'
 
 extraResources:
+  # ⚠️ The engine, copied here by scripts/prepack-engine.mjs (2026-09-07 21:32 EDT), which
+  # `npm run dist` runs first and which FAILS the build if the engine or either
+  # of its two LGPL texts is missing. server/engine.py takes it as the LAST
+  # candidate, after $DEVOID_SKILL, devoid.config.json and the documented path.
+  - from: build/engine
+    to: engine
+    filter: ['**/*']
   - from: server
     to: server
     filter: ['**/*.py', '!**/__pycache__/**']

@@ -6,7 +6,7 @@ Everything a contributor needs that a user does not. For what the app is and how
 
 ## Layout
 
-| | |
+| path | what lives there |
 |---|---|
 | `main.js`, `lib/` | the Electron main process: spawns the server, resolves Python, owns the menu and the dialogs |
 | `server/` | the Starlette app. `app.py` holds the routes, `engine.py` resolves and calls the skill, `cli.py` builds argv, `render.py` runs jobs, `preview.py` builds the seam pair |
@@ -63,10 +63,14 @@ Three things make that work, and each was a failure before it was a design:
 | piece | why |
 |---|---|
 | `server/` and `web/` ship as **extraResources**, not inside `app.asar` | Python cannot read an asar, and Python is what imports the server *and* serves `web/` as static files. Inside the asar they are invisible to it |
+| The **engine** ships as `Resources/engine/` | `scripts/prepack-engine.mjs` copies it, and both LGPL texts, before every `dist`. It **fails the build** if either is missing. `server/engine.py` takes it as the LAST candidate, so a checkout still wins |
+| `server/` gets an explicit **`PATH`** | see below |
 | `.venv` ships as **`pyvenv`** in Resources | The old build spawned `.venv/bin/python` relative to its own directory, which exists only in this checkout |
 | The log and the crash journal follow `$DEVOID_DATA_DIR` | `main.js` points it at `~/Library/Application Support/Devoid` when packaged. Writing inside the bundle breaks under signing and is wiped by the next install |
 
-⚠️ **The bundle is not portable to an arbitrary Mac.** `pyvenv` is a *virtualenv*, so it still needs the python.org 3.11 framework build, and the engine is resolved at runtime rather than bundled — see the README's Requirements table, which is the canonical statement of both.
+⚠️ **A FINDER-LAUNCHED APP HAS NO SHELL, SO NO SHELL `PATH` (fixed 2026-09-07 18:59 EDT).** It inherits `/usr/bin:/bin:/usr/sbin:/sbin`. Homebrew installs into `/opt/homebrew/bin`, which is on neither — so `shutil.which("gifsicle")` in `server/engine.py` answered `None` **in the packaged app, on a Mac where gifsicle was installed and working**, and the app called itself degraded for a reason that was not true. `startServer` now sets `env.PATH = toolPath(process.env.PATH, fs.existsSync)`. **Invisible from a checkout**, because `npm start` runs under a shell that already fixed it — which is why it survived every gate: the gates run from a checkout too.
+
+⚠️ **The bundle's venv is built against THIS machine's interpreter, and that is an artefact rather than a requirement (corrected 2026-09-07 18:25 EDT).** `pyvenv` is a virtualenv, and a virtualenv hardcodes the path of the interpreter it was built against — here python.org's framework build under `/Library/Frameworks/`, because that is what happened to build it. On a Mac without that path the bundled environment is dead, and `main.js` falls back to a system Python 3.11: it probes `/usr/bin`, **`/opt/homebrew/bin`** and `/usr/local/bin`, then offers to install the packages. **Nothing in the code requires the framework build**, and the README said it did until this correction. The engine, separately, is resolved at runtime rather than bundled.
 
 ⚠️ **Only the Python failure is a dialog. The engine failure is not** (corrected 2026-09-07 16:28 EDT). `EngineUnavailable` names all three lookup paths, `main.js` prints it to stdout, and `web/app.js` reads `/api/engine/status` for `engine_version` alone — so a missing engine is a normal-looking window and a 503 the first time a file is added. Both this file and the README claimed a dialog for it. Filed `[P1 · S]`.
 
@@ -92,18 +96,23 @@ Those entitlements matter. A signed app cannot spawn the unsigned Python interpr
 npm test
 ```
 
-**Twelve commands, eleven gates** — `test:wipe` and `test:coords` share a row below. **The order is load-bearing and cannot be alphabetised:** `gate:ui` writes the captures and the `.boxes.json` sidecars that `check:greyscale` then measures, and `check:tracker` runs last because it is about the branch rather than the code.
+**Fifteen commands, fourteen gates** — `test:wipe` and `test:coords` share a row below. **The order is load-bearing and cannot be alphabetised:** `gate:ui` writes the captures and the `.boxes.json` sidecars that `check:greyscale` then measures, and `check:tracker` runs last because it is about the branch rather than the code.
 
 | gate | asks |
 |---|---|
 | `pytest` | the server, the API contract, the flag builder, the render path |
+| ↳ `tests/test_ledger_honesty.py` | that the verdict's numbers come from the engine's measured background colour, and **say `estimated` when they don't**. Its falsifier builds a file whose artwork touches the corner — the case the old corner-pixel guess reported as total artwork loss |
 | `test:wipe`, `test:coords` | the seam's synchronisation and its coordinate maths |
 | `test:versions` | version comparison for the update check |
+| `test:deps` | what the machine is missing: the Finder `PATH` case, the brew formula map, and that *no engine* and *no `gifsicle`* stay different verdicts |
+| `pytest tests/test_engine_bundle.py` | that the bundled engine is the last candidate, and that the update check gets a **semver** rather than the `sha256:` content hash it was comparing against a git tag |
+| `test:prefs` | the launch check's throttle and its off switch: a corrupt prefs file reads as defaults, reopening a window does not re-ping GitHub, and a clock that moved backwards does not wedge the check off |
 | `test:hooks` | that each routing hook can both fire and stay silent |
 | `check:contrast` | text and UI contrast ratios |
 | `python3 scripts/check_font_axes.py --check` | every declared font axis range matches the shipped file. ⚠️ The only entry with no npm script of its own; it runs inline in the chain |
+| `check:claims` | the documents' checkable claims against the code they describe: badge versions against `package.json`, badge colours against both GitHub grounds **and against shields' own white label text at WCAG AA's 4.5:1** (the check first shipped with 3:1, the large-text bar, and certified a badge at 4.20:1), hardcoded option counts against the engine's own parser (**fifteen files**, `options` *and* `flags`, and a quoted count is read as a citation rather than a claim), promised environment variables against the source that reads them, files the docs tell you to create against `.gitignore`, every relative link, inline code long enough to widen the page on a phone, screenshots with no `width=` (their container sizes them otherwise — measured at 6.5% scale on a phone), and empty markdown table header rows |
 | `check:detector` | the design detector reports **presence** against a deliberately defective fixture, so an empty result means something |
-| `check:design` | asks git what changed, then runs the detector over it; fails on drift or on a degraded run |
+| `check:design` | asks git what changed, then runs the detector over it; fails on drift or on a degraded run. ⚠️ **Untracked files outside `web/` are excluded** — an untracked file ships nowhere, and scratch left in the directory used to enter the contract |
 | `gate:ui` | every UI state, captured through the real Electron window, with assertions on each |
 | `check:greyscale` | every state stays legible with colour removed, in both lighting states |
 | `check:tracker` | the tracker's conservation rule, in two scopes: the branch against its merge base, and the working tree |

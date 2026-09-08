@@ -19,7 +19,202 @@ The **story** behind the app: the traps, the reasoning behind decisions, the thi
 
 ---
 
+## 2026-09-08 00:15 EDT — a warning is not a colour, it is a finding
+
+`npm test` came back red on the greyscale gate. Scrolling past the failure to find it, the pytest block read:
+
+```
+ValueError: unknown settings keys: analysis_json
+...
+107 passed, 2 warnings
+```
+
+**A shipped bug, printed in full, above a passing line, for a day.** `jobs.jsonl` — the app's single append-only record, the thing `CLAUDE.md` calls "the truth" — had not been recording any render that used the analysis handoff, because the write raised in a worker thread and pytest downgraded the escaped exception to a warning.
+
+🔴 **THE READING FAILURE IS THE FINDING.** I have run this suite perhaps twenty times tonight and read `NPM_TEST_EXIT` each time, which is exactly what I built the habit for. The exit code is a summary, and **a summary is a place for something to hide**. `2 warnings` was in every one of those runs.
+
+⚠️ **And it is the third distinct thing tonight that a green line concealed** — a hung capture behind an empty log, a `--body`-less merge, and now this. The pattern is not carelessness about failures; it is that **I only ever asked whether the gate said no**, never what else it said.
+
+**Fixed by stripping at the call site**, because a per-process temp path in a permanent log is a dead pointer, and the falsifier that matters asserts the whitelist still refuses it.
+
+## 2026-09-08 00:01 EDT — I invented a citation to fix an ambiguity complaint
+
+A README row read *"on two real files, 31% and 21% of the artwork sits inside the same red…"*. Harkirat: *"what two files? this is a claimed, stated 'why it holds' and it's completely ambiguous."* Correct — a "why it holds" column that names no source holds nothing.
+
+**So I named two files. One of them was made up.** I wrote `hurricane.gif` and `growth.gif`. `web/app.css:19` says **hurricane and paper-plane**, and it says the artwork *"sits within RGB distance 90 of rubylith"* — a colour **neighbourhood**, which I had written as *"is the same red"*.
+
+🔴 **THIS IS THE WORST SHAPE OF THE EVENING'S CLASS, NOT A NEW ONE.** Every other instance was a claim that had drifted from something once true. This one was manufactured **in the act of removing an ambiguity** — the complaint was that the row lacked a source, and I produced a source rather than looking one up. **Specificity is the disguise vagueness wears once someone objects to it**, and it is more dangerous than the vagueness, because a filename reads as a citation.
+
+⚠️ **And no gate could have caught it.** `growth.gif` is a real file in `web/assets/`, so "the named file exists" would have passed. The only check that works is the one I skipped: **open the source that made the measurement.** It took one `rg` after the fact.
+
+**The correct text is now in the README with its file and line**, and the table it sits in is filed for redesign — a table that can hold an uncheckable claim without looking odd is the wrong shape for claims.
+
+## 2026-09-07 21:34 EDT — building the feature is what tested the feature
+
+Bundling the engine was filed as a packaging job. Wiring it required knowing what version the bundled copy is, which required looking at what `engine_version()` actually returns — **a `sha256:` content hash**, which `checkForUpdates` had been comparing against a git tag since I wrote it three hours earlier. It parses to `0.0.0`. **Every check said "behind".**
+
+🔴 **I had "verified" that path live, and the verification was worthless.** The node one-liner I ran passed `'6.4.1'` as the installed version — a number I typed, not one the app produces. It printed `ahead`, correctly, about an input that never occurs. **A test given a fabricated input tests the fabrication**, and this is the third instance tonight: `"63 options"` against a defect that says `flags`, `*"…"*` against a repo that writes backticks, and now a hand-typed semver against a hash.
+
+⚠️ **The pattern behind all three: I supply the input that makes the check meaningful, and I supply it from the same belief the code came from.** The fix is not more care. It is to take the input from the system under test — read `status()`, don't type a version — which costs one extra call and removes the whole class.
+
+**And the finding arrived from BUILDING, not from auditing.** A full sequential-thinking sweep an hour earlier looked directly at the update check and did not see this; implementing the next feature did, immediately, because implementation forces you to use the real values. **A sweep reads; a build runs.**
+
+## 2026-09-07 21:05 EDT — I concluded a file was missing from a glob that could not have matched it
+
+Writing the handoff, I ran `ls docs/*handoff*`, got four superseded copies and no live one, and wrote a 🔴 paragraph into `docs/HANDOFF.md` claiming the file `CLAUDE.md`'s first line points at did not exist.
+
+**`docs/HANDOFF.md` was there the whole time.** The glob was lowercase; the filename is uppercase. On a case-sensitive match `*handoff*` cannot match `HANDOFF.md`, so the search was incapable of returning the file I was asking about — and I read its silence as an answer.
+
+⚠️ **This is the rule from my own global instructions, verbatim:** *never conclude "not found" from a default-flag search.* It is written there about `rg`'s hidden and gitignored defaults; the same failure has a second door, which is case. **A search that cannot match the thing you are asking about returns exactly what a true absence returns.**
+
+🔴 **And it is the evening's own class committed while documenting the evening's own class** — a claim that was never true, asserted confidently, in the same file that names the pattern. The paragraph was live for about ninety seconds because the very next command printed the file's own name back at me. **The check that caught it was looking at the thing rather than at a search for the thing**, which is the entire finding of this branch.
+
+## 2026-09-07 20:57 EDT — the code was honest and the documents deleted it
+
+A sweep for the engine-bundling shape found twelve more. **Every one was in prose or in a justification; none was in the code.** The pattern is worth more than the list:
+
+`render.py` said its ledger thresholds were *"INVENTED"* — the README printed the number as a fact. `preview.py` marks `SEAM_THRESHOLD` *"provisional"* — that constant decides whether you are offered the seam at all, and nothing says so. `index.html` carries *"nobody maps 'emitting' to 'light mode' from a control alone"* — and the fix was to add a word beside the control rather than change it. **In all three the source documented its own uncertainty and the layer above dropped it.**
+
+🔴 **THE GENERATOR.** This project rewards stating reasons. So a structure that demands a reason will always receive one — including where the truth is *"nobody built it yet"*. A heading reading *"each of these is a decision with a reason"* makes an empty right-hand column unwriteable, so it never comes back empty.
+
+**Evidence it is structural and not a lapse:** the four bad non-goal rows are exactly the four whose honest answer is *unbuilt*; the three with real external causes (no Apple account, not attempted, wrong tool) are clean. And I reproduced it **while fixing it** — three hours earlier I renamed a column from *"the evidence"* to *"why it holds"* and wrote reasons into its three empty cells, rather than admitting three rows had no evidence.
+
+**So the fix is a shape, not a sentence:** a `kind` column that admits *not built*. A sentence-level fix would have produced better prose and the same defect, and this session has already demonstrated that twice.
+
+⚠️ **What can and cannot be gated, stated plainly.** Whether a stated reason is the REAL reason has no gate and never will. But the **tell** does: a virtue-shaped word with no digit anywhere near it, in a repository whose own rule is that anything measured belongs in the docs with its numbers. That is crude and will flag honest sentences too — its value is that it makes someone look at the sentence once, which is the step that never happened for the engine claim, the screenshots, or the alt text.
+
+**One near-miss worth recording:** I nearly filed the preview matte swatches (checkerboard / white / black / chroma) as surface with no merit, before seeing that judging an alpha edge against different grounds is how you catch fringing. **A sweep's own failure mode is finding fault to justify itself**, and the three non-goal rows that came back clean are what stop the diagnosis being a mood.
+
+## 2026-09-07 20:35 EDT — a limitation written as a principle
+
+*"It is deliberately not bundled: a copy inside the app would drift from the original in silence."* That sentence was in the README, in `electron-builder.yml`'s comments and in the release note. It reads as rigour. It is a limitation wearing the costume of a decision.
+
+**The numbers settle it.** The engine is **one 636 KB Python file** whose only third-party imports are `numpy`, `PIL` and `scipy` — **all three already inside Devoid's own 170 MB bundle**, at 149 MB between them. The app ships every dependency the engine has and refuses to ship the engine.
+
+🔴 **AND THE ARGUMENT WAS BACKWARDS.** Not bundling does not prevent drift; it *guarantees* it, because the user runs whatever they happened to clone. That is exactly how the v6.3.3-floor-versus-v6.3.0-release trap came to exist earlier the same evening. A bundled copy has a known version — and `checkForUpdates`, built three hours before this was noticed, is the mechanism for saying a newer one exists. **The case against bundling was a case for a feature the app already had.**
+
+⚠️ **This is a different failure from the rest of the evening, and worth naming separately.** The others were claims that were *true once* — a path, a count, a repository's visibility. This one was **never true**: it is a constraint restated as a virtue, and that shape is harder to catch, because a virtue invites agreement rather than checking. The tell is that **no measurement appears anywhere near it.** Every other claim in that README carries a number; this one carried a feeling, in a repository whose own rule is *"anything measured belongs in the docs with its numbers."*
+
+**The honest version, now filed:** bundling is right, the reason not to is that Harkirat develops both and a bundled copy means rebuilding Devoid to test an engine change — a developer's convenience, which justifies keeping the override paths first, not shipping nothing.
+
+## 2026-09-07 20:28 EDT — nobody opened the screenshots
+
+Four images sat in the README. They went through a rebuild, an `impeccable` critique agent, a four-pass external review with measured pixel dimensions, and several rounds of my own edits. **Not one of those passes displayed them.** Alt text and filenames stood in for the picture every time — and alt text is a claim about an image, written by the same person who chose it.
+
+Opening them took one tool call and showed that **three of the four are the same screen**.
+
+🔴 **The external review measured them and still could not see this.** It had their natural sizes, their rendered sizes, their downscale ratios, their mean luminance and their corner pixels — a table of real numbers — and concluded the images were *too small*. They were also **the wrong images**, and no measurement of a rectangle asks what is inside it.
+
+⚠️ **This is the session's own class in its purest form.** Every gate reads the artifact; the alt text describes the artifact; the review measured the artifact. **The thing none of them did was look at what the artifact was of.** `check:claims` now catches a screenshot with no `width=`, which is a property of the markup — there is no gate for *"this picture does not show what the sentence says"*, and there cannot be one.
+
+**The fix was cropping, which the review had recommended and I had substituted `width=` for** — after noting in my own report that `width=` only makes an unreadable image bigger. I wrote the correct reason for not doing it and then did the cheaper thing anyway.
+
+## 2026-09-07 20:05 EDT — a threshold from the wrong row of the spec
+
+`check:claims` grew a badge-contrast check earlier the same evening, after a `#22D3EE` swatch shipped at 1.81:1. It was falsified, it passed, and it then **certified a badge that fails WCAG AA**.
+
+The threshold read `white < 3`. **3:1 is the LARGE-TEXT bar.** shields.io sets its label in roughly 11px bold, which is normal text, so the bar is **4.5:1**. `#E2402A` measures **4.20:1** — above the wrong number, below the right one.
+
+🔴 **A wrong threshold is worse than no check, because it certifies.** No threshold leaves you knowing you have not looked. A threshold from the wrong row of the spec tells you that you have, for every value in the gap — and the gap here was 3.0 to 4.5, which is where a great many brand colours live.
+
+⚠️ **The falsifier could not have caught it.** It injected a colour at 1.01:1, far below both bars, so it passed under either number. **A falsifier proves the check fires; only reading the spec proves it fires at the right place.** Same lesson as the `"63 options"` injection three hours earlier, in a different disguise: the test was shaped by the same belief as the code.
+
+**Also this pass:** two screenshots with no `width=` rendered at 6.5% scale on a phone while their alt text promised detail; two tables shipped an empty `| | |` header row. Both are now gates, and the header check found **five more** in files nobody had reviewed.
+
+## 2026-09-07 19:44 EDT — the fact that invalidated a document, reported as a table row
+
+Devoid's repository is private. I found that by running the update check for real, put it in a summary as one row of a two-row table, and **asked nothing**. Harkirat: *"arguably the most important line in your summary and you buried it. Nor did you ask any question about it."*
+
+⚠️ **It is not a detail about one code path. It is the precondition for the whole document.** Private means the download button 404s, the clone fails, the issue link 404s, the changelog badge 404s, *"clone it, change it, ship it"* has nothing to clone, and the v1.0.0 release with its 170 MB disk image is invisible to everyone. **A whole session of public-facing writing — README, release note, CONTRIBUTING, CODE_OF_CONDUCT — addressed an audience that could not arrive.**
+
+🔴 **THE REPORTING FAILURE IS ITS OWN LESSON, SEPARATE FROM THE FACT.** A finding's place in a report is a claim about its size. Filing *"the repo is private"* beside *"the engine is public"* as two symmetric rows said they were the same weight; one was a correction, the other was a precondition. **When a discovery changes whether the work is addressed to anyone, it is the headline and it is a question — not a row.**
+
+**Decided:** Devoid goes public. The private warnings are out of the README, and the update check ships with a message that names both causes of a 404 rather than asserting one — because *"its repository is private"* is exactly the kind of momentary fact this session spent the evening prising out of shipped copy.
+
+## 2026-09-07 19:36 EDT — I fixed the instance and left the class, on the evening I built the gate for that
+
+Correcting *"the engine repository is private"* took one command. **The sentence three sections above it said "Both repositories are private", and I never went back to it.** Devoid is private; the engine is public. Running the real network path is what surfaced it — `gh` on each repo, not a reread.
+
+⚠️ **The consequence was user-visible and I would have shipped it.** Devoid's own update check is **structurally dead while its repository is private**: an anonymous caller gets 404, which the code reads as *"GitHub has no release to show."* So the engine half works, the app half cannot, and the dialog copy implied both did — while blaming GitHub for a configuration choice. The message now says what is actually happening, and the README says which half is dark and what turns it on.
+
+🔴 **THE LESSON IS THE ORDER OF OPERATIONS.** *"We fix the class, not the instance"* is not the same as *"we fix every instance"* — and having built a class-level gate that same evening made it feel finished. **A correction is not complete until you have re-searched for the claim you just corrected**, in the words it appears in elsewhere. Here the corrected phrasing was "the engine repository" and the surviving one was "both repositories": no substring links them.
+
+⚠️ **And running the code is what found it.** Every gate was green, `check:claims` passed, and one live call to each API answered a question no amount of rereading would have.
+
+## 2026-09-07 19:34 EDT — a correct argument for the wrong feature
+
+`main.js` argued, in a comment, that the update check must never run at launch: *"this app's whole premise is that it works on your machine with your files and talks to nothing."* Every clause of that is true and it protects a real constraint. It was also the wrong answer, and one question found it: **"what if a user never clicks it themself?"**
+
+⚠️ **The comment had conflated two promises into one.** *Your files never leave this machine* and *nothing ever contacts the network* are different claims; the first is the product's spine and the second was a habit that had borrowed its authority. Once separated, the launch check costs the first promise nothing — and an update mechanism that only fires for the person who remembers it exists is a mechanism for nobody.
+
+**What actually protects the user is the shape, not the absence:** throttled to once a day, **silent unless something is newer**, and one checkbox from off — placed in the dialog itself, because the moment somebody wants this off is the moment it is interrupting them.
+
+⚠️ **A promise that gets amended must be amended in the COPY.** The README said *"you start every one"* and that is now false, so it says something else. A stale promise in a README is the same defect class as a stale version badge — worse, because nobody thinks to check it.
+
+**Also merged:** the separate **Check for Engine Updates…** shipped earlier the same evening lasted about ten minutes. It asked the person to know that Devoid and its engine are different things versioned separately, which is the exact knowledge this app exists to spare them. One command, one dialog, both answers.
+
+## 2026-09-07 19:23 EDT — three gates, three different ways of being green about the wrong thing
+
+One evening, one shape, four instances. Worth keeping together because each looks unrelated until they are in a column.
+
+| | what was verified | what was not |
+|---|---|---|
+| the engine repo claim | that the reasoning was sound (*never ship a path that fails at runtime*) | **whether the fact under it was true.** `gh repo view` says `isPrivate: false`; `gh release list` returns nine |
+| `check:claims` | that the check fired on `"63 options"` | **that the defect says `flags`.** Eleven live instances, in eight files it never read |
+| the citation rule | that `*"…"*` is skipped | **the backtick form**, which is what this repo actually writes. The gate failed on the changelog entry announcing the gate |
+| `check:design` | that the detector reads the shipped surface | **what "the surface" resolves to.** `git status --porcelain` includes untracked files, so two scratch renders at the root put GitHub's stylesheet under this app's design contract |
+
+🔴 **The common thread is that every falsifier was authored by the same person who authored the belief.** A test written to match what you already think confirms the thinking, not the code. **Falsify against an instance you did not write** — and when the defect is still in the tree, that instance is free.
+
+⚠️ **A second thread, quieter:** two of the four were about a gate's **scope** rather than its **logic**. `check:claims` read three files; `check:design` read whatever was lying in the directory. Neither could be caught by reading the check — only by asking what set it runs over, and comparing that to where the claim actually lives.
+
+## 2026-09-07 18:59 EDT — the gates all ran under a shell, so none of them could see this
+
+`startServer` gave the Python server `{ ...process.env }`. Under `npm start` that is a zsh `PATH` with `/opt/homebrew/bin` on it. Under Finder it is `/usr/bin:/bin:/usr/sbin:/sbin`, and `shutil.which("gifsicle")` returns `None` **on a machine where gifsicle is installed and on your own `PATH` right now**.
+
+⚠️ **Every gate in `npm test` runs from a checkout, under a shell.** So the one environment the defect lives in is the one environment nothing tests. `gate:ui` drives the real Electron window — and inherits the same shell. That is worth keeping: *a gate that runs in only one environment proves one environment.*
+
+The fix is one line and the falsifiers are in `tests/test_deps.test.js`, but the finding was not the line — it was noticing that a constant naming a location appeared in `REQUIRED_BINARIES`, in `README.md`, in `docs/DEVELOPMENT.md` and in the release note, and in **no conditional anywhere**. Same tell as the Homebrew-Python claim earlier the same evening. `npm run check:claims` catches the documented half of that class; it cannot catch this half, and that limit is now stated in its own header.
+
+**Also this pass:** the engine-absent dialog that two documents described and that did not exist (filed `[P1 · S]`, now closed), an engine-floor dialog, a `brew install` offer verified by re-checking for the binary rather than by `brew`'s exit code, and the README rebuilt against eight pieces of direct feedback with every image moved to WebP (1333 KB → 857 KB).
+
+🔴 **AND THE CORRECTION, 2026-09-07 19:18 EDT, WHICH IS THE BETTER LESSON.** I refused the engine updater in this same pass, writing that the engine repository *"publishes no releases and is private"*. **Neither is true** — `isPrivate: false`, nine releases. The false half came from a handoff note recording that the **v6.4.0 merge** shipped no release; that was true of one merge and I wrote it as a property of the repository, then asserted "private" on top of it without ever running `gh repo view`.
+
+⚠️ **The refusal was dressed in this repo's own reasoning** — *never ship a path that fails at runtime*, the Squirrel.Mac test — which made it read as rigour rather than as an unchecked premise. **A principle correctly applied to a false fact produces a confident wrong answer**, and it is harder to catch than a sloppy one because the argument is sound.
+
+⚠️ **`check:claims` cannot reach this class.** It reads the documents against the code; this claim was about a **remote**. Anything asserted about something outside the repository has no gate, and the honest move is to say so in the gate's own header rather than imply coverage it does not have. Built now: `checkEngineUpdate()`, with `ahead` as a first-class verdict because the engine's newest release (v6.3.0) is **older** than its newest tag (v6.4.1).
+
 ## ⚠️ Traps — each of these cost real time, and none is obvious
+
+### The class behind it: a claim true of one artefact, written as a property of the software (2026-09-07 18:33 EDT)
+
+The Homebrew entry below is one instance. Harkirat's response was *"we fix the class, not the instance"*, so the sweep found four more, all sharing one shape and none visible to any gate:
+
+| claim | what the code actually said |
+|---|---|
+| *"Homebrew's Python will not work"* | `main.js` probes `/opt/homebrew/bin/python3` **by name** |
+| *"the 63 options"* | the parser reported **64** the moment `--analysis-json` landed |
+| a `v1.0.0` badge | over a `package.json` reading `1.0.1` |
+| a `#22D3EE` swatch | **1.81:1** on white — fixed on the badge, left on the swatch |
+| *"the published build is `arm64`"* | `electron-builder.yml` pins no architecture; it builds for the host |
+
+Two more of the same shape came from a critique agent: `10-ledger.png` was captioned as *"the verification readings for a finished render"* while the shot's own header reads **not checked** with one question still open — the app's founding sin, committed on the page that advertises never committing it — and the README told people to `git clone` two **private** repositories, admitting it only in a collapsed aside six sections down.
+
+🔴 **The tell is available every time.** A constant that appears in comments and configuration but in **no conditional** is describing a habit, not a rule. `/Library/Frameworks/Python.framework/Versions/3.11` appeared three times in this repo, all three in prose.
+
+**The fix is a gate, not a resolution.** `npm run check:claims` (`scripts/check_claims.mjs`) reads the three user-facing documents and checks the parts with a right answer: badge versions against `package.json`, badge colours against **both** GitHub grounds, hardcoded option counts against the engine's own parser, promised environment variables against the source that reads them, files the docs tell you to create against `.gitignore`, every relative link, and inline code long enough to widen the page on a phone. Falsified against all seven defects; it found three more on its first real run.
+
+⚠️ **It cannot check prose, and must not be read as if it could.** It checks claims that have a right answer. *"Nobody can answer that by reading it"* is still on nobody's authority but the author's.
+
+### A packaging artefact documented as a product requirement (2026-09-07 18:25 EDT)
+
+The README told every reader they needed **python.org's framework build specifically, not Homebrew's** — in the source-install section, where it is simply false. Harkirat caught it: *"tf? the app doesn't support the homebrew version? arguably the more popular installation of it."*
+
+`systemPython()` in `main.js` probes `/usr/bin/python3`, **`/opt/homebrew/bin/python3`** and `/usr/local/bin/python3`. Homebrew is one of the three interpreters it is written to accept. Nothing in the code mentions the framework path at all except two comments.
+
+Where the path actually comes from: `.venv/pyvenv.cfg` on this machine reads `home = /Library/Frameworks/Python.framework/Versions/3.11/bin`, because that is the interpreter that happened to create it. A virtualenv hardcodes its base. So the shipped `pyvenv` inside the disk image wants that path — and even then it is not a hard block, because a dead bundled venv falls through to the system probe.
+
+⚠️ **The claim was true of one artefact on one machine and was written as a requirement of the software.** It reached three documents. The tell was available the whole time: the constant appears in `electron-builder.yml` and two comments, and in **zero** conditionals.
 
 ### `asar extract-file` wrote the archive's copy OVER the source (2026-09-07 16:33 EDT)
 

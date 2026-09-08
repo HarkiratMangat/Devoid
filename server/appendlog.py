@@ -1,6 +1,8 @@
 """The one primitive the two append-only logs share: an O_APPEND line-atomic write.
 
-`labels/protection.jsonl` and `jobs.jsonl` are two schemas with one writer each
+`jobs.jsonl` is the only log this module writes (corrected 2026-09-07 20:56 EDT: the
+`labels/protection.jsonl` writer was removed on 2026-09-07 and the file survives as
+tracked evidence only)
 (CLAUDE.md, "Two append-only logs, two schemas, one writer each"). They share
 exactly this module and nothing else: neither log imports the other.
 

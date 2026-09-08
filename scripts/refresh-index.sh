@@ -36,6 +36,17 @@ echo "── prose ────────────────────�
 # is for prose. Found by reading a search result that came back from a .py file.
 context-mode index "$ROOT/docs" --source project:devoid-docs  --project "$ROOT" --ext .md --max-files 60 --max-depth 4 | sed 's/^/  /'
 context-mode index "$ROOT"      --source project:devoid-rules --project "$ROOT" --ext .md --max-files 40 --max-depth 1 | sed 's/^/  /'
+# ⚠️ THE MEMORY STORE, added 2026-09-07 17:58 EDT. `~/.claude/projects/<slug>/memory/` holds
+# the caveats and decisions this project writes for its future sessions, and it
+# sat OUTSIDE every index — retrievable only by opening a file you already knew
+# the name of. `--project "$ROOT"` puts it in THIS repo's content DB despite the
+# files living elsewhere, which is what makes it reachable from a search here.
+MEM="$HOME/.claude/projects/$(printf '%s' "$ROOT" | tr '/ ' '--')/memory"
+if [ -d "$MEM" ]; then
+  context-mode index "$MEM" --source project:devoid-memory --project "$ROOT" --ext .md --max-files 40 --max-depth 2 | sed 's/^/  /'
+else
+  echo "  no memory store at $MEM"
+fi
 
 echo "── the ENGINE repo ───────────────────────────────────────"
 # ⚠️ ADDED 2026-09-07 11:59 EDT. The gif repo was indexed and then had NO
