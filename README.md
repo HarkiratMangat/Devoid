@@ -12,28 +12,57 @@
 <img src="https://img.shields.io/github/license/HarkiratMangat/Devoid?style=flat-square&label=&color=3D4451" alt="licence">
 </p>
 
-<p><a href="#download-and-install">Download</a> &nbsp;·&nbsp; <a href="#the-one-thing-it-asks-you">What it asks you</a> &nbsp;·&nbsp; <a href="#using-it">Using it</a> &nbsp;·&nbsp; <a href="#if-something-goes-wrong">If something goes wrong</a></p>
+<p><a href="#download-and-install">Download</a> &nbsp;·&nbsp; <a href="#the-engines-question">What it asks you</a> &nbsp;·&nbsp; <a href="#using-it">Using it</a> &nbsp;·&nbsp; <a href="#if-something-goes-wrong">If something goes wrong</a></p>
 
 </div>
 
 **Devoid removes the background from animated images on your Mac** — GIF, WebP, AVIF, APNG, and static PNG and JPEG. Drop files on the window, get transparent ones back beside them. Nothing is uploaded.
 
-Most come back done. **About one in eight stops and asks you something first.** The engine underneath will not guess at a question about what the artist meant — so instead of handing you a hex code to interpret, [Devoid marks the place on the artwork](#the-one-thing-it-asks-you) and takes your answer as a click.
+While most engines guess or restrict, Devoid's engine **asks**. The engine underneath will not guess at a question about what the artist meant — so instead of handing you a hex code and a bounding box to interpret, [Devoid marks the exact disputed pixels on the artwork](#the-engines-question) and takes your answer as a click.
 
 <br>
 
-## Download and install
+## Download and Install
 
-**1 · Download the disk image.** The button above gets you `Devoid-<version>-arm64.dmg` from the [releases page](https://github.com/HarkiratMangat/Devoid/releases/latest).
+**1 · Download the disk image.**
 
-**2 · Open it and drag Devoid into Applications.** Double-clicking the `.dmg` opens a window with the app and a shortcut to your Applications folder. Drag one onto the other, then eject the disk image from the Finder sidebar.
+> Get the latest `Devoid-<version>-arm64.dmg` from the [releases page](https://github.com/HarkiratMangat/Devoid/releases/latest).
 
-**3 · Open it the first time by right-clicking.**
+**2 · Open it and drag Devoid into Applications.**
+
+> Double-clicking the `.dmg` opens a window with the app and a shortcut to your Applications folder. Drag one onto the other, then eject the disk image from the Finder sidebar.
+
+**3 · Open it the first time by right-clicking Devoid.app → Open.**
 
 > [!IMPORTANT]
-> **A normal double-click will not work, and macOS will say the app is damaged or from an unidentified developer.** It is neither — the app is signed with a certificate I made rather than a paid Apple one, and Gatekeeper only trusts Apple's. **Right-click Devoid → Open → Open.** You do this once; every launch after that is a normal double-click.
+> **The app is not signed!** — A normal double-click will not work _the first time_. MacOS will say the app is _damaged_ or _from an unidentified developer_. It is neither — the app carries a self-signed certificate, not the official paid Apple one, and Gatekeeper only trusts Apple's.
+>
+> <details>
+> <summary><b>How to Open an Unsigned App</b></summary>
+>
+> #### <ins>By right-clicking:</ins>
+> * **Right-click Devoid → Open → Open**.
+> * You do this once; every launch after that is a normal double-click.
+>
+> #### <ins>In System Settings:</ins>
+> * Try to open the app and **dismiss the warning message** that says the app cannot be opened.
+> * Open the **Apple menu** and select **System Settings**.
+> * Click on **Privacy & Security** in the sidebar.
+> * Scroll down to the **Security** section to find the blocked app.
+> * Click **Open Anyway** and enter your login password to confirm.
+>
+> #### <ins>Using Terminal:</ins>
+> * You can **remove the quarantine** attribute quickly using the Terminal App with the command:
+> ```sh
+> xattr -cr /path/to/Devoid.app
+> ```
+> * The path will likely be `/Applications/Devoid.app`.
+>
+> </details>
 
-**4 · Say yes to the setup check.** On first launch Devoid looks at what your Mac already has and offers to install the rest — a few command-line tools and a few Python packages. It asks before installing either, and installs nothing you decline.
+**4 · Say yes to the setup check.**
+
+> On first launch Devoid looks at what your Mac already has and offers to install the rest — a few command-line tools and a few Python packages. It **asks before installing** either, and installs nothing you decline.
 
 <details>
 <summary><b>Or build it from source</b> — works on any Mac, including Intel</summary>
@@ -59,7 +88,7 @@ More in the [development guide](docs/DEVELOPMENT.md).
 
 <br>
 
-## The one thing it asks you
+## The Engine’s Question
 
 Sometimes a patch of background colour sits **enclosed by the artwork** — inside a letter, a loop, a gap between limbs — and only on some frames.
 
@@ -97,7 +126,7 @@ Not sure? **Drag the seam** — a divider you pull across two renders of the sam
 
 <br>
 
-## Using it
+## Using It
 
 **1 · Drop files in.** Whichever ones need you sort to the front, carry a mark, and take a wider tile — you spot them by shape, without reading.
 
@@ -131,10 +160,10 @@ Not sure? **Drag the seam** — a divider you pull across two renders of the sam
 
 <br>
 
-## Why it works this way
+## Why It Works This Way
 
 <table>
-<tr><th width="30%" align="left">the idea</th><th width="34%" align="left">what it means</th><th width="36%" align="left">why it holds</th></tr>
+<tr><th width="30%" align="left">The idea</th><th width="34%" align="left">What it means</th><th width="36%" align="left">Why it holds</th></tr>
 <tr>
 <td><b>Three states, not two</b></td>
 <td>A control reads <code>auto · what the tool would do</code> until you take it over. A switch can be on, off, <b>or left to the engine</b></td>
@@ -164,13 +193,13 @@ Not sure? **Drag the seam** — a divider you pull across two renders of the sam
 
 <br>
 
-## Your files
+## Your Files
 
 Your images never leave the machine, and nothing about them is ever sent anywhere.
 
 Devoid contacts the network twice, both about versions rather than about your work:
 
-| when | what |
+| When | What |
 |---|---|
 | **once a day, at launch** | asks GitHub what the newest Devoid and the newest engine are. Silent unless something is newer, downloads nothing, and opens a release page only if you click. Turn it off with **Check for Updates on Launch** in the menu, or from the dialog itself |
 | **the first launch** | offers to install the command-line tools and Python packages it needs. It asks first, and installs nothing you decline |
@@ -179,9 +208,9 @@ Finished renders land beside their sources. Your job history goes in `jobs.jsonl
 
 <br>
 
-## If something goes wrong
+## If Something Goes Wrong
 
-| what you see | what to do |
+| What you see | What to do |
 |---|---|
 | **Nothing happens when I add a file** | Devoid cannot find the engine, or the one it found is too old. It says which at launch, and names every path it tried |
 | **It is asking to install things** | That is the first-launch setup check. Approve it — or install `gifsicle`, `pngquant` and `webp` yourself with Homebrew. It installs nothing you decline |
@@ -190,23 +219,25 @@ Finished renders land beside their sources. Your job history goes in `jobs.jsonl
 
 > [!TIP]
 > `launchctl setenv DEVOID_SKILL /path/to/remove_gif_background.py`, then reopen Devoid. Running from a checkout has neither problem, and `$DEVOID_PYTHON` and `$DEVOID_DATA_DIR` work the same way — see the [development guide](docs/DEVELOPMENT.md).
-
-> [!NOTE]
+>
+> ---
+>
 > **To see the logs**, launch Devoid from a terminal. The engine and port diagnostics never reach the window.
 >
 > ```sh
 > /Applications/Devoid.app/Contents/MacOS/Devoid
 > ```
 
-**To uninstall**, drag it to the Trash and delete `~/Library/Application Support/Devoid/`.
+### To uninstall
+Drag it to the Trash and delete `~/Library/Application Support/Devoid/`.
+
+<br>
 
 **Still stuck?** [Open an issue](https://github.com/HarkiratMangat/Devoid/issues), with that console output if the engine is involved.
 
 <br>
 
 ## What it doesn't do
-
-⚠️ **Three different things get written down here, and a table with one "why" column cannot tell them apart** — so the middle column says which. *Outside our control* is a fact nobody here can change. *Decided* is a choice with a reason. **Not built** is not built, and no reason is offered, because there isn't one beyond nobody having done it yet.
 
 | | kind | |
 |---|---|---|
@@ -219,7 +250,10 @@ Finished renders land beside their sources. Your job history goes in `jobs.jsonl
 | Controls that show you engine flags | decided | A control may offer an engine capability; it may never show you a flag. *"Keep the fade"* is a control, `--recover-fade-alpha` is a passthrough, and you only ever meet the first |
 | Photographs | decided | This separates a flat background from artwork drawn against it. It is not subject segmentation, and a photo of a person against a wall is not what it is for |
 
-Open work and the reasoning behind each: [`devoid-deferred-list.md`](devoid-deferred-list.md).
+> [!NOTE]
+> *Outside our control* is a fact nobody here can change. *Decided* is a choice with a reason. *Not built* is not built. If no reason is offered, it means there isn't one beyond nobody having done it yet.
+>
+> Open work and the reasoning behind each: [`devoid-deferred-list.md`](devoid-deferred-list.md).
 
 <br>
 

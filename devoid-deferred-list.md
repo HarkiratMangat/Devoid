@@ -27,26 +27,6 @@ Harkirat: *"your idea for a 'why it works this way' section isn't wrong, but the
 
 **Not scoped.** The redesign is the work; possibilities include splitting measured claims from design principles, or dropping the table for a short list with each measurement beside the thing it measures.
 
-### `[P1 · M · Opus5-High]` The region mark is a BOUNDING BOX where it should be the disputed pixels *(filed 2026-09-07 23:39 EDT)*
-
-`web/app.js:578-586` reads `r.bbox_xyxy` and sets `left/top/width/height` — an axis-aligned rectangle. The disputed region in the corpus's megaphone is a **diagonal white band** inside the cone, so the rectangle covers the band, the yellow bar beside it, the navy outlines and a corner of background, **and still clips the band's ends**.
-
-Harkirat, looking at the shipped capture: *"what is it even highlighting and asking? the white band inside the megaphone? then why is it a vertical rectangle? why is it also highlighting parts of the background and the yellow and the outlines? why doesn't it fully shade/cover the entire white band?"* Every one of those has the same answer — it is a bbox, not a shape.
-
-🔴 **THIS IS THE PRODUCT'S CENTRAL CLAIM, HALF-DELIVERED.** `docs/PRODUCT.md`: *"the question is visual; delivering it as text is the failure."* Devoid moved the bounding box out of prose and onto the artwork, which is real progress, and then stopped — a rectangle over the wrong pixels is a third state: visual, and still not the question.
-
-**Concrete next action, and the data is already there.** The dispute is defined **by colour** (`outline_color`), and the app already answers per colour and never per region — so the correct mark is *the pixels inside that bbox that match the colour*. `web/wipe.js` already decodes frames to canvas and composes them; a per-pixel colour test on one decoded frame is the whole feature. Draw it as a mask (a canvas overlay, or an SVG path from a marching-squares trace) instead of a `div`.
-
-⚠️ **THE README SCREENSHOT MUST BE RE-CAPTURED AND SWAPPED WHEN THIS LANDS.** `docs/shots/the-question.webp` is the hero of the README and it shows the bbox. Shipping it now is deliberate — Harkirat: *"ship the screenshot as is. document it in deferred list that the screenshot needs recapturing/swap after the feature is correctly built."* The capture is `scripts/capture-window.mjs`'s `02-open-question`, cropped to 1930x800 at +420+230. ⚠️ The claim *"instead of a hex code **and a bounding box**"* was removed from the README in the same pass, because that half was contradicted by its own picture; it goes back when the mark is real.
-
-### `[P2 · S · Sonnet5-High]` The seam is offered on a provisional threshold, and nothing says so *(filed 2026-09-07 20:58 EDT)*
-
-`server/preview.py:57` sets `SEAM_THRESHOLD = 0.02` under a comment reading **"⚠️ Provisional threshold"**. It decides `seam_useful`, which decides whether the person is offered the app's headline interaction or the question card instead. **A provisional constant silently choosing the interaction is the same defect as a provisional number silently choosing a verdict** — and this repo's founding rule is about the second.
-
-⚠️ **Its failure mode has already been observed in this repo.** When it wrongly returns true you get a seam whose two sides look identical — which is exactly what `09-seam.webp` showed, and why that screenshot was removed from the README tonight.
-
-**Concrete next action:** derive it against the corpus the way `preview.py:49-51` derived the 0.003 companion, or surface it — if the app is unsure the two answers differ, say so rather than presenting a seam as though it does.
-
 ### `[P2 · XS · Sonnet5-High]` The lamp needs a word beside it to be legible *(filed 2026-09-07 20:58 EDT)*
 
 `web/index.html:34` carries its own diagnosis: **"Nobody maps 'emitting' to 'light mode' from a control alone"** — so a `lamp-word` reading `void` was added next to it. **A control that needs an adjacent word to be comprehensible has the wrong label**, and the fix was to add a second element rather than change the first.
@@ -54,22 +34,26 @@ Harkirat, looking at the shipped capture: *"what is it even highlighting and ask
 ⚠️ **Not a rename to Light/Dark.** `docs/PRODUCT.md` makes the void world binding and the vocabulary is a real identity choice. The honest resolution is to accept that the *word* is the control and stop treating the icon as one.
 
 
-### `[P1 · S · Sonnet5-High]` `09-seam.webp` does not show a seam doing anything *(filed 2026-09-07 20:28 EDT)*
 
-The capture is of the seam view, and **both sides of the divider look identical** — the one thing a seam exists to show, two different renders of the same file, is not visible in the shot of the seam. The dashed divider is a 1px line on a dark ground. It was in the README for a day captioned *"a draggable wipe divider between two renders of the same asset"*, which the picture did not support.
+### `[P2 · S · Sonnet5-High]` `09-seam.webp` still needs a real crop before it can ship *(filed 2026-09-08 17:35 EDT, successor to "09-seam.webp does not show a seam doing anything")*
 
-**Found by looking at it.** Four README screenshots had been described from their alt text and filenames through several passes; opening them showed that **three of the four were the same screen** — the megaphone open view with a different right rail — and a reader could not tell them apart. Harkirat: *"wtf do those screenshots even show? I'm SOO confused looking at them, AND IM LITERALLY THE MAIN USER."*
+**The mechanism is confirmed fixed, and that is not the same thing as the screenshot being fixed.** `web/regionmask.js`'s pixel mask landed and the seam now genuinely differs between its two sides — measured, not guessed: 52,011 vs 54,058 background px removed on the megaphone's `protection` question. `gate:ui`'s own verification capture (`local/window-shots/09-seam.png`) proves the mechanism.
 
-**Removed from the README** rather than left with a caption it cannot support. **Concrete next action:** in `scripts/capture-window.mjs`, drag the seam to roughly 40% before `shot('09-seam')` and pick an asset whose two answers differ visibly, then crop to the divider. The other three are now crops (`the-question`, `needs-you`, `verdict`, `not-checked`) and read at a glance.
+⚠️ **A first pass this session claimed this was "recaptured" into `docs/shots/09-seam.webp` and the README.** Neither happened — `gate:ui` writes to `local/`, which is gitignored, and nobody copied the file into the tracked, shipped location. Caught only because the raw capture was sent to Harkirat and looked at with fresh eyes rather than described from memory: *"i can't figure out wtf you're description is talking about or wtf i'm looking it or wtf the screenshot is trying to show me."*
 
-### `[P1 · S · Opus5-High]` A packaged app cannot be pointed at a different engine *(filed 2026-09-07 16:26 EDT)*
+**Why the raw capture still fails, specifically.** It is the full Electron window — sidebar icons, top-bar buttons, a starfield background — none of it relevant to the one thing the screenshot needs to show. The dashed seam divider is a thin, low-contrast line on a dark ground. The hatch marking the disputed region is small and sits inside a small red box, easy to miss entirely. The two numbers that actually prove the difference (52,011 / 54,058) have no visual line connecting them back to the hatch. This is the exact legibility failure the original filing was about, on a fresh capture.
 
-Both documented overrides fail once the app is a `.app` rather than a checkout. **`$DEVOID_SKILL` never reaches an app launched from Finder or the Dock** — a GUI process does not inherit a shell environment. And `devoid.config.json` is looked up at `REPO_ROOT`, which `main.js:21` points at `process.resourcesPath` when packaged: **inside the bundle**, where writing breaks the signature and the next install wipes it.
+**Concrete next action:** crop tightly to the wipe + the disputed box, the way `the-question.webp` is cropped to 1930×800 — not the whole window. Possibly zoom further into just the box and the seam line either side of it, since even a tight window-crop may still bury the one pixel-level detail that matters. Needs an actual design pass, not a bigger claim about an uncropped file.
 
-So a packaged Devoid can only ever find the engine at the hardcoded fallback. The README documents `launchctl setenv DEVOID_SKILL <path>` as the workaround, which works, and is not something a user should have to know.
+### `[P2 · M · Sonnet5-High]` The question-card fallback has the identical bbox-not-shape defect the seam view just had *(filed 2026-09-08 17:40 EDT)*
 
-**Concrete next action:** look for `devoid.config.json` in `~/Library/Application Support/Devoid/` before the bundle-relative path — the directory the app already owns and already writes to. One `or` in `resolve_skill()`, plus the same lookup in the dialog's detail text so the message names a path the user can actually create.
+`web/regionmask.js`'s per-pixel colour mask was wired into `renderQuestionRegions` (`web/app.js`) — the live-seam overlay. `web/wipe.js`'s `drawHatchedRegion(host, side, bbox)` is the OTHER renderer for the same disputed-region question — the fallback used when `seamCanHelp()` says the two candidate answers are too visually similar to compare directly (PLAN.md 3.0b) — and it still clips a plain rectangle (`ctx.rect(x0,y0,bw,bh); ctx.clip();`) with a diagonal hatch inside it. Same defect, second code path.
 
+⚠️ **Currently unreached by the corpus's one real ambiguous-protection asset**, since the megaphone's seam DOES help (confirmed this session — the two sides measurably differ). That is a mitigating fact about the current corpus, not a proof the card path can't fire on some other asset; it was not tested as unreachable, only observed to not fire in the runs watched this session.
+
+**Also worth folding in if this is picked up:** the seam-view mask samples ONE static frame of `#before` (whatever frame the browser happens to be showing when `art.complete` first becomes true — effectively frame 0). The disputed region's own definition is multi-frame (`frames_enclosed`/`frames_checked`, e.g. "held on 102 of 144 frames"), so a mask computed from one frame could be wrong for frames where the enclosure's shape or position actually differs. Not a regression — the old rectangle was equally frame-agnostic — but an unstated scope limit that should be named if the card path gets the same treatment, rather than silently inherited a second time.
+
+**Concrete next action:** either reuse `web/regionmask.js`'s `regionMaskDataURL` inside `drawHatchedRegion` (it already has a decoded frame via `side.frames[i]`, so this may be a small change), or determine and document that the card path is provably unreachable for every asset this app currently supports and downgrade this item accordingly — but that determination has to be made, not assumed.
 
 ## ✅ Considered and NOT fixed — a real decision, not an oversight
 

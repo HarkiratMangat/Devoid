@@ -308,6 +308,9 @@ app.whenReady().then(async () => {
   `);
   if (!seamRestored) failures.push('02: loadPair was not restored after the pre-seam capture');
 
+
+
+
   await shot('03-emitting', `document.getElementById('lamp').click()`);
   // ⚠️ MOVED ABOVE THE EMPTY-TABLE SHOTS, 2026-09-07 00:55 EDT. 04 sets
   // S.assets=[] and nothing put them back, so 06 and 08 both photographed the
@@ -471,6 +474,21 @@ app.whenReady().then(async () => {
   // seam are mutually exclusive BY CONSTRUCTION.
   const qr = await probe(`return { n: document.querySelectorAll('.qregion').length }`);
   check('the disputed region is drawn on the artwork', qr.n > 0, `${qr.n} .qregion nodes`);
+
+  // ⚠️ 2026-09-08. PRESENCE OF THE MASK VAR IS NOT THE SAME CLAIM AS "the box
+  // is now a shape". A rectangle with an unset --qmask (mask-image:none) has
+  // a .qregion node too and would pass the check above vacuously. This is the
+  // falsifier for regionmask.js's own P0: it must resolve to an actual url(),
+  // not the CSS fallback.
+  const qmask = await probe(`
+    const m = document.querySelector('.qregion');
+    if (!m) return { present: false };
+    return { present: true, mask: getComputedStyle(m, ':before').maskImage
+                                || getComputedStyle(m, ':before').webkitMaskImage };
+  `);
+  check('the disputed region is a per-pixel mask, not the whole bbox',
+        qmask.present && !!qmask.mask && qmask.mask !== 'none' && qmask.mask.indexOf('url(') === 0,
+        `mask-image = ${qmask.mask}`);
 
   // ⚠️ P0, 2026-09-07 00:33 EDT. DRAWING THE MARK IS NOT THE ASSERTION. The mark drew
   // correctly and the fill was still painted over the disputed rectangle

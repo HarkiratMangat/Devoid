@@ -158,6 +158,9 @@ function pencil(kind, cls) {
    `--assume-remove X` at once is incoherent — so they are ONE question here
    and the collision is impossible by construction rather than rejected after
    the fact. (API-CONTRACT "Per-colour vs per-region"; PLAN.md 3.0a.) */
+/* One mask per (asset, colour, region) for the life of the page -- the colour test only needs to run once, and #before's src is gone the moment the seam mounts (wipe.js's mountCanvases), so the FIRST render is the only chance to sample it. */
+const regionMaskCache = new Map();
+
 function colourGroups(a) {
   const regions = (a.questions && a.questions.ambiguous_protection) || [];
   const by = new Map();
@@ -584,8 +587,29 @@ function renderQuestionRegions(a) {
       m.style.left = tl.x + 'px'; m.style.top = tl.y + 'px';
       m.style.width = Math.max(2, br.x - tl.x) + 'px';
       m.style.height = Math.max(2, br.y - tl.y) + 'px';
+      /* ⚠️ The mark used to be the whole bbox. #before still holds the
+         un-mounted source only on the FIRST render of a fresh asset, so the
+         mask is computed once here and cached -- see regionMaskCache above. */
+      const maskKey = `${a.id}:${g.hex}:${r.region_id}`;
+      /* ⚠️ Cache a SUCCESS, never a failure. #before can still be mid-load
+         (art.complete === false) on the render that happens to run first --
+         caching that null would disable the mask for this region permanently,
+         since nothing else ever asks again. Retrying costs one cheap DOM
+         check per render until the source is actually ready. */
+      let maskUrl = regionMaskCache.get(maskKey);
+      if (!maskUrl) {
+        maskUrl = (art.complete && art.naturalWidth && window.Devoid && window.Devoid.regionMask)
+          ? window.Devoid.regionMask.regionMaskDataURL(document, art, bb, g.hex)
+          : null;
+        if (maskUrl) regionMaskCache.set(maskKey, maskUrl);
+      }
+      if (maskUrl) m.style.setProperty('--qmask', `url("${maskUrl}")`);
+      /* "is this yours?" was the one place this app asked in a vocabulary the
+         rest of it doesn't use -- every other spot for this exact binary
+         (the card, the wipe tags, the verdict labels right below) already
+         says keep/cut. /impeccable clarify, 2026-09-08. */
       m.append(el('b', null, verdict === 'protect' ? 'keeping this'
-                          : verdict === 'remove' ? 'cutting this' : 'is this yours?'));
+                          : verdict === 'remove' ? 'cutting this' : 'keep or cut?'));
       /* ⚠️ The fill's clip needs the seam expressed in THIS element's basis, and
          these two numbers are already in #wipe's coordinate space -- the same
          space --seam is a percentage of, because .wipe has no padding and no
@@ -2161,7 +2185,8 @@ window.addEventListener('devoid:open-files', e => {
 });
 
 /* ── what the other two frontend modules read ─────────────────────────────── */
-window.Devoid = {
+/* ⚠️ EXTEND, NEVER REPLACE (2026-09-08). This used to be a plain `window.Devoid = { ... }`, which is fine only because nothing had attached to window.Devoid before app.js ran -- until regionmask.js did, loaded one script tag earlier specifically so its colour-mask API would be ready before this file's own functions ever call it. The literal assignment silently deleted it every load; Object.assign is the same "extend, never clobber" rule wipe.js's own export comment already states, just not followed here. */
+window.Devoid = Object.assign(window.Devoid || {}, {
   openAsset,
   /* wipe.js calls this when the answer pair finishes decoding -- app.js owns
      the region overlay and cannot otherwise know the canvases have dimensions. */
@@ -2210,6 +2235,7 @@ window.Devoid = {
     if (S.qerror) throw new Error(S.qerror);
     return { state: a.state };
   },
-};
+});
+
 
 refresh();

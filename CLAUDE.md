@@ -149,6 +149,8 @@ This is step 1 of what Harkirat means by *"full merge flow"* and every phrase of
 
 ⚠️ **Run `git branch --show-current` before `git fetch origin main:main`.** Git refuses that refspec when the target is checked out — and `gh pr merge --delete-branch` **auto-switches the local checkout back to `main`**, so straight after a merge it fails on `main` specifically. Use `git pull` for that one, or move off it first.
 
+**The GitHub Release body follows [`docs/release-note-template.md`](docs/release-note-template.md), every time.** Fixed badge row, a one-sentence headline, the bullets folded into a `<details>`, a link to `docs/CHANGELOG.md` for the detail, the same footer. It exists because the v1.1.0 release note ran 65 lines and buried the `.dmg` download.
+
 ### A MERGE is not a RELEASE
 
 **The tag rides with the merge**, under the merge's own approval — not a third gate. **The merge-yes IS the version-number-yes.** ⚠️ **A MAJOR bump is always asked separately.**
@@ -390,7 +392,7 @@ linksee-memory map reconcile           # re-run every check
 
 ## Testing
 
-🔴 **`npm test` RUNS ALL FOURTEEN GATES. Use it.** Until 2026-09-07 12:03 EDT there was no aggregate and every session re-listed them by hand from a commit message — which is a checklist living in prose, and it was nearly short by one twice in one day. ⚠️ **The order is load-bearing and cannot be alphabetised:** `gate:ui` writes the captures and the `.boxes.json` sidecars that `check:greyscale` then measures, so greyscale must run after it. `check:tracker` runs last because it is about the branch, not the code.
+🔴 **`npm test` RUNS ALL SEVENTEEN GATES. Use it.** ⚠️ **This number drifts — verify it, don't quote it.** It read "FOURTEEN" from 2026-09-07 12:03 EDT through 2026-09-08, three gates added in that window without the count ever being touched; corrected 2026-09-08 by literally splitting `package.json`'s `scripts.test` string on `&&` and counting, not by re-deriving from memory. Until there was an aggregate, every session re-listed the gates by hand from a commit message — a checklist living in prose, nearly short by one twice in one day. ⚠️ **The order is load-bearing and cannot be alphabetised:** `gate:ui` writes the captures and the `.boxes.json` sidecars that `check:greyscale` then measures, so greyscale must run after it. `check:tracker` runs last because it is about the branch, not the code.
 
 🔴 **A CLAIM IN A DOCUMENT IS CODE NOBODY COMPILES, AND `npm run check:claims` IS THE ANSWER (2026-09-07 18:31 EDT).** Five wrong claims shipped in one afternoon and no gate could see any of them, because every gate read the product and none read what the product's documents said about it. They shared one shape: **true of one artefact, on one machine, at one moment, written as a property of the software.**
 
