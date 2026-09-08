@@ -144,11 +144,28 @@ def _journal(job: Job) -> None:
         journal.close_job(job.id)
     except Exception:  # noqa: BLE001
         log.warning("devoid: could not close job %s in the journal", job.id, exc_info=True)
+    # 🔴 `analysis_json` IS NOT A SETTING AND MUST NOT REACH THE JOURNAL
+    # (2026-09-08 00:14 EDT). `server/app.py` puts the handoff document's path into
+    # the render body, `jobs.py`'s SETTINGS_KEYS whitelist does not list it, and
+    # `validate()` therefore raised `unknown settings keys: analysis_json` --
+    # inside the render worker thread, where nothing was watching. **Every job
+    # that carried a handoff failed to be journalled**, silently, since the
+    # v1.0.0 work that introduced the handoff. `jobs.jsonl` is this app's one
+    # durable record of your work.
+    #
+    # ⚠️ Found in a pytest WARNING, not a failure: the suite printed
+    # `PytestUnhandledThreadExceptionWarning` beside `107 passed` and had been
+    # doing so for a day. A green line with a warning above it reads as green.
+    #
+    # Stripped rather than whitelisted: it is a per-process temp path that is
+    # gone by the next launch, so journalling it would put a dead pointer in a
+    # permanent log and a re-run would try to honour it.
+    settings = {k: v for k, v in (job.settings or {}).items() if k != "analysis_json"}
     jobs_log.append_job(
         {
             "ts": utc_now(),
             "input_path": job.input_path,
-            "settings": job.settings,
+            "settings": settings,
             "output_path": job.output_path,
             # ⚠️ `conflict` is a SUCCESSFUL write that escalated to _v2. The schema's
             # verdict vocabulary is done|failed|cancelled, and mapping it to

@@ -4,47 +4,36 @@
 
 <p><b>Cut the background out of an animated image.<br>Answer the one question the pixels can't.</b></p>
 
-<img src="https://img.shields.io/badge/macOS-Apple%20silicon-3D4451?style=for-the-badge" alt="macOS, Apple silicon">
-<a href="docs/CHANGELOG.md"><img src="https://img.shields.io/badge/v1.1.0-2F5D7C?style=for-the-badge" alt="version 1.1.0"></a>
-<a href="LICENSE"><img src="https://img.shields.io/badge/GPL--3.0--or--later-3D4451?style=for-the-badge" alt="GPL-3.0-or-later"></a>
+<a href="https://github.com/HarkiratMangat/Devoid/releases/latest"><img src="https://img.shields.io/badge/%E2%AC%87%20Download%20for%20macOS-9B3551?style=for-the-badge" alt="Download for macOS" height="40"></a>
 
-<p><a href="#install">Install</a> &nbsp;·&nbsp; <a href="#the-question-devoid-asks-you">The question</a> &nbsp;·&nbsp; <a href="#how-it-goes">How it goes</a> &nbsp;·&nbsp; <a href="#troubleshooting">Troubleshooting</a></p>
+<p>
+<img src="https://img.shields.io/github/v/release/HarkiratMangat/Devoid?style=flat-square&label=&color=4A3B52" alt="latest release">
+<img src="https://img.shields.io/badge/Apple%20silicon-E8E8ED?style=flat-square" alt="Apple silicon">
+<img src="https://img.shields.io/github/license/HarkiratMangat/Devoid?style=flat-square&label=&color=3D4451" alt="licence">
+</p>
+
+<p><a href="#download-and-install">Download</a> &nbsp;·&nbsp; <a href="#the-one-thing-it-asks-you">What it asks you</a> &nbsp;·&nbsp; <a href="#using-it">Using it</a> &nbsp;·&nbsp; <a href="#if-something-goes-wrong">If something goes wrong</a></p>
 
 </div>
 
 **Devoid removes the background from animated images on your Mac** — GIF, WebP, AVIF, APNG, and static PNG and JPEG. Drop files on the window, get transparent ones back beside them. Nothing is uploaded.
 
-Most files come back done. **About one in eight stops and asks you something first** — a question about the artist's intent that no amount of looking at pixels can settle, which every other background remover either guesses at or hands you as a hex code. [Devoid draws it on the artwork instead.](#the-question-devoid-asks-you)
+Most come back done. **About one in eight stops and asks you something first.** The engine underneath will not guess at a question about what the artist meant — so instead of handing you a hex code to interpret, [Devoid marks the place on the artwork](#the-one-thing-it-asks-you) and takes your answer as a click.
 
 <br>
 
-## Install
+## Download and install
 
-<div align="center">
+**1 · Download the disk image.** The button above gets you `Devoid-<version>-arm64.dmg` from the [releases page](https://github.com/HarkiratMangat/Devoid/releases/latest).
 
-**[⬇︎ Download Devoid](https://github.com/HarkiratMangat/Devoid/releases/latest)** &nbsp;·&nbsp; Apple silicon &nbsp;·&nbsp; ~170 MB
+**2 · Open it and drag Devoid into Applications.** Double-clicking the `.dmg` opens a window with the app and a shortcut to your Applications folder. Drag one onto the other, then eject the disk image from the Finder sidebar.
 
-</div>
+**3 · Open it the first time by right-clicking.**
 
-macOS will refuse to open it the first time, because the app is signed with a self-signed certificate rather than a paid Apple one. **Right-click the app → Open → Open.** You only do this once.
+> [!IMPORTANT]
+> **A normal double-click will not work, and macOS will say the app is damaged or from an unidentified developer.** It is neither — the app is signed with a certificate I made rather than a paid Apple one, and Gatekeeper only trusts Apple's. **Right-click Devoid → Open → Open.** You do this once; every launch after that is a normal double-click.
 
-> [!IMPORTANT] **Devoid needs the engine, and cannot fetch it for you.** [`gif-background-remover`](https://github.com/HarkiratMangat/gif-background-remover) does all the image processing and lives in its own repository. **v6.3.3 or newer**; the [newest release](https://github.com/HarkiratMangat/gif-background-remover/releases/latest) is v6.4.1. Cloning also works and is often ahead — that repository tags every merge but publishes releases only sometimes.
->
-> ```sh
-> git clone https://github.com/HarkiratMangat/gif-background-remover.git
-> ```
->
-> Then tell Devoid where it is. From a `.dmg` install the only way that works is:
->
-> ```sh
-> launchctl setenv DEVOID_SKILL /full/path/to/gif-background-remover/scripts/remove_gif_background.py
-> ```
->
-> …or put the repository at the path Devoid falls back to, exactly: `/Applications/Claude Code/Gif-Background-Remover/`. Reopen Devoid afterwards. It says at launch if it still cannot find it, and names every path it tried.
-
-**This is a gap, not a design choice.** The engine is one 636 KB Python file and Devoid already ships every library it needs; bundling it is the right answer and is [filed](devoid-deferred-list.md). Until then it is a step you have to do.
-
-**On first launch Devoid checks the rest of what it needs and offers to fetch it.** Three command-line tools (`gifsicle`, `pngquant`, `webpmux`) come from Homebrew, and a handful of Python packages come from pip. It asks before installing either, and installs nothing you decline.
+**4 · Say yes to the setup check.** On first launch Devoid looks at what your Mac already has and offers to install the rest — a few command-line tools and a few Python packages. It asks before installing either, and installs nothing you decline.
 
 <details>
 <summary><b>Or build it from source</b> — works on any Mac, including Intel</summary>
@@ -62,7 +51,7 @@ npm install && python3 -m venv .venv && .venv/bin/pip install -e .
 npm start
 ```
 
-Any Python 3.11 or later does — Homebrew's, python.org's, pyenv's. `pyproject.toml` declares `requires-python = ">=3.11"`, and an older one is refused at launch with a dialog that says why.
+Any Python 3.11 or later does — Homebrew's, python.org's, pyenv's. An older one is refused at launch with a dialog that says why.
 
 More in the [development guide](docs/DEVELOPMENT.md).
 
@@ -70,17 +59,17 @@ More in the [development guide](docs/DEVELOPMENT.md).
 
 <br>
 
-## The question Devoid asks you
+## The one thing it asks you
 
-Sometimes a patch of background colour sits **enclosed by the artwork** — inside a letter, a loop, a gap between limbs — and only on some frames. Is it a hole you can see through, or is it part of the drawing?
+Sometimes a patch of background colour sits **enclosed by the artwork** — inside a letter, a loop, a gap between limbs — and only on some frames.
 
-Nothing in the pixels answers that. It is a question about what the artist meant, so a background remover either guesses or gives up. **The engine gives up on purpose**, and hands the question over as a hex colour and a bounding box.
+**Is it a hole you can see through, or is it part of the drawing?**
 
-Devoid draws it on the artwork instead.
+Nothing in the pixels answers that. It is a question about what the artist meant, so every background remover has to either guess or hand it back. Devoid draws it where it is:
 
 <div align="center">
 
-<img src="docs/shots/the-question.webp" width="860" alt="The disputed region outlined in red on the artwork, tagged “is this yours?”, with a panel reading “The marked place on the artwork · held on 102 of 144 frames” and two buttons, Keep it and Cut it">
+<img src="docs/shots/the-question.webp" width="860" alt="The disputed region outlined in red on untouched artwork, tagged “is this yours?”, beside a panel reading “The marked place on the artwork · held on 102 of 144 frames” with two buttons, Keep it and Cut it">
 
 </div>
 
@@ -105,27 +94,12 @@ Background showing through. It goes, along with everything else that colour.
 
 Not sure? **Drag the seam** — a divider you pull across two renders of the same file, one for each answer, both playing — and watch both before you pick.
 
-<details>
-<summary><b>How often does it interrupt, and is there more than one question?</b></summary>
 
 <br>
 
-**12.8%** of the 304 files the engine was measured against stop and ask something — about one in eight. That splits two ways:
+## Using it
 
-| rate | which question |
-|---|---|
-| **10.2%** (31 files) | the enclosed-region question above |
-| **2.6%** (8 files) | **the fade question** — a region that fades toward the background colour, which the engine can find but cannot classify. It looks the same on screen and asks whether the fading part is artwork |
-
-⚠️ **10.2% is not the interrupt rate**, and quoting it as one understates how often the app stops you. Both numbers are real measurements of different things — see [`docs/PRODUCT.md`](docs/PRODUCT.md), which records the conflation as a documented trap.
-
-</details>
-
-<br>
-
-## How it goes
-
-**1 · Drop files in.** Whichever one needs you sorts to the front, carries a mark, and takes a wider tile — you spot it by shape, without reading.
+**1 · Drop files in.** Whichever ones need you sort to the front, carry a mark, and take a wider tile — you spot them by shape, without reading.
 
 <div align="center">
 
@@ -133,7 +107,7 @@ Not sure? **Drag the seam** — a divider you pull across two renders of the sam
 
 </div>
 
-**2 · Answer it.** Or drag **the seam** first — a divider you pull across two renders of the same file, one for each answer, both playing — and watch both before you pick.
+**2 · Answer.** Click **Keep it** or **Cut it** — or drag the seam first and compare.
 
 **3 · Set a size or format target, or don't.** Left alone, Devoid renders at full resolution and invents nothing. Guessing at a size you didn't ask for is a mistake this app is built to avoid.
 
@@ -147,7 +121,7 @@ Not sure? **Drag the seam** — a divider you pull across two renders of the sam
 
 </div>
 
-⚠️ **Until a check has actually run, the header says so** — in the same weight as done and failed:
+**Until something has actually been measured, it says `not checked` instead of guessing** — in the title bar, at the same weight as done and failed:
 
 <div align="center">
 
@@ -157,7 +131,7 @@ Not sure? **Drag the seam** — a divider you pull across two renders of the sam
 
 <br>
 
-## What makes it different
+## Why it works this way
 
 <table>
 <tr><th width="30%" align="left">the idea</th><th width="34%" align="left">what it means</th><th width="36%" align="left">why it holds</th></tr>
@@ -179,12 +153,7 @@ Not sure? **Drag the seam** — a divider you pull across two renders of the sam
 <tr>
 <td><b>Colour is never the only signal</b></td>
 <td>Every state carries a mark or a word too</td>
-<td>on two real files, <b>31%</b> and <b>21%</b> of the artwork sits inside the same red the app uses for <i>this goes</i></td>
-</tr>
-<tr>
-<td><b>Half the render time</b></td>
-<td>The analysis behind your questions is handed straight to the render instead of recomputed</td>
-<td><b>4.3s</b> instead of <b>9.8s</b> on one measured file, byte-identical output — needs engine v6.4.0</td>
+<td>on <code>hurricane</code> and <code>paper-plane</code> from the engine's corpus, <b>31%</b> and <b>21%</b> of the artwork sits within RGB distance 90 of the red the app uses for <i>this goes</i> — close enough that hue alone would not have read (<code>web/app.css:19</code>)</td>
 </tr>
 <tr>
 <td><b>Advice ships with its undo</b></td>
@@ -204,49 +173,32 @@ Devoid contacts the network twice, both about versions rather than about your wo
 | when | what |
 |---|---|
 | **once a day, at launch** | asks GitHub what the newest Devoid and the newest engine are. Silent unless something is newer, downloads nothing, and opens a release page only if you click. Turn it off with **Check for Updates on Launch** in the menu, or from the dialog itself |
-| **the first launch** | offers to install the Homebrew tools and Python packages it needs. It asks first, and installs nothing you decline |
+| **the first launch** | offers to install the command-line tools and Python packages it needs. It asks first, and installs nothing you decline |
 
 Finished renders land beside their sources. Your job history goes in `jobs.jsonl` under `~/Library/Application Support/Devoid/`, which is also where the logs and preferences are.
 
 <br>
 
-## Settings
+## If something goes wrong
 
-Devoid finds the engine by taking the first of these that resolves:
-
-| where Devoid looks | notes |
+| what you see | what to do |
 |---|---|
-| `$DEVOID_SKILL` | full path to `remove_gif_background.py`. ⚠️ **Checkout only** — an app launched from Finder inherits no shell environment. Use `launchctl setenv` for a `.dmg` install |
-| `skill_path` in `devoid.config.json` | ⚠️ **Checkout only** — in a `.dmg` install this file resolves inside the bundle, where writing breaks the signature |
-| the fallback path | `/Applications/Claude Code/Gif-Background-Remover/scripts/remove_gif_background.py` |
+| **Nothing happens when I add a file** | Devoid cannot find the engine, or the one it found is too old. It says which at launch, and names every path it tried |
+| **It is asking to install things** | That is the first-launch setup check. Approve it — or install `gifsicle`, `pngquant` and `webp` yourself with Homebrew. It installs nothing you decline |
+| **macOS says the app is damaged, or will not open it** | Right-click it → **Open** → **Open**. Once only |
+| **I set `$DEVOID_SKILL` and it was ignored** | An app opened from Finder inherits no shell environment, so it never sees your variable |
 
-`$DEVOID_PYTHON` points at an interpreter that already has the packages. `$DEVOID_DATA_DIR` moves `jobs.jsonl` and the crash journal. **Check for Updates on Launch** is in the menu, on by default, stored in `prefs.json` beside `jobs.jsonl`.
+> [!TIP]
+> `launchctl setenv DEVOID_SKILL /path/to/remove_gif_background.py`, then reopen Devoid. Running from a checkout has neither problem, and `$DEVOID_PYTHON` and `$DEVOID_DATA_DIR` work the same way — see the [development guide](docs/DEVELOPMENT.md).
 
-<br>
+> [!NOTE]
+> **To see the logs**, launch Devoid from a terminal. The engine and port diagnostics never reach the window.
+>
+> ```sh
+> /Applications/Devoid.app/Contents/MacOS/Devoid
+> ```
 
-## Troubleshooting
-
-**Nothing happens when I add a file.** Devoid cannot find the engine, or it is older than v6.3.3. It says which at launch and names every path it tried — see [Settings](#settings) for the three places it looks.
-
-**It asks to install things.** That is the first-launch check. Approve it, or set `$DEVOID_PYTHON` to an interpreter that already has the packages. It installs nothing you decline.
-
-**macOS won't open the app.** Right-click it → **Open** → **Open**.
-
-**I set `$DEVOID_SKILL` and Devoid ignored it.**
-
-| | what is going on |
-|---|---|
-| what happens | A `.dmg` install only ever finds the engine at the fallback path, whatever you set |
-| why | An app launched from Finder inherits no shell environment, so it never sees your variable — and `devoid.config.json` is read from inside the bundle, where writing would break the signature |
-| what to do | `launchctl setenv DEVOID_SKILL <path>`, then reopen. Running from a checkout has neither problem |
-
-**Getting the logs.** Launch from a terminal to see the engine and port diagnostics the window doesn't show:
-
-```sh
-/Applications/Devoid.app/Contents/MacOS/Devoid
-```
-
-**Uninstalling.** Drag to the Trash, then delete `~/Library/Application Support/Devoid/`.
+**To uninstall**, drag it to the Trash and delete `~/Library/Application Support/Devoid/`.
 
 **Still stuck?** [Open an issue](https://github.com/HarkiratMangat/Devoid/issues), with that console output if the engine is involved.
 
@@ -254,18 +206,17 @@ Devoid finds the engine by taking the first of these that resolves:
 
 ## What it doesn't do
 
-⚠️ **Three different things get written down here, and a table with one "why" column cannot tell them apart** — so the middle column says which. *Outside our control* is a fact nobody here can change. *Decided* is a choice with a reason. **Not built** is not built, and no reason is offered for it, because there isn't one beyond nobody having done it yet.
+⚠️ **Three different things get written down here, and a table with one "why" column cannot tell them apart** — so the middle column says which. *Outside our control* is a fact nobody here can change. *Decided* is a choice with a reason. **Not built** is not built, and no reason is offered, because there isn't one beyond nobody having done it yet.
 
 | | kind | |
 |---|---|---|
 | Notarised builds | outside our control | No paid Apple Developer account. The variables stay unset, and no placeholder credential is supplied to make the path look testable |
-| Install its own updates | **not built** | Squirrel.Mac, the usual mechanism, needs a signature the destination already trusts and this build is self-signed. Other mechanisms exist — Sparkle carries its own key — and none is wired up. **Check for Updates…** opens the release page and stops |
-| Ship the engine inside the app | **not built** | The engine is one 636 KB file and Devoid already ships every library it needs. This is a gap; it is [filed](devoid-deferred-list.md) |
+| Install its own updates | **not built** | Squirrel.Mac, the usual mechanism, needs a signature the destination already trusts and this build is self-signed. Other mechanisms exist — Sparkle carries its own key — and none is wired up |
 | Write to the engine for you | decided | It tells you when a newer one is published. `git pull` in that repository is yours to run |
 | A screen-reader pass | **not built** | The states are legible without colour and the app is keyboard-operable, but no assistive-technology testing has been done and it does not claim otherwise |
 | Opening two files at once | **not built** | You can *select* many — click, shift-click a range, or **Select all** — and act on them together. Only one opens at a time |
 | Frame-accurate scrubbing | **not built** | The film strip highlights and counts; the artwork is a looping `<img>` that never seeks. Frame decoding exists for GIF in the seam ([`web/vendor/gifuct.js`](web/vendor/)); wiring it to the film strip, and finding a decoder for WebP, AVIF and APNG, is the unbuilt part |
-| Controls that mirror engine options | decided | A control may offer an engine capability; it may never show you a flag. *"Keep the fade"* is a control, `--recover-fade-alpha` is a passthrough, and you only ever meet the first |
+| Controls that show you engine flags | decided | A control may offer an engine capability; it may never show you a flag. *"Keep the fade"* is a control, `--recover-fade-alpha` is a passthrough, and you only ever meet the first |
 | Photographs | decided | This separates a flat background from artwork drawn against it. It is not subject segmentation, and a photo of a person against a wall is not what it is for |
 
 Open work and the reasoning behind each: [`devoid-deferred-list.md`](devoid-deferred-list.md).
@@ -285,6 +236,6 @@ Open work and the reasoning behind each: [`devoid-deferred-list.md`](devoid-defe
 
 **GPL-3.0-or-later** — see [LICENSE](LICENSE). Clone it, change it, ship it; a version you distribute stays open.
 
-The engine is **LGPL-3.0-or-later** from v6.4.1, so anything may use it — including something closed — while improvements to the engine itself come back. Fonts under `web/fonts/` are [SIL OFL 1.1](web/fonts/README.md).
+The image processing is done by [`gif-background-remover`](https://github.com/HarkiratMangat/gif-background-remover), **LGPL-3.0-or-later**, which ships inside the app. Fonts under `web/fonts/` are [SIL OFL 1.1](web/fonts/README.md).
 
 <sub>Copyright © 2026 Harkirat Mangat.</sub>

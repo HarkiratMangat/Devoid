@@ -46,3 +46,7 @@ local/scale-shots/
 # lib/prefs.js writes here when running from a checkout (packaged it goes to
 # ~/Library/Application Support/Devoid). Following the README must never dirty a clone.
 prefs.json
+
+# scripts/prepack-engine.mjs copies the engine here at build time. It is another
+# repository's source; this one does not vendor it into git.
+build/engine/

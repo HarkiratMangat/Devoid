@@ -63,6 +63,7 @@ Three things make that work, and each was a failure before it was a design:
 | piece | why |
 |---|---|
 | `server/` and `web/` ship as **extraResources**, not inside `app.asar` | Python cannot read an asar, and Python is what imports the server *and* serves `web/` as static files. Inside the asar they are invisible to it |
+| The **engine** ships as `Resources/engine/` | `scripts/prepack-engine.mjs` copies it, and both LGPL texts, before every `dist`. It **fails the build** if either is missing. `server/engine.py` takes it as the LAST candidate, so a checkout still wins |
 | `server/` gets an explicit **`PATH`** | see below |
 | `.venv` ships as **`pyvenv`** in Resources | The old build spawned `.venv/bin/python` relative to its own directory, which exists only in this checkout |
 | The log and the crash journal follow `$DEVOID_DATA_DIR` | `main.js` points it at `~/Library/Application Support/Devoid` when packaged. Writing inside the bundle breaks under signing and is wiped by the next install |
@@ -104,6 +105,7 @@ npm test
 | `test:wipe`, `test:coords` | the seam's synchronisation and its coordinate maths |
 | `test:versions` | version comparison for the update check |
 | `test:deps` | what the machine is missing: the Finder `PATH` case, the brew formula map, and that *no engine* and *no `gifsicle`* stay different verdicts |
+| `pytest tests/test_engine_bundle.py` | that the bundled engine is the last candidate, and that the update check gets a **semver** rather than the `sha256:` content hash it was comparing against a git tag |
 | `test:prefs` | the launch check's throttle and its off switch: a corrupt prefs file reads as defaults, reopening a window does not re-ping GitHub, and a clock that moved backwards does not wedge the check off |
 | `test:hooks` | that each routing hook can both fire and stay silent |
 | `check:contrast` | text and UI contrast ratios |

@@ -74,6 +74,27 @@ const server = spawn(join(ROOT, '.venv', 'bin', 'python'),
 async function seed() {
   const paths = ['secure.src.gif', 'megaphone.src.gif', 'rocket.gif', 'galaxy.gif',
                  'hurricane.gif', 'satellite.gif'].map((n) => join(ROOT, 'web', 'assets', n));
+  /* 🔴 THE REGISTRY MUST BE EMPTY, OR THIS GATE MEASURES ITS OWN HISTORY
+     (2026-09-08 00:22 EDT). `app.on('before-quit')` kills the server, and a
+     SIGTERM'd Electron never runs it -- so one killed run left a uvicorn
+     orphaned on this port, and every later `gate:ui` reused it and APPENDED.
+     Six runs in, /api/assets held 72 rows instead of 6, the contact sheet read
+     "30 on the table", the edge rail was 24 buttons long and check:greyscale
+     failed because the open asset sat 11,476px below a 1,656px window. The
+     gate's assertions had become a function of how many times it had been run.
+
+     ⚠️ Two wrong causes were blamed and "fixed" before this one was found. The
+     off-screen distance GREW between attempts, 9,244 -> 11,476, which was the
+     evidence, and it was read as noise. */
+  const existing = await fetch(`http://127.0.0.1:${PORT}/api/assets`).then((r) => r.json()).catch(() => []);
+  if (Array.isArray(existing) && existing.length) {
+    console.error(`\n  capture: ${existing.length} asset(s) are already registered on port ${PORT}.`);
+    console.error('  A previous run left its server alive. Every capture below would measure that');
+    console.error('  corpus plus this one. Kill it first:\n');
+    console.error('    pkill -f "uvicorn server.app"\n');
+    process.exit(1);
+  }
+
   const res = await fetch(`http://127.0.0.1:${PORT}/api/assets`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ paths }),
@@ -239,7 +260,54 @@ app.whenReady().then(async () => {
   };
 
   await shot('01-contact-sheet');
-  await shot('02-open-question', `openAsset(${JSON.stringify(megaId)})`);
+  /* 🔴 CAPTURE THE QUESTION BEFORE THE ANSWER PREVIEWS ARRIVE (2026-09-07 22:40 EDT).
+     wipe.js's mountCanvases() hides #before and swaps in two KEYED renders, so
+     this shot showed the app asking "is this yours?" over artwork whose
+     background was already gone. As a still, out of context, it reads as the
+     app interrupting AFTER it finished the job -- Harkirat, on the rendered
+     README: "love that the screenshot shows the app asking me 'is this yours'
+     AFTER correctly removing the entire background. *sarcasm*".
+
+     ⚠️ It is not a product defect: in the app you know you have not answered,
+     and seeing both candidates while deciding is the point. It is a defect of
+     the MOMENT CHOSEN. The pre-seam state is equally real -- it is what is on
+     screen until the pair arrives, `#before` still carries the source, and
+     app.js:554 documents that path by name.
+
+     ⚠️ SUPPRESSED, NOT RACED. Shooting early enough to beat the fetch would be
+     a timing accident that passes on a fast machine and fails on a slow one.
+     maybeLoadSeamPair() returns early when `loadPair` is not a function, so
+     deleting it is a deterministic "no pair", and 09-seam restores it. */
+  await shot('02-open-question', `
+    (function () {
+      var W = window.Devoid && window.Devoid.wipe;
+      if (W && typeof W.loadPair === 'function') { W.__loadPair = W.loadPair; delete W.loadPair; }
+      openAsset(${JSON.stringify(megaId)});
+    })()`);
+  /* ⚠️ UNDO THE SUPPRESSION IMMEDIATELY. It exists for exactly one capture.
+     A first version restored it just before shot('09-seam') -- 220 lines and
+     an entire assertion block later -- so every seam check ran against a
+     deliberately broken app and SEVEN of them failed. The blast radius of a
+     stub is every line until it is removed, not every line until it is
+     conceptually finished with.
+
+     ⚠️ `probe` wraps its argument as an ARROW FUNCTION BODY and needs a
+     top-level `return`. Passing an IIFE expression instead returned undefined,
+     and `JSON.parse(undefined)` hung the run for 45 minutes on an empty log. */
+  const seamRestored = await probe(`
+    const W = window.Devoid && window.Devoid.wipe;
+    if (W && W.__loadPair) { W.loadPair = W.__loadPair; delete W.__loadPair; }
+    /* ⚠️ DO NOT FORCE A RENDER HERE. Two attempts did and both broke
+       check:greyscale on 09-seam and 03-emitting: closeAsset()+openAsset()
+       rebuilt the edge rail, and a bare render() did too, either way leaving
+       the open asset's button 9,244px below a 1,656px window -- the rail's
+       scroll position is what normally holds it in view, and rebuilding drops
+       it. seamKey was never set while loadPair was missing, so the NEXT
+       natural render loads the pair; shot 03's lamp click is that render. */
+    return typeof (W && W.loadPair) === 'function';
+  `);
+  if (!seamRestored) failures.push('02: loadPair was not restored after the pre-seam capture');
+
   await shot('03-emitting', `document.getElementById('lamp').click()`);
   // ⚠️ MOVED ABOVE THE EMPTY-TABLE SHOTS, 2026-09-07 00:55 EDT. 04 sets
   // S.assets=[] and nothing put them back, so 06 and 08 both photographed the

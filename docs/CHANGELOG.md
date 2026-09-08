@@ -76,6 +76,53 @@ Three states that reached **stdout and nothing else** now reach the person:
 
 **The case a naive version check gets wrong, and it is the live one:** the engine's newest *release* is **v6.3.0** while its newest *tag* is **v6.4.1**, because that repo tags every merge and publishes a release only sometimes. `installed !== latest` would have told a v6.4.1 user to downgrade. `updateVerdict()` returns **`ahead`** as a first-class answer, and `tests/test_deps.test.js` asserts it against exactly those two numbers.
 
+### `gate:ui` was measuring its own history
+
+**A killed Electron leaves its Python server alive.** `app.on('before-quit')` stops the server; a SIGTERM'd Electron never runs it. One orphaned uvicorn later, **every `gate:ui` reused it and appended** — six runs in, `/api/assets` held **72 rows instead of 6**, the contact sheet read *"30 on the table"*, the edge rail was 24 buttons long, and `check:greyscale` failed because the open asset sat **11,476px** below a 1,656px window.
+
+⚠️ **The gate's assertions had become a function of how many times it had been run**, and two wrong causes were blamed and "fixed" before the real one was found. The off-screen distance **grew** between those attempts — 9,244 → 11,476 — which was the evidence, and it was read as noise. **A cause you introduced is not more likely just because you introduced it most recently.**
+
+`seed()` now refuses to run against a non-empty registry and prints the command to clear it. Falsified: a stray server with one asset exits 1; killing it restores a passing run. **All four README crops were re-made from the clean corpus** — the previous contact sheet showed five duplicate megaphones for this reason.
+
+### 🔴 `jobs.jsonl` had stopped recording any job that used the analysis handoff
+
+**The app's one durable record of your work, silently not being written.** `server/app.py` puts the handoff document's path into the render body as `analysis_json`; `server/jobs.py`'s `SETTINGS_KEYS` whitelist does not list it; `validate()` therefore raised `unknown settings keys: analysis_json` — **inside the render worker thread, where nothing was watching.** Every job that carried a handoff — which is every job since the v1.0.0 work that introduced it — failed to reach the log.
+
+⚠️ **It surfaced as a pytest WARNING, not a failure.** The suite printed `PytestUnhandledThreadExceptionWarning` beside `107 passed`, and had been doing so for a day. **A green line with a warning above it reads as green**, and the exception was in a thread, so nothing else could report it.
+
+**Stripped at the call site rather than added to the whitelist.** It is a per-process temp path, gone by the next launch: journalling it would put a dead pointer in a permanent log and a re-run would try to honour it. `tests/test_journal_handoff.py` has three cases, and the one that matters **asserts the whitelist still rejects it** — if that test ever passes, the fix was moved to the wrong place.
+
+### The README, rebuilt against 32 comments left on a rendered copy
+
+Harkirat read the page as a page — annotated in the artifact, not the file — and the notes went at the shape rather than the sentences. **The install section had no install steps**: a download button, two notes and a collapsed source block, with nothing saying what a `.dmg` is or what to do with it. It now numbers the four things that actually happen, including the right-click that a first-timer will otherwise read as *"this app is damaged"*.
+
+| what changed | how |
+|---|---|
+| the hero screenshot | **re-captured before the answer previews load**, so the question arrives over untouched artwork rather than over a finished render |
+| badges | **dynamic** — `github/v/release` and `github/license` read the repo, so they cannot go stale; the download is a real button and the first coloured object on the page |
+| the rates warning | deleted. *"no one cares about this warning"* |
+| Settings | deleted. The variables live in Troubleshooting and the dev guide |
+| Troubleshooting | a **what-you-see / what-to-do** table. The bold leads had been reading as sub-headings rather than as symptoms |
+| *"Half the render time"* | out of the differentiator table — it compares Devoid to Devoid |
+
+🔴 **AND ONE ROW OF THAT TABLE HAD TO BE CORRECTED TWICE.** *"On two real files"* named neither; fixing it, this session **invented one of the two filenames**. The real measurement is `web/app.css:19` — hurricane and **paper-plane**, *within RGB distance 90 of rubylith*. The README now cites the file and line. See `docs/DEVLOG.md`: **specificity is the disguise vagueness wears once someone objects to it.**
+
+⚠️ **Two GFM constraints found the hard way.** An alert does not render inside `<details>` or a table cell — GitHub emits the literal `[!WARNING]`. And `reflow-prose.mjs --write` joins the marker onto the text line, which turns an alert into a plain blockquote **with nothing reporting it**. `check:claims` now fails on that; `CLAUDE.md` records that the two house conventions genuinely conflict.
+
+### The engine ships inside the app
+
+**A `.dmg` user now has a working app out of the box.** `scripts/prepack-engine.mjs` copies the engine and **both** of its LGPL texts into the bundle before every `dist`, and **fails the build** if any of the three is missing — a build that silently ships no engine produces a disk image that cannot do the one thing it is for.
+
+⚠️ **It is the LAST candidate, never the first.** `$DEVOID_SKILL`, `devoid.config.json` and the documented path all beat it, so pointing Devoid at your own checkout still works and a developer testing an engine change never rebuilds the app.
+
+### 🔴 The update check had been reporting every engine as out of date
+
+`engine_version()` returns a **content hash** — `sha256:0ffc8a71b8b5` — and `checkForUpdates` handed it to `compareVersions`, which parses it as **0.0.0**. So the check said **behind** every time and offered an update that was already installed, once a day, for every user.
+
+**It shipped a few hours after the update check itself, in this same branch.** The live verification meant to prove that path worked passed a hand-typed `'6.4.1'` rather than reading what the app reports. ⚠️ **A test given a fabricated input tests the fabrication** — the same shape as the falsifier that injected `"63 options"` and missed eleven real instances that all said `flags`.
+
+`engine_semver()` derives a real version with no network: `git describe --tags` in the resolved script's own repository, then the `VERSION` file written beside the bundled copy, then **None** — never junk, because junk is precisely how a hash became 0.0.0. The dialog now separates *no engine* from *an engine whose version cannot be read*. `tests/test_engine_bundle.py`, 7 cases.
+
 ### The verdict is measured now, or it says it isn't
 
 **The big number was a yardstick presented as a measurement.** `_ledger` guessed the background from the source's **top-left pixel**, split artwork from it at a hardcoded **20**, and called a pixel survived at **alpha > 200** — while `web/app.js` printed the result in 44px type with no qualification, inside the one feature whose whole claim is that the app never reports a check it did not earn. The function's own docstring admitted the thresholds were *"INVENTED"* and the figure *"never an absolute damage figure"*.

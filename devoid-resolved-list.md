@@ -17,6 +17,30 @@ Heading shape, matching the engine repo's archive:
 
 ---
 
+### ✅ `[P1 · M]` Bundle the engine — and the update-check bug it uncovered *(resolved 2026-09-07 21:33 EDT)*
+
+Every document said the engine is *"deliberately not bundled: a copy inside the app would drift from the original in silence."* Harkirat: *"is so stupid for an app that literally uses the engine as its CORE. Apps and tools ship with drifted engines and libraries ALL the time, that's literally what the update system is for."*
+
+**He is right, and the numbers make it worse than a weak argument.**
+
+| the piece | the number |
+|---|---|
+| the engine | **one 636 KB Python file**, imported with `importlib.util.spec_from_file_location` |
+| its third-party imports | `numpy`, `PIL`, `scipy` — **all three already ship inside Devoid's bundle**, at 36 + 14 + 99 MB |
+| the disk image | **~170 MB**, of which 149 MB is the engine's own dependencies |
+| `references/lessons.md` mentions in the engine | all **comments**. Nothing is read from its repository at runtime |
+
+**So the app already ships 149 MB of the engine's dependencies and refuses to ship the 636 KB engine.**
+
+⚠️ **And the stated reason is backwards.** Not bundling does not prevent drift, it *guarantees* it: the user has whatever they happened to clone, which is how the v6.3.3-floor-versus-v6.3.0-release trap existed. A bundled copy has a known version, and `checkForUpdates` — built the same evening — is the mechanism for telling them a newer one exists. **The argument against bundling was an argument for the feature the app already h
+
+**Outcome.** `scripts/prepack-engine.mjs` copies the engine and **both** LGPL texts into `build/engine/` before every `dist`, and **fails the build** if the engine or either licence is missing — a build that silently ships no engine produces a `.dmg` that cannot do the one thing it is for. `electron-builder.yml` ships it to `Resources/engine`; `server/engine.py` takes it as the **last** candidate, after `$DEVOID_SKILL`, `devoid.config.json` and the documented path, so a developer testing an engine change never rebuilds Devoid.
+
+🔴 **AND IT FOUND A LIVE BUG IN THE UPDATE CHECK SHIPPED THE SAME EVENING.** `engine_version()` returns a **content hash** — `sha256:0ffc8a71b8b5` — and `checkForUpdates` was handing that to `compareVersions`, which parses it as **0.0.0**. Every check therefore reported the engine **behind** and offered an update that was already installed, once a day, forever.
+
+⚠️ **The live check that was supposed to prove that path worked passed a hand-typed `'6.4.1'`** instead of reading what the app reports. **A test given a fabricated input tests the fabrication.** `engine_semver()` now derives a real version from `git describe --tags` in the resolved script's repository, falling back to the `VERSION` file written beside the bundled copy, and returns **None** rather than junk — junk is exactly how a hash became 0.0.0. `tests/test_engine_bundle.py` has seven cases; the one that matters asserts the hash does **not** parse as a number.
+
+
 ### ✅ `tests/port-probe.test.js` was wired to nothing *(resolved 2026-09-07 21:03 EDT)*
 
 Five cases, 3.2 KB, referenced by no npm script and by no other file. `npm test` chains twelve commands and this is not one of them, so the port probe's own tests have never run in the suite that certifies a release. ⚠️ **A test nobody runs is worse than no test** — it reads as coverage in a directory listing.

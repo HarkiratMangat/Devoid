@@ -19,6 +19,46 @@ The **story** behind the app: the traps, the reasoning behind decisions, the thi
 
 ---
 
+## 2026-09-08 00:15 EDT — a warning is not a colour, it is a finding
+
+`npm test` came back red on the greyscale gate. Scrolling past the failure to find it, the pytest block read:
+
+```
+ValueError: unknown settings keys: analysis_json
+...
+107 passed, 2 warnings
+```
+
+**A shipped bug, printed in full, above a passing line, for a day.** `jobs.jsonl` — the app's single append-only record, the thing `CLAUDE.md` calls "the truth" — had not been recording any render that used the analysis handoff, because the write raised in a worker thread and pytest downgraded the escaped exception to a warning.
+
+🔴 **THE READING FAILURE IS THE FINDING.** I have run this suite perhaps twenty times tonight and read `NPM_TEST_EXIT` each time, which is exactly what I built the habit for. The exit code is a summary, and **a summary is a place for something to hide**. `2 warnings` was in every one of those runs.
+
+⚠️ **And it is the third distinct thing tonight that a green line concealed** — a hung capture behind an empty log, a `--body`-less merge, and now this. The pattern is not carelessness about failures; it is that **I only ever asked whether the gate said no**, never what else it said.
+
+**Fixed by stripping at the call site**, because a per-process temp path in a permanent log is a dead pointer, and the falsifier that matters asserts the whitelist still refuses it.
+
+## 2026-09-08 00:01 EDT — I invented a citation to fix an ambiguity complaint
+
+A README row read *"on two real files, 31% and 21% of the artwork sits inside the same red…"*. Harkirat: *"what two files? this is a claimed, stated 'why it holds' and it's completely ambiguous."* Correct — a "why it holds" column that names no source holds nothing.
+
+**So I named two files. One of them was made up.** I wrote `hurricane.gif` and `growth.gif`. `web/app.css:19` says **hurricane and paper-plane**, and it says the artwork *"sits within RGB distance 90 of rubylith"* — a colour **neighbourhood**, which I had written as *"is the same red"*.
+
+🔴 **THIS IS THE WORST SHAPE OF THE EVENING'S CLASS, NOT A NEW ONE.** Every other instance was a claim that had drifted from something once true. This one was manufactured **in the act of removing an ambiguity** — the complaint was that the row lacked a source, and I produced a source rather than looking one up. **Specificity is the disguise vagueness wears once someone objects to it**, and it is more dangerous than the vagueness, because a filename reads as a citation.
+
+⚠️ **And no gate could have caught it.** `growth.gif` is a real file in `web/assets/`, so "the named file exists" would have passed. The only check that works is the one I skipped: **open the source that made the measurement.** It took one `rg` after the fact.
+
+**The correct text is now in the README with its file and line**, and the table it sits in is filed for redesign — a table that can hold an uncheckable claim without looking odd is the wrong shape for claims.
+
+## 2026-09-07 21:34 EDT — building the feature is what tested the feature
+
+Bundling the engine was filed as a packaging job. Wiring it required knowing what version the bundled copy is, which required looking at what `engine_version()` actually returns — **a `sha256:` content hash**, which `checkForUpdates` had been comparing against a git tag since I wrote it three hours earlier. It parses to `0.0.0`. **Every check said "behind".**
+
+🔴 **I had "verified" that path live, and the verification was worthless.** The node one-liner I ran passed `'6.4.1'` as the installed version — a number I typed, not one the app produces. It printed `ahead`, correctly, about an input that never occurs. **A test given a fabricated input tests the fabrication**, and this is the third instance tonight: `"63 options"` against a defect that says `flags`, `*"…"*` against a repo that writes backticks, and now a hand-typed semver against a hash.
+
+⚠️ **The pattern behind all three: I supply the input that makes the check meaningful, and I supply it from the same belief the code came from.** The fix is not more care. It is to take the input from the system under test — read `status()`, don't type a version — which costs one extra call and removes the whole class.
+
+**And the finding arrived from BUILDING, not from auditing.** A full sequential-thinking sweep an hour earlier looked directly at the update check and did not see this; implementing the next feature did, immediately, because implementation forces you to use the real values. **A sweep reads; a build runs.**
+
 ## 2026-09-07 21:05 EDT — I concluded a file was missing from a glob that could not have matched it
 
 Writing the handoff, I ran `ls docs/*handoff*`, got four superseded copies and no live one, and wrote a 🔴 paragraph into `docs/HANDOFF.md` claiming the file `CLAUDE.md`'s first line points at did not exist.

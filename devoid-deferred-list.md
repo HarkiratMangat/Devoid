@@ -19,6 +19,26 @@ The project-local tracker for open work, real TODOs, and reminders specific to t
 
 ## 🐞 Open — real TODOs with an available fix, not yet done
 
+### `[P2 · M · Opus5-High]` The "Why it works this way" table needs a redesign *(filed 2026-09-08 00:01 EDT)*
+
+Harkirat: *"your idea for a 'why it works this way' section isn't wrong, but the execution needs a redesign someday. not right now."*
+
+**What is wrong with the execution, as far as it has been diagnosed.** Three columns of prose at equal weight, read left to right five times; the third column carries measurements, a design rationale and a restatement in the same visual slot, so nothing tells you which rows are evidence and which are argument. One row was **ambiguous enough to be unusable** — *"on two real files"* named neither, and correcting it uncovered that this session had **invented one of the two filenames**. A table that can hold an uncheckable claim without looking odd is a table with the wrong shape.
+
+**Not scoped.** The redesign is the work; possibilities include splitting measured claims from design principles, or dropping the table for a short list with each measurement beside the thing it measures.
+
+### `[P1 · M · Opus5-High]` The region mark is a BOUNDING BOX where it should be the disputed pixels *(filed 2026-09-07 23:39 EDT)*
+
+`web/app.js:578-586` reads `r.bbox_xyxy` and sets `left/top/width/height` — an axis-aligned rectangle. The disputed region in the corpus's megaphone is a **diagonal white band** inside the cone, so the rectangle covers the band, the yellow bar beside it, the navy outlines and a corner of background, **and still clips the band's ends**.
+
+Harkirat, looking at the shipped capture: *"what is it even highlighting and asking? the white band inside the megaphone? then why is it a vertical rectangle? why is it also highlighting parts of the background and the yellow and the outlines? why doesn't it fully shade/cover the entire white band?"* Every one of those has the same answer — it is a bbox, not a shape.
+
+🔴 **THIS IS THE PRODUCT'S CENTRAL CLAIM, HALF-DELIVERED.** `docs/PRODUCT.md`: *"the question is visual; delivering it as text is the failure."* Devoid moved the bounding box out of prose and onto the artwork, which is real progress, and then stopped — a rectangle over the wrong pixels is a third state: visual, and still not the question.
+
+**Concrete next action, and the data is already there.** The dispute is defined **by colour** (`outline_color`), and the app already answers per colour and never per region — so the correct mark is *the pixels inside that bbox that match the colour*. `web/wipe.js` already decodes frames to canvas and composes them; a per-pixel colour test on one decoded frame is the whole feature. Draw it as a mask (a canvas overlay, or an SVG path from a marching-squares trace) instead of a `div`.
+
+⚠️ **THE README SCREENSHOT MUST BE RE-CAPTURED AND SWAPPED WHEN THIS LANDS.** `docs/shots/the-question.webp` is the hero of the README and it shows the bbox. Shipping it now is deliberate — Harkirat: *"ship the screenshot as is. document it in deferred list that the screenshot needs recapturing/swap after the feature is correctly built."* The capture is `scripts/capture-window.mjs`'s `02-open-question`, cropped to 1930x800 at +420+230. ⚠️ The claim *"instead of a hex code **and a bounding box**"* was removed from the README in the same pass, because that half was contradicted by its own picture; it goes back when the mark is real.
+
 ### `[P2 · S · Sonnet5-High]` The seam is offered on a provisional threshold, and nothing says so *(filed 2026-09-07 20:58 EDT)*
 
 `server/preview.py:57` sets `SEAM_THRESHOLD = 0.02` under a comment reading **"⚠️ Provisional threshold"**. It decides `seam_useful`, which decides whether the person is offered the app's headline interaction or the question card instead. **A provisional constant silently choosing the interaction is the same defect as a provisional number silently choosing a verdict** — and this repo's founding rule is about the second.
@@ -33,26 +53,6 @@ The project-local tracker for open work, real TODOs, and reminders specific to t
 
 ⚠️ **Not a rename to Light/Dark.** `docs/PRODUCT.md` makes the void world binding and the vocabulary is a real identity choice. The honest resolution is to accept that the *word* is the control and stop treating the icon as one.
 
-### `[P1 · M · Opus5-High]` Bundle the engine, and stop calling its absence a principle *(filed 2026-09-07 20:35 EDT)*
-
-Every document said the engine is *"deliberately not bundled: a copy inside the app would drift from the original in silence."* Harkirat: *"is so stupid for an app that literally uses the engine as its CORE. Apps and tools ship with drifted engines and libraries ALL the time, that's literally what the update system is for."*
-
-**He is right, and the numbers make it worse than a weak argument.**
-
-| the piece | the number |
-|---|---|
-| the engine | **one 636 KB Python file**, imported with `importlib.util.spec_from_file_location` |
-| its third-party imports | `numpy`, `PIL`, `scipy` — **all three already ship inside Devoid's bundle**, at 36 + 14 + 99 MB |
-| the disk image | **~170 MB**, of which 149 MB is the engine's own dependencies |
-| `references/lessons.md` mentions in the engine | all **comments**. Nothing is read from its repository at runtime |
-
-**So the app already ships 149 MB of the engine's dependencies and refuses to ship the 636 KB engine.**
-
-⚠️ **And the stated reason is backwards.** Not bundling does not prevent drift, it *guarantees* it: the user has whatever they happened to clone, which is how the v6.3.3-floor-versus-v6.3.0-release trap existed. A bundled copy has a known version, and `checkForUpdates` — built the same evening — is the mechanism for telling them a newer one exists. **The argument against bundling was an argument for the feature the app already has.**
-
-**The real reason is developer-side and was never stated:** Harkirat develops both, and a bundled copy means rebuilding Devoid to test an engine change. That is a valid reason to keep the override paths first in the resolution order. It is not a reason to ship no engine at all.
-
-**Concrete next action.** Copy `scripts/remove_gif_background.py` into `extraResources` at build time and add it to `resolve_skill()` as the **last** fallback, after `$DEVOID_SKILL`, `devoid.config.json` and the documented path — so a checkout still wins and a `.dmg` user gets a working app out of the box. Record the bundled version in `/api/engine/status` so `checkForUpdates` can compare it. ⚠️ **LGPL-3.0-or-later requires the licence to travel with the copy** — `COPYING` and `COPYING.LESSER` ship alongside it, the same obligation the fonts have.
 
 ### `[P1 · S · Sonnet5-High]` `09-seam.webp` does not show a seam doing anything *(filed 2026-09-07 20:28 EDT)*
 

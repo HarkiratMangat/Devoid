@@ -494,7 +494,15 @@ async function collectUpdates() {
   let installed = null;
   try {
     const status = await fetchEngineStatus();
-    installed = status && status.engine_version !== 'unavailable' ? status.engine_version : null;
+    /* 🔴 `engine_version` IS A CONTENT HASH, NOT A VERSION (2026-09-07 21:32 EDT). This read
+       it and handed `sha256:0ffc8a71b8b5` to compareVersions, which parses it as
+       0.0.0 -- so every check said the engine was BEHIND and offered an update
+       that was already installed, every day. It shipped hours after the update
+       check did, and the live check meant to prove that path worked passed a
+       hand-typed '6.4.1' instead of what the app actually reports. A test given
+       a fabricated input tests the fabrication. `engine_semver` is derived from
+       git tags or the bundled VERSION file, and is null when neither exists. */
+    installed = (status && status.engine_semver) || null;
   } catch { /* no engine resolved; reviewEngine already said so at launch */ }
 
   if (installed) {
@@ -549,8 +557,13 @@ async function checkForUpdates({ auto = false } = {}) {
         : r.engine.verdict === 'unknown'
           ? `Engine ${r.engine.current} — GitHub has no release to show.`
           : `Engine ${r.engine.current} is the newest release.`);
-    } else if (!r.errors.length) {
-      lines.push('The engine could not be resolved, so there is nothing to compare it against.');
+      } else if (!r.errors.length) {
+      /* ⚠️ Two different reasons and they must not read as one: no engine at
+         all, versus an engine whose version cannot be derived (not a git
+         checkout, no tags, no bundled VERSION). Neither is an error. */
+      lines.push(enginePath
+        ? 'The engine is here but its version cannot be read — it is not a git checkout with tags, and no version shipped beside it. Nothing to compare.'
+        : 'The engine could not be resolved, so there is nothing to compare it against.');
     }
     if (r.errors.length) lines.push('', `Could not reach GitHub for: ${r.errors.join('; ')}`);
     dialog.showMessageBox(mainWindow, { type: r.errors.length ? 'warning' : 'info',

@@ -72,6 +72,13 @@ files:
   - '!dist/**'
 
 extraResources:
+  # ⚠️ The engine, copied here by scripts/prepack-engine.mjs (2026-09-07 21:32 EDT), which
+  # `npm run dist` runs first and which FAILS the build if the engine or either
+  # of its two LGPL texts is missing. server/engine.py takes it as the LAST
+  # candidate, after $DEVOID_SKILL, devoid.config.json and the documented path.
+  - from: build/engine
+    to: engine
+    filter: ['**/*']
   - from: server
     to: server
     filter: ['**/*.py', '!**/__pycache__/**']

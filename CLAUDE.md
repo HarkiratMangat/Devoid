@@ -198,6 +198,15 @@ This is step 1 of what Harkirat means by *"full merge flow"* and every phrase of
 
 - **Markdown is soft-wrapped** — one physical line per paragraph or list item. Check with `node "/Applications/Claude Code/Diors-Builds/scripts/reflow-prose.mjs" --check <files>`.
 
+  🔴 **AND IT SILENTLY DESTROYS GITHUB ALERTS (2026-09-07 23:35 EDT).** A GFM alert needs its marker alone on the first line:
+
+  ```
+  > [!WARNING]
+  > the text
+  ```
+
+  `reflow-prose.mjs --write` joins those into `> [!WARNING] the text`, which GitHub renders as **an ordinary blockquote** — no rail, no icon, no colour — and **nothing reports it**, because the markdown is still valid. Three alerts were flattened this way and the only evidence was a rendered page with no alert classes in it. `npm run check:claims` now fails on a marker with text after it; `reflow --check` still asks for the opposite, so **never run `--write` on a file containing alerts**. The two conventions genuinely conflict and the gate is the tie-breaker.
+
 ## Asking
 
 **Every question goes in a popup — `AskUserQuestion` — never in prose.** Including "want me to also…". A question set in a paragraph under a report gets read as commentary and answered by silence.

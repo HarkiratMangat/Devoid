@@ -64,8 +64,27 @@ const ratio = (a, b) => {
   return (x + 0.05) / (y + 0.05);
 };
 for (const f of DOCS) {
-  for (const [, hex] of R(f).matchAll(/img\.shields\.io\/badge\/[^")\s]*?-([0-9A-Fa-f]{6})\?/g)) {
-    const white = ratio('FFFFFF', hex);          // shields' own label text
+  /* ⚠️ TWO SHIELDS URL SHAPES, and only one was checked (2026-09-07 22:43 EDT).
+     A static badge carries its colour as the last dash-segment of the path
+     (`/badge/label-RRGGBB?…`); a DYNAMIC badge -- `/github/v/release/…` and
+     friends, which never go stale because shields reads the repo -- carries it
+     as a `color=` query parameter. The second shape was invisible here, so the
+     moment the version badge became dynamic its contrast stopped being checked
+     at all. Both are matched now. */
+  const hexes = [
+    ...[...R(f).matchAll(/img\.shields\.io\/badge\/[^")\s]*?-([0-9A-Fa-f]{6})\?/g)].map((m) => m[1]),
+    ...[...R(f).matchAll(/img\.shields\.io\/[^")\s]*?[?&]color=([0-9A-Fa-f]{6})/g)].map((m) => m[1]),
+  ];
+  for (const hex of hexes) {
+    /* ⚠️ SHIELDS DOES NOT ALWAYS USE WHITE TEXT (2026-09-08 00:10 EDT). On a light
+       badge it switches to `#333` — verified by reading the SVG it returns:
+       `00A3FF` came back with white, `B9A7F0` and `E8E8ED` both with
+       `fill="#333"`. This check assumed white unconditionally, so the first
+       light badge would have been reported as failing when it reads perfectly.
+       It takes the BETTER of the two, because shields picks the better one. */
+    const white = ratio('FFFFFF', hex);
+    const onDarkText = ratio('333333', hex);
+    const best = Math.max(white, onDarkText);
     const dark = ratio('0d1117', hex);           // GitHub dark page ground
     /* 🔴 THIS READ `< 3` AND PASSED A BADGE THAT FAILS WCAG AA (2026-09-07 20:00 EDT).
        3:1 is the LARGE-TEXT bar. shields.io sets its label in ~11px bold, which
@@ -73,7 +92,7 @@ for (const f of DOCS) {
        between the two numbers, so the gate written to catch bad badge contrast
        reported the badge as fine. A threshold copied from the wrong row of the
        spec is indistinguishable from no threshold for everything in between. */
-    if (white < 4.5) note(`${f}: badge #${hex} is ${white.toFixed(2)}:1 against shields' white text (WCAG AA needs 4.5:1 for text this size)`);
+    if (best < 4.5) note(`${f}: badge #${hex} is ${best.toFixed(2)}:1 at best against shields' label text — ${white.toFixed(2)} on white, ${onDarkText.toFixed(2)} on #333 (WCAG AA needs 4.5:1)`);
     if (dark < 1.4) note(`${f}: badge #${hex} is ${dark.toFixed(2)}:1 on GitHub's dark ground — invisible`);
   }
 }
@@ -159,6 +178,22 @@ for (const f of CLAIM_FILES.filter((x) => x.endsWith('.md'))) {
 for (const f of CLAIM_FILES.filter((x) => x.endsWith('.md'))) {
   R(f).split('\n').forEach((line, i) => {
     if (/^\|(\s*\|)+\s*$/.test(line)) note(`${f}:${i + 1}: empty table header row — renders as a blank bordered band`);
+  });
+}
+
+/* 3d — a GFM alert marker must be ALONE on its first line.
+   🔴 FOUND 2026-09-07 23:35 EDT BY A RENDER THAT CAME BACK WITH NO ALERTS IN IT.
+   `reflow-prose.mjs --write` joins a soft-wrapped paragraph onto one physical
+   line, which is the house convention -- and it does not know that
+   `> [!WARNING]` is a marker rather than the first words of one. It silently
+   turned three alerts into three ordinary blockquotes: no rail, no icon, no
+   colour, and NOTHING said so. The markdown still renders, which is what makes
+   it invisible. Two house rules in direct conflict, and the reflow gate wins by
+   running later. */
+for (const f of CLAIM_FILES.filter((x) => x.endsWith('.md'))) {
+  R(f).split('\n').forEach((line, i) => {
+    const m = line.match(/^>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s+\S/);
+    if (m) note(`${f}:${i + 1}: [!${m[1]}] has text on the marker line — GitHub renders this as a plain blockquote, not an alert`);
   });
 }
 
