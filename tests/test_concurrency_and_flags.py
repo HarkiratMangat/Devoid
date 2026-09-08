@@ -93,7 +93,7 @@ def test_no_overrides_means_auto_alone():
 
 
 def test_a_value_equal_to_the_default_is_not_sent():
-    """⚠️ A UI that sends all 64 flags makes ``--auto`` a no-op and the tool stops
+    """⚠️ A UI that sends every flag makes ``--auto`` a no-op and the tool stops
     thinking. Left-at-default must be indistinguishable from absent."""
     assert cli.build_argv({"tolerance": 15}) == ["--auto"]
     assert cli.build_argv({"tolerance": 22}) == ["--auto", "--tolerance", "22"]

@@ -9,7 +9,8 @@
  *
  *   · "Homebrew's Python will not work" — main.js probes /opt/homebrew/bin/python3
  *     explicitly. The framework path appears in comments and in ZERO conditionals.
- *   · "the 63 options" — the engine's parser reports 65 once a flag lands.
+ *   · "the 63 options" — the parser reports 64. This check MISSED eleven real
+ *     instances by matching `options` and never `flags`; see check 3.
  *   · a v1.0.0 badge above a package.json reading 1.0.1, stale on day one.
  *   · #22D3EE on a white badge: 1.81:1. DESIGN.md records that exact number and
  *     carries a second cyan for light. The bug was fixed in one place and left
@@ -19,6 +20,16 @@
  *
  * It cannot check prose. It checks the things with a right answer.
  *     npm run check:claims
+ *
+ * ⛔ WHAT THIS GATE CANNOT SEE, stated here so it is never read as coverage
+ * (added 2026-09-07 19:18 EDT). It compares the documents against THIS REPOSITORY'S CODE.
+ * A claim about anything OUTSIDE it -- another repo's visibility, whether a
+ * remote publishes releases, what a third-party tool does on someone else's
+ * Mac -- has no gate at all. One shipped on this branch the same evening:
+ * "the engine repository publishes no releases and is private" was written
+ * into three documents and was false in both halves, and this gate passed on
+ * all three. If a claim's truth lives on a server, verify it with a command
+ * and cite the command.
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -56,7 +67,13 @@ for (const f of DOCS) {
   for (const [, hex] of R(f).matchAll(/img\.shields\.io\/badge\/[^")\s]*?-([0-9A-Fa-f]{6})\?/g)) {
     const white = ratio('FFFFFF', hex);          // shields' own label text
     const dark = ratio('0d1117', hex);           // GitHub dark page ground
-    if (white < 3) note(`${f}: badge #${hex} is ${white.toFixed(2)}:1 against shields' white text`);
+    /* 🔴 THIS READ `< 3` AND PASSED A BADGE THAT FAILS WCAG AA (2026-09-07 20:00 EDT).
+       3:1 is the LARGE-TEXT bar. shields.io sets its label in ~11px bold, which
+       is normal text, so the bar is 4.5:1. `#E2402A` measures 4.20:1 -- it sat
+       between the two numbers, so the gate written to catch bad badge contrast
+       reported the badge as fine. A threshold copied from the wrong row of the
+       spec is indistinguishable from no threshold for everything in between. */
+    if (white < 4.5) note(`${f}: badge #${hex} is ${white.toFixed(2)}:1 against shields' white text (WCAG AA needs 4.5:1 for text this size)`);
     if (dark < 1.4) note(`${f}: badge #${hex} is ${dark.toFixed(2)}:1 on GitHub's dark ground — invisible`);
   }
 }
@@ -71,12 +88,78 @@ const engineFlags = (() => {
     return parseInt(out.trim(), 10);
   } catch { return null; }
 })();
-for (const f of DOCS) {
-  for (const [m, n] of R(f).matchAll(/\b(\d{2})\s+(?:engine\s+)?options\b/g)) {
-    if (engineFlags && +n !== engineFlags) {
-      note(`${f}: "${m.trim()}" — the engine's parser reports ${engineFlags}`);
+/* 🔴 THIS CHECK EXISTED, PASSED, AND MISSED ELEVEN REAL INSTANCES (2026-09-07 19:20 EDT).
+   Two reasons, and both are the same mistake:
+
+     1. The pattern matched `options` and never `flags`. Every occurrence in
+        this repository says FLAGS. The falsifier that proved the check worked
+        injected "63 options" -- a string shaped like the check rather than
+        like the defect. A gate proven against a synthetic instance is proven
+        against nothing.
+     2. It read three files. The claim lived in eleven, including CLAUDE.md
+        (twice), docs/PRODUCT.md (three times), map.yaml, web/app.js,
+        server/cli.py and a test's own docstring.
+
+   The count was 63 in eight live places and 64 in three. The parser reports
+   64. All eleven now say "every flag", which cannot go stale -- and this
+   check is what catches the next one that does.
+
+   ⚠️ A QUOTED count is a CITATION of a claim, not a claim: CLAUDE.md and
+   DEVLOG deliberately quote *"the 63 options"* as the defect they record.
+   Quoted matches are skipped; unquoted ones are claims. Archives, superseded
+   handoffs and generated critique files are out of scope for the same
+   reason -- they are records of what was true then. */
+const CLAIM_FILES = [
+  'README.md', 'CONTRIBUTING.md', 'CLAUDE.md', 'map.yaml',
+  'docs/PRODUCT.md', 'docs/DESIGN.md', 'docs/DEVELOPMENT.md',
+  'docs/CHANGELOG.md', 'docs/DEVLOG.md', 'docs/API-CONTRACT.md',
+  'devoid-deferred-list.md', 'web/app.js', 'server/cli.py',
+  'tests/test_concurrency_and_flags.py', 'tests/fixtures/api-contract-samples.json',
+].filter((f) => existsSync(join(ROOT, f)));
+
+for (const f of CLAIM_FILES) {
+  R(f).split('\n').forEach((line, i) => {
+    for (const m of line.matchAll(/\b(\d{2})\s+(?:engine\s+|skill's\s+)?(options|flags)\b/g)) {
+      /* An ODD number of quote marks before the match means it sits INSIDE a
+         quoted span -- a citation of a claim, not a claim. That is how
+         CLAUDE.md and DEVLOG can both record *"the 63 options"* as the defect
+         they are documenting without this gate firing on their own history. */
+      const before = line.slice(0, m.index);
+      /* ⚠️ COUNT EACH DELIMITER SEPARATELY. A first draft counted `"` and a
+         backtick as one class, so ``"63 options"`` -- a backtick-wrapped
+         quotation, which is how this file's OWN changelog entry cites the
+         defect -- summed to two and read as even, i.e. as a live claim. The
+         gate then failed on the entry describing its own fix. */
+      const odd = (c) => (before.split(c).length - 1) % 2 === 1;
+      if (odd('"') || odd('`')) continue;
+      if (engineFlags && +m[1] !== engineFlags) {
+        note(`${f}:${i + 1}: "${m[0]}" — the engine's parser reports ${engineFlags}`);
+      }
     }
-  }
+  });
+}
+
+/* 3b — a screenshot with no `width` is sized by whatever contains it.
+   ⚠️ Measured """ + STAMP + """: the two images inside a two-column table
+   rendered 445x288 on a 1280px desktop and 107x70 at 400px -- a 15.3x
+   downscale, 6.5% scale, of a screenshot whose smallest UI text is already
+   ~11px. Their own alt text promised detail that was not visible at either
+   size. The three images that DID carry `width` scaled cleanly across the same
+   range, so the correct pattern was already in the file and simply unapplied. */
+for (const f of CLAIM_FILES.filter((x) => x.endsWith('.md'))) {
+  R(f).split('\n').forEach((line, i) => {
+    if (/<img\s[^>]*src="docs\//.test(line) && !/\swidth=/.test(line)) {
+      note(`${f}:${i + 1}: a docs/ screenshot with no width= — its container decides its size`);
+    }
+  });
+}
+
+/* 3c — GFM requires a header row, so `| | |` renders an empty bordered band and
+   a screen reader announces blank column headers. Two shipped. */
+for (const f of CLAIM_FILES.filter((x) => x.endsWith('.md'))) {
+  R(f).split('\n').forEach((line, i) => {
+    if (/^\|(\s*\|)+\s*$/.test(line)) note(`${f}:${i + 1}: empty table header row — renders as a blank bordered band`);
+  });
 }
 
 /* 4 — every environment variable a doc promises exists in the code */

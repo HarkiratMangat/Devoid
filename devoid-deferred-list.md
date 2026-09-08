@@ -19,13 +19,48 @@ The project-local tracker for open work, real TODOs, and reminders specific to t
 
 ## 🐞 Open — real TODOs with an available fix, not yet done
 
-### `[P1 · S · Sonnet5-High]` A missing engine is a 503 on the first render, and two documents claimed it was a dialog *(filed 2026-09-07 16:26 EDT)*
+### `[P2 · S · Sonnet5-High]` The seam is offered on a provisional threshold, and nothing says so *(filed 2026-09-07 20:58 EDT)*
 
-`README.md` and `docs/DEVELOPMENT.md` both said a missing engine surfaces as a launch dialog naming the three places Devoid looked. **No such dialog exists.** Every `dialog.*` call in `main.js` is the Python path, Check for Updates, port exhaustion or a server restart; none mentions the engine.
+`server/preview.py:57` sets `SEAM_THRESHOLD = 0.02` under a comment reading **"⚠️ Provisional threshold"**. It decides `seam_useful`, which decides whether the person is offered the app's headline interaction or the question card instead. **A provisional constant silently choosing the interaction is the same defect as a provisional number silently choosing a verdict** — and this repo's founding rule is about the second.
 
-What actually happens: `server/engine.py:86` raises `EngineUnavailable` with a message that does name all three paths, `main.js:347` prints it to **stdout**, and `web/app.js:1320` reads `/api/engine/status` for `engine_version` alone and never renders the `missing` array. The user gets a normal-looking window and a 503 banner the first time they add a file.
+⚠️ **Its failure mode has already been observed in this repo.** When it wrongly returns true you get a seam whose two sides look identical — which is exactly what `09-seam.webp` showed, and why that screenshot was removed from the README tonight.
 
-Both documents were corrected to describe what happens rather than what was intended. **Concrete next action:** probe `/api/engine/status` at startup and show the same dialog shape the Python check already uses, with the three paths in the detail. The message text exists; only the surface is missing.
+**Concrete next action:** derive it against the corpus the way `preview.py:49-51` derived the 0.003 companion, or surface it — if the app is unsure the two answers differ, say so rather than presenting a seam as though it does.
+
+### `[P2 · XS · Sonnet5-High]` The lamp needs a word beside it to be legible *(filed 2026-09-07 20:58 EDT)*
+
+`web/index.html:34` carries its own diagnosis: **"Nobody maps 'emitting' to 'light mode' from a control alone"** — so a `lamp-word` reading `void` was added next to it. **A control that needs an adjacent word to be comprehensible has the wrong label**, and the fix was to add a second element rather than change the first.
+
+⚠️ **Not a rename to Light/Dark.** `docs/PRODUCT.md` makes the void world binding and the vocabulary is a real identity choice. The honest resolution is to accept that the *word* is the control and stop treating the icon as one.
+
+### `[P1 · M · Opus5-High]` Bundle the engine, and stop calling its absence a principle *(filed 2026-09-07 20:35 EDT)*
+
+Every document said the engine is *"deliberately not bundled: a copy inside the app would drift from the original in silence."* Harkirat: *"is so stupid for an app that literally uses the engine as its CORE. Apps and tools ship with drifted engines and libraries ALL the time, that's literally what the update system is for."*
+
+**He is right, and the numbers make it worse than a weak argument.**
+
+| the piece | the number |
+|---|---|
+| the engine | **one 636 KB Python file**, imported with `importlib.util.spec_from_file_location` |
+| its third-party imports | `numpy`, `PIL`, `scipy` — **all three already ship inside Devoid's bundle**, at 36 + 14 + 99 MB |
+| the disk image | **~170 MB**, of which 149 MB is the engine's own dependencies |
+| `references/lessons.md` mentions in the engine | all **comments**. Nothing is read from its repository at runtime |
+
+**So the app already ships 149 MB of the engine's dependencies and refuses to ship the 636 KB engine.**
+
+⚠️ **And the stated reason is backwards.** Not bundling does not prevent drift, it *guarantees* it: the user has whatever they happened to clone, which is how the v6.3.3-floor-versus-v6.3.0-release trap existed. A bundled copy has a known version, and `checkForUpdates` — built the same evening — is the mechanism for telling them a newer one exists. **The argument against bundling was an argument for the feature the app already has.**
+
+**The real reason is developer-side and was never stated:** Harkirat develops both, and a bundled copy means rebuilding Devoid to test an engine change. That is a valid reason to keep the override paths first in the resolution order. It is not a reason to ship no engine at all.
+
+**Concrete next action.** Copy `scripts/remove_gif_background.py` into `extraResources` at build time and add it to `resolve_skill()` as the **last** fallback, after `$DEVOID_SKILL`, `devoid.config.json` and the documented path — so a checkout still wins and a `.dmg` user gets a working app out of the box. Record the bundled version in `/api/engine/status` so `checkForUpdates` can compare it. ⚠️ **LGPL-3.0-or-later requires the licence to travel with the copy** — `COPYING` and `COPYING.LESSER` ship alongside it, the same obligation the fonts have.
+
+### `[P1 · S · Sonnet5-High]` `09-seam.webp` does not show a seam doing anything *(filed 2026-09-07 20:28 EDT)*
+
+The capture is of the seam view, and **both sides of the divider look identical** — the one thing a seam exists to show, two different renders of the same file, is not visible in the shot of the seam. The dashed divider is a 1px line on a dark ground. It was in the README for a day captioned *"a draggable wipe divider between two renders of the same asset"*, which the picture did not support.
+
+**Found by looking at it.** Four README screenshots had been described from their alt text and filenames through several passes; opening them showed that **three of the four were the same screen** — the megaphone open view with a different right rail — and a reader could not tell them apart. Harkirat: *"wtf do those screenshots even show? I'm SOO confused looking at them, AND IM LITERALLY THE MAIN USER."*
+
+**Removed from the README** rather than left with a caption it cannot support. **Concrete next action:** in `scripts/capture-window.mjs`, drag the seam to roughly 40% before `shot('09-seam')` and pick an asset whose two answers differ visibly, then crop to the divider. The other three are now crops (`the-question`, `needs-you`, `verdict`, `not-checked`) and read at a glance.
 
 ### `[P1 · S · Opus5-High]` A packaged app cannot be pointed at a different engine *(filed 2026-09-07 16:26 EDT)*
 
@@ -35,11 +70,6 @@ So a packaged Devoid can only ever find the engine at the hardcoded fallback. Th
 
 **Concrete next action:** look for `devoid.config.json` in `~/Library/Application Support/Devoid/` before the bundle-relative path — the directory the app already owns and already writes to. One `or` in `resolve_skill()`, plus the same lookup in the dialog's detail text so the message names a path the user can actually create.
 
-### `[P2 · XS · Sonnet5-Med]` `tests/port-probe.test.js` is wired to nothing *(filed 2026-09-07 16:26 EDT)*
-
-Five cases, 3.2 KB, referenced by no npm script and by no other file. `npm test` chains twelve commands and this is not one of them, so the port probe's own tests have never run in the suite that certifies a release. ⚠️ **A test nobody runs is worse than no test** — it reads as coverage in a directory listing.
-
-**Concrete next action:** add it to `test:coords`'s neighbours as its own script and into the `test` chain, then confirm it actually passes before assuming it does; it may have rotted.
 
 ## ✅ Considered and NOT fixed — a real decision, not an oversight
 

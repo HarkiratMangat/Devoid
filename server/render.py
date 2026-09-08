@@ -274,7 +274,7 @@ def _run(job: Job) -> None:
             escalated = final.name != f"{source.stem}_transparent.{ext}"
             job.state = "conflict" if escalated else "done"
             job.output_path = str(final)
-            job.ledger = _ledger(source, final)
+            job.ledger = _ledger(source, final, job.settings.get("analysis_json"))
 
     shutil.rmtree(tmp_dir, ignore_errors=True)
     job._tmp = None
@@ -282,40 +282,89 @@ def _run(job: Job) -> None:
     job._settled.set()
 
 
-def _ledger(source: Path, output: Path) -> dict | None:
-    """``{bg, art, total}`` for the settled output — the same method as
-    ``scripts/measure_ledger.py``, on that script's own middle frame.
+def _ledger(source: Path, output: Path, analysis_json: str | None = None) -> dict | None:
+    """``{bg, art, total, measured, frame_index}`` for the settled output.
 
-    ⚠️ ``art`` is a CEILING, not a defect count: it includes the antialiasing ramp
-    the keyer is meant to remove. Comparable between settings on one asset, never
-    an absolute damage figure. Its 200/20 thresholds are INVENTED and are the
-    script's, quoted here rather than re-derived.
+    🔴 REWRITTEN 2026-09-07 20:55 EDT, BECAUSE THE OLD ONE WAS A YARDSTICK PRESENTED AS A
+    MEASUREMENT. It guessed the background from the source's top-left pixel,
+    split artwork from background at a hardcoded distance of 20, and called a
+    pixel "survived" at alpha > 200. Its own docstring admitted the thresholds
+    were "INVENTED" and the result "comparable between settings on one asset,
+    never an absolute damage figure" -- while ``web/app.js`` printed the number
+    in 44px type with no qualification, inside the one feature whose whole claim
+    is that this app never reports a check it did not earn.
+
+    All three guesses had a real answer already in hand:
+
+      * the background colour -- the engine MEASURES it and reports it as
+        ``detected_bg_color``. The corner pixel is that colour only when no
+        artwork touches the corner.
+      * the tolerance -- the engine's own, recorded in the handoff document,
+        rather than a 20 typed here.
+      * "survived" -- needs no threshold at all. Removed means alpha == 0. A 200
+        cut-off called a half-transparent antialiased edge gone.
+
+    ⚠️ ``measured`` is the honesty bit and the UI reads it. True means both
+    numbers came from the engine's own analysis of THIS file. False means no
+    analysis was available and the old corner/20 estimate ran instead, in which
+    case the figures compare settings and nothing more -- which is all they ever
+    did.
+
+    ⚠️ ``art`` is still a CEILING rather than a defect count: it includes the
+    antialiasing ramp the keyer is meant to remove.
     """
     try:
+        import json
         import numpy as np
         from PIL import Image, ImageSequence
     except Exception:  # noqa: BLE001
         return None
 
-    def mid(path: Path):
+    def frame(path: Path, index: int | None = None):
         with Image.open(path) as im:
             n = getattr(im, "n_frames", 1)
+            want = n // 2 if index is None else max(0, min(index, n - 1))
             for i, f in enumerate(ImageSequence.Iterator(im)):
-                if i == n // 2:
-                    return np.array(f.convert("RGBA"))
-        return None
+                if i == want:
+                    return np.array(f.convert("RGBA")), want
+        return None, None
+
+    bg_color = tolerance = None
+    if analysis_json and os.path.exists(analysis_json):
+        try:
+            doc = json.loads(Path(analysis_json).read_text())
+            report = doc.get("analysis", doc)
+            raw = report.get("detected_bg_color")
+            if raw is not None and len(raw) >= 3:
+                bg_color = [int(c) for c in list(raw)[:3]]
+            tolerance = doc.get("tolerance")
+        except Exception:  # noqa: BLE001 -- an unreadable document is not fatal
+            log.warning("devoid: could not read %s for the ledger", analysis_json)
+
+    measured = bg_color is not None and tolerance is not None
 
     try:
-        cut = mid(output)
+        cut, used = frame(output)
         if cut is None:
             return None
-        cut_a = cut[..., 3] > 200
-        row = {"bg": int((~cut_a).sum()), "art": None, "total": int(cut_a.sum())}
-        src = mid(source)
+        # ⚠️ Removed means alpha == 0. No threshold, so none to invent.
+        gone = cut[..., 3] == 0
+        row = {
+            "bg": int(gone.sum()),
+            "art": None,
+            "total": int((~gone).sum()),
+            "measured": measured,
+            "frame_index": used,
+        }
+        src, _ = frame(source, used)
         if src is not None and src.shape[:2] == cut.shape[:2]:
-            corner = src[0, 0, :3]
-            src_art = (np.abs(src[..., :3].astype(int) - corner).max(axis=2) > 20)
-            row["art"] = int((src_art & ~cut_a).sum())
+            if measured:
+                ref, tol = np.array(bg_color), int(tolerance)
+            else:
+                ref, tol = src[0, 0, :3], 20   # the old estimate, and it is labelled
+            src_art = np.abs(src[..., :3].astype(int) - ref).max(axis=2) > tol
+            row["art"] = int((src_art & gone).sum())
+            row["bg"] = int((~src_art & gone).sum())
         return row
     except Exception:  # noqa: BLE001 -- a ledger that cannot be measured is `not checked`
         log.warning("devoid: ledger measurement failed for %s", output, exc_info=True)

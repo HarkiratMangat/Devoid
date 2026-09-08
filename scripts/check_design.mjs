@@ -43,8 +43,22 @@ const git = (args) => {
   try { return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' }).split('\n'); }
   catch { return []; }
 };
-const changed = [...git(['diff', '--name-only', 'main...HEAD']), ...git(['status', '--porcelain'])
-  .map((l) => l.slice(3).trim())];
+/* 🔴 `git status --porcelain` INCLUDES UNTRACKED FILES, and an untracked file
+   ships nowhere (found 2026-09-07 19:23 EDT). Two scratch renders of the README
+   left at the repo root -- `.readme-render.html` and its light twin -- entered
+   the design contract and failed it with 17 findings, every one a correct
+   reading of GitHub's own stylesheet rather than of this app. The gate's SCOPE
+   was environment-dependent: a stray page, a saved article or an editor backup
+   could turn it red, and a clean checkout and a working one scanned different
+   sets. ⚠️ An untracked file under `web/` is KEPT, because new shipped surface
+   is untracked until it is added and dropping it would open the opposite hole. */
+const untracked = (l) => l.startsWith('??');
+const changed = [
+  ...git(['diff', '--name-only', 'main...HEAD']),
+  ...git(['status', '--porcelain'])
+    .filter((l) => l.trim() && (!untracked(l) || l.slice(3).trim().startsWith('web/')))
+    .map((l) => l.slice(3).trim()),
+];
 const files = [...new Set([...CORE, ...changed])]
   .filter((f) => f && UI.test(f) && existsSync(join(ROOT, f)) && !SKIP.some((p) => f.startsWith(p)))
   .map((f) => join(ROOT, f));

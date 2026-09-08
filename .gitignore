@@ -42,3 +42,7 @@ local/gate-data/
 local/scale-corpus/
 local/scale-data/
 local/scale-shots/
+
+# lib/prefs.js writes here when running from a checkout (packaged it goes to
+# ~/Library/Application Support/Devoid). Following the README must never dirty a clone.
+prefs.json

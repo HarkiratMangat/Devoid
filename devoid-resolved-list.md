@@ -17,6 +17,41 @@ Heading shape, matching the engine repo's archive:
 
 ---
 
+### ✅ `tests/port-probe.test.js` was wired to nothing *(resolved 2026-09-07 21:03 EDT)*
+
+Five cases, 3.2 KB, referenced by no npm script and by no other file. `npm test` chains twelve commands and this is not one of them, so the port probe's own tests have never run in the suite that certifies a release. ⚠️ **A test nobody runs is worse than no test** — it reads as coverage in a directory listing.
+
+**Concrete next action:** add it to `test:coords`'s neighbours as its own script and into the `test` chain, then confirm it actually passes before assuming it does; it may have rotted.
+
+**Outcome.** Wired as `npm run test:ports`, between `test:deps` and `test:prefs`. It passes as written and it is a better test than its filing suggested: it does not copy the probe, it **reads `main.js` and evaluates `isPortFree` and `findFreePort` out of it verbatim**, so a change to the shipped code changes what is tested. It also asserts the slice stays under 60 lines, which is a guard against the probe growing into something the test silently stops covering.
+
+
+### ✅ `[P2 · S · Sonnet5-High]` An engine updater has nowhere to read from *(filed and closed 2026-09-07 19:18 EDT — THE PREMISE WAS FALSE)*
+
+Harkirat asked for *"the option to update the engine based on the gif repo's release page"*. **Not built, deliberately.** `HarkiratMangat/gif-background-remover` is private and publishes **no GitHub releases** — that is a standing decision in that repo, not a temporary state — so an anonymous check gets a 404 that GitHub returns identically for *private* and *nothing published*. The menu item could only ever say "nothing to show". Same test that keeps Squirrel.Mac out of this app: never ship a path that fails at runtime.
+
+**What shipped instead:** `reviewEngine()` compares the engine on disk against `ENGINE_FLOOR` (v6.3.3) at launch, offline, and says so when it is older.
+
+**What would unblock this:** the engine repo publishing releases, or Devoid reading its `version-history.md` / git tags from a local checkout — which it already has a path to, since the engine is resolved from disk. The local-checkout route needs no network and is probably the better feature.
+
+**Outcome — the item should never have been filed.** Harkirat asked one question — *"huh? no?"* with the releases URL — and both premises failed on the first command. `gh repo view` reports `isPrivate: false`. `gh release list` returns **nine** releases. The false belief came from a handoff note recording that the **v6.4.0 merge** shipped no release: true of one merge, carried forward as a property of the repository, with "private" asserted on top and never checked.
+
+**Built instead of filed:** `checkEngineUpdate()` in `main.js`, `updateVerdict()` in `lib/deps.js`, four falsifiers. The verdict that matters is **`ahead`** — the engine's newest release is v6.3.0 while its newest tag is v6.4.1, so a boolean check would have offered a downgrade to every current user.
+
+⚠️ **Keep this row.** The lesson is not the missing feature, it is that the refusal was argued from this repo's own correct principle (*never ship a path that fails at runtime*) applied to a fact nobody had verified — which reads as rigour and is not.
+
+
+### ✅ `[P1 · S · Sonnet5-High]` A missing engine is a 503 on the first render *(resolved 2026-09-07 18:59 EDT)*
+
+`README.md` and `docs/DEVELOPMENT.md` both said a missing engine surfaces as a launch dialog naming the three places Devoid looked. **No such dialog exists.** Every `dialog.*` call in `main.js` is the Python path, Check for Updates, port exhaustion or a server restart; none mentions the engine.
+
+What actually happens: `server/engine.py:86` raises `EngineUnavailable` with a message that does name all three paths, `main.js:347` prints it to **stdout**, and `web/app.js:1320` reads `/api/engine/status` for `engine_version` alone and never renders the `missing` array. The user gets a normal-looking window and a 503 banner the first time they add a file.
+
+Both documents were corrected to describe what happens rather than what was intended. **Concrete next action:** probe `/api/engine/status` at startup and show the same dialog shape the Python check already uses, with the three paths in the detail. The message text exists; only the surface is missing.
+
+**Outcome.** `reviewEngine()` in `main.js` reads `/api/engine/status` after the server answers and shows a dialog carrying `EngineUnavailable`'s own message, which already named all three paths. The same pass added a dialog for an engine below the v6.3.3 floor and an install offer for the three missing binaries — none of which had any surface at all. `lib/deps.js` holds the verdict logic and `tests/test_deps.test.js` falsifies it: the test that matters asserts **absent and degraded are different sentences**, because collapsing them to a boolean is what made the console line useless.
+
+
 ## Closed items
 
 ## ✅ The engine repo needs its LGPLv3 licence — CLOSED 2026-09-07 16:45 EDT (engine branch `docs/lgpl-licence`, merged `75a1b11`, tagged **v6.4.1**)

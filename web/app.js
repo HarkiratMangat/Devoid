@@ -18,7 +18,7 @@
       A flag in no drawer is a warning, not a new control.
    2. EVERY CONTROL IS TRI-STATE. A row reads `auto · <default>` until it is
       deliberately taken over, and only taken-over rows go into `overrides`.
-      A UI that sends all 63 flags makes `--auto` a no-op and the tool stops
+      A UI that sends every flag makes `--auto` a no-op and the tool stops
       thinking.
    3. NEVER REPORT A CHECK THAT DID NOT RUN. `not-checked` is a first-class
       state with the weight of done and failed, and a blank ledger says so.
@@ -1038,6 +1038,17 @@ function renderLedger(a) {
   const fig = el('span', null, '');
   fig.append(el('b', 'fig', bg.toLocaleString()), document.createTextNode(' background px removed'));
   L.append(fig);
+  /* ⚠️ THE BIG NUMBER USED TO BE PRINTED THE SAME WAY WHETHER IT WAS MEASURED
+     OR ESTIMATED (2026-09-07 20:56 EDT). server/render.py guesses the background from the
+     source's corner pixel when no analysis is available, and a file whose
+     artwork touches the corner is then classified against the artwork's own
+     colour -- tests/test_ledger_honesty.py shows that case reporting the entire
+     background as artwork lost. Saying so is the difference between a figure
+     and a claim. */
+  if (px.measured === false) {
+    L.append(el('span', 'atmost',
+      'estimated — no analysis for this file, so these compare settings rather than count pixels'));
+  }
   /* ⚠️ `art` is a CEILING — it counts every source pixel that differed from
      the corner colour and ended up transparent, including the antialiasing
      ramp the keyer is meant to remove. Comparable BETWEEN settings on one

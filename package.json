@@ -1,6 +1,6 @@
 {
   "name": "devoid",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "A local desktop app for removing the background from animated images \u2014 GIF, WebP, AVIF, APNG, and static PNG/JPEG \u2014 and fitting the result to a size or format target.",
   "main": "main.js",
   "scripts": {
@@ -12,6 +12,9 @@
     "gate:ui": "electron scripts/capture-window.mjs",
     "test:coords": "node --test tests/test_canvas_coords.mjs",
     "test:versions": "node --test tests/test_versions.mjs",
+    "test:deps": "node --test tests/test_deps.test.js",
+    "test:ports": "node --test tests/port-probe.test.js",
+    "test:prefs": "node --test tests/test_prefs.test.js",
     "check:contrast": "python3 scripts/check_contrast.py --check",
     "check:greyscale": ".venv/bin/python scripts/check_greyscale.py --check",
     "refresh:index": "bash scripts/refresh-index.sh",
@@ -19,7 +22,7 @@
     "check:detector": "node scripts/check_detector.mjs",
     "check:design": "node scripts/check_design.mjs",
     "check:tracker": "python3 scripts/audit_tracker.py --diff main",
-    "test": ".venv/bin/python -m pytest -q && npm run test:wipe && npm run test:coords && npm run test:versions && npm run test:hooks && npm run check:contrast && python3 scripts/check_font_axes.py --check && npm run check:claims && npm run check:detector && npm run check:design && npm run gate:ui && npm run check:greyscale && npm run check:tracker",
+    "test": ".venv/bin/python -m pytest -q && npm run test:wipe && npm run test:coords && npm run test:versions && npm run test:deps && npm run test:ports && npm run test:prefs && npm run test:hooks && npm run check:contrast && python3 scripts/check_font_axes.py --check && npm run check:claims && npm run check:detector && npm run check:design && npm run gate:ui && npm run check:greyscale && npm run check:tracker",
     "check:claims": "node scripts/check_claims.mjs"
   },
   "author": "Harkirat Mangat",

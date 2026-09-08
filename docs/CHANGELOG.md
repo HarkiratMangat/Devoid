@@ -20,7 +20,160 @@ What shipped, when, and why. Newest first.
 
 ---
 
-## v1.0.1 — 2026-09-07 17:20 EDT (#3) — the conventions this repo runs on, written down
+## v1.1.0 — 2026-09-07 21:03 EDT (#3) — Devoid fetches what it needs, and stops overstating what it found
+
+⚠️ **This was going to be `v1.0.1`.** The branch began as documentation and then grew a behaviour change, and the bars in `CLAUDE.md` are explicit: minor is defined by the **absence** of a behaviour change. New dialogs, a new first-launch install offer and a corrected `PATH` are all "the product behaves differently inside capabilities it already had" — the moderate bar, verbatim. One branch, one version, one tag; the documentation work below is a section of it, not an entry of its own.
+
+### 🔴 The packaged app could not see Homebrew, and blamed the machine
+
+`startServer` handed the Python server `{ ...process.env }`. **An app launched from Finder inherits `/usr/bin:/bin:/usr/sbin:/sbin`** — your shell's `PATH` is set by your shell, and Finder never runs one. Homebrew installs into `/opt/homebrew/bin`, which is on neither list. So `shutil.which("gifsicle")` in `server/engine.py` answered `None` **in the packaged app on a Mac where gifsicle was installed and working**, and Devoid reported itself degraded for a reason that was not true.
+
+Invisible from a checkout, because `npm start` runs under a shell that already fixed `PATH`. ⚠️ It is this session's named class — *true of one machine at one moment, written as a property of the software* — and the tell was the usual one: the tool names appear in `REQUIRED_BINARIES` and in three documents, and in no code that says where they live.
+
+`lib/deps.js` now owns `toolPath()`, and `tests/test_deps.test.js` asserts the Finder `PATH` case, the no-duplicate case and the missing-prefix case.
+
+### Devoid asks for what it needs, once, at launch
+
+Three states that reached **stdout and nothing else** now reach the person:
+
+| state | before | now |
+|---|---|---|
+| **No engine** | a normal-looking window, then a 503 on the first render | a dialog naming every path that was tried — the message already existed, only the surface was missing. Closes `[P1 · S]` |
+| **Engine older than v6.3.3** | the option list silently fails to load | a dialog saying which version is on disk and which is needed |
+| **`gifsicle` / `pngquant` / `webpmux` missing** | nothing at all — a missing binary does not set `available: false`, so even the console line never fired | an offer to run `brew install`, with the formulae mapped correctly (`webpmux` is the binary; **`webp`** is the formula) |
+
+**Nothing installs without being asked**, and the app does not quit on a missing engine — the window opens and every other surface still works.
+
+⚠️ **The install is verified by the remedy, not by `brew`'s exit code.** `brew install` exits 0 for "already installed" and for a formula that installed nothing usable; the check is whether the binary is now where the server will look.
+
+### The engine has a published release again, and Devoid's floor is reachable
+
+**Released 2026-09-07 20:05 EDT, on Harkirat's explicit authorization:** [`gif-background-remover` v6.4.1](https://github.com/HarkiratMangat/gif-background-remover/releases/tag/v6.4.1), with the 484 KB `.skill` attached.
+
+⚠️ **It closes a trap this README was walking readers into.** Devoid's floor is **v6.3.3**, and the newest *published* engine release was **v6.3.0** — below it. Anyone who followed the README's engine link and took the latest release got an engine Devoid refuses, with no way to know why from either document. Verified after publishing, anonymously: the latest release now satisfies the floor, and an installed v6.4.1 reads as **current** rather than ahead.
+
+### Devoid goes public, and the documents stop hedging
+
+**Decided 2026-09-07 19:44 EDT.** The repository was private, which made most of the README fiction for anyone but its author: the download button, the clone, the issue link and the changelog badge all resolved to 404, and the v1.0.0 release carrying a 170 MB disk image was invisible. The `⚠️ this repository is private` warnings are gone.
+
+⚠️ **The split was also backwards from what the licences say.** The engine is public under **LGPL** — the permissive one, chosen so closed software could use it — while the app was private under **GPL**, the copyleft one that exists to keep distributed code open. Nothing was being distributed.
+
+### One update check, for both things, running on its own
+
+**Check for Updates…** now answers for **Devoid and the engine together**, in one dialog — and it runs by itself, once a day, when you open the app.
+
+⚠️ **THE APP'S OWN PREMISE WAS AMENDED TO DO THIS.** `main.js` carried a comment arguing the opposite: *"USER-INITIATED ONLY, NEVER ON LAUNCH … a version ping fired at startup would quietly break that promise for a feature nobody asked for at that moment."* Sound reasoning, answering the wrong question. Harkirat: *"what if a user never clicks it themself?"* **An update mechanism that only works for the person who remembers it exists serves nobody**, and the people running a stale engine are exactly the ones not reading the menu bar.
+
+**The promise is kept differently rather than dropped:** throttled to once a day, **silent when there is nothing to say**, and one checkbox from off — **Check for Updates on Launch** in the same menu, and in the dialog itself the moment it interrupts you. `docs/PRODUCT.md` records what the network claim became; the README no longer says *"you start every one"*, because that would now be false.
+
+⚠️ **AND IT IS ONE MENU ITEM, NOT TWO.** The first version of this shipped a separate **Check for Engine Updates…**, which asked the person to know that Devoid and its engine are different things versioned separately — precisely the knowledge this app exists to spare them. Merged before it left the branch.
+
+`lib/prefs.js` holds the preference and the throttle; `tests/test_prefs.test.js` falsifies both. The two that matter: **reopening a window must not re-ping GitHub** (`activate` reopens without restarting, so "on launch" happens all afternoon), and **a clock that has moved backwards must not wedge the check off forever** — a `lastCheck` in the future reads as due, not as recent.
+
+🔴 **THE ONLY REASON THIS IS WORTH WRITING DOWN IS THAT IT WAS REFUSED FIRST, ON A CLAIM NOBODY CHECKED.** Hours earlier this same branch recorded: *"that repository publishes no releases and is private, so the check could only ever answer nothing to show."* **Both halves were false.** `gh repo view` reports `isPrivate: false`; `gh release list` returns **nine**. The claim came from a handoff note saying the v6.4.0 merge shipped no release — true of **one merge**, carried forward as a property of **the repository** — with "and it is private" asserted on top and never tested. One command would have settled it.
+
+⚠️ **It is the session's own named class, and `check:claims` is structurally blind to it.** That gate reads the documents against the **code**; this claim was about a **remote**. A claim about something outside the repository has no gate, and saying so is the only honest mitigation available.
+
+**The case a naive version check gets wrong, and it is the live one:** the engine's newest *release* is **v6.3.0** while its newest *tag* is **v6.4.1**, because that repo tags every merge and publishes a release only sometimes. `installed !== latest` would have told a v6.4.1 user to downgrade. `updateVerdict()` returns **`ahead`** as a first-class answer, and `tests/test_deps.test.js` asserts it against exactly those two numbers.
+
+### The verdict is measured now, or it says it isn't
+
+**The big number was a yardstick presented as a measurement.** `_ledger` guessed the background from the source's **top-left pixel**, split artwork from it at a hardcoded **20**, and called a pixel survived at **alpha > 200** — while `web/app.js` printed the result in 44px type with no qualification, inside the one feature whose whole claim is that the app never reports a check it did not earn. The function's own docstring admitted the thresholds were *"INVENTED"* and the figure *"never an absolute damage figure"*.
+
+**All three guesses had a real answer already in hand**, because Devoid computes the analysis for its own questions and hands it to the render:
+
+| was | is |
+|---|---|
+| the corner pixel | the engine's measured **`detected_bg_color`** |
+| a hardcoded `20` | the engine's own tolerance, from the handoff document |
+| `alpha > 200` | **`alpha == 0`** — removed needs no threshold, so there is none to invent |
+
+When no analysis is available the old estimate still runs and the row carries **`measured: false`**, which the panel now says out loud. `tests/test_ledger_honesty.py` — 6 cases — builds a file whose **artwork touches the corner**: measured reports **0 artwork lost**, the estimate reports **1,456**, the entire background misread as damage. That was shipping as a headline figure.
+
+### Rules, briefs and reasons that had stopped being true
+
+| the claim | what was true |
+|---|---|
+| **the 1:1 controls rule** | `CLAUDE.md` forbade controls mapping onto engine flags. **Six shipped** (`web/canvas.js:89-94`). The drawer is right and the rule was wrong: it named a mechanism where the design cares about an experience. Now: *a control may offer a capability, never a flag* — the test is the label |
+| **`docs/PRODUCT.md`'s audience** | *"the project is not shaped around that stranger"* — written when the repo was private. It went public this evening with a front door, a contributing guide and an issue tracker. The document every decision is justified against was stale about who the work is for |
+| **"needs a canvas decoder"** | `web/vendor/gifuct.js` is in the repo, vendored by an npm script, already decoding frames in the seam. GIF-only and unwired — a scope, not a blocker |
+| **"an unsigned build"** | the build is signed, self-signed; the same file says so 230 lines earlier. And Squirrel is one mechanism, not the category |
+| **"keeps the layout identical"** | the contact sheet deliberately varies with count, documented as a feature two sections above |
+| **`appendlog.py`** | still described `labels/protection.jsonl` as a live second writer, removed on 2026-09-07 |
+| **`4000` and `DAY_MS`** | mine, three hours old. A `setTimeout` does not "never block the window" at any delay; both now say they are judgements |
+
+🔴 **The generator behind all of it: this project rewards stating reasons, so a structure that demands a reason receives one — including where the truth is "nobody built it".** Four of eight non-goal rows were unbuilt work wearing a justification; the three with real external causes were clean. **The table now has a `kind` column with `outside our control` / `decided` / **not built**, so the honest answer is writeable.** Fixing the sentences would have produced better-sounding reasons and the same defect — which is exactly what happened three hours earlier, when the differentiator column was renamed from *"the evidence"* to *"why it holds"* and its three empty cells were filled in rather than emptied.
+
+### The engine's absence stops being described as a virtue
+
+*"It is deliberately not bundled: a copy inside the app would drift from the original in silence."* **The engine is one 636 KB Python file, and Devoid already ships `numpy`, `PIL` and `scipy` — its only dependencies — at 149 MB of a 170 MB disk image.**
+
+⚠️ **The argument was also backwards.** Not bundling guarantees drift rather than preventing it, which is how a floor of v6.3.3 came to sit above a newest release of v6.3.0. The README now says the absence is a gap, points at the tracker, and gives the step; bundling is filed `[P1 · M]` with the resolution order and the LGPL obligation that comes with a shipped copy.
+
+### Four screenshots, three of them the same screen
+
+**Nobody had opened them.** They were described from alt text and filenames through a rebuild, a critique agent, a four-pass external review and several rounds of edits — and every one of those passes reasoned about `01-contact-sheet`, `02-open-question`, `09-seam` and `10-ledger` without looking at the pixels.
+
+Opening them: **02, 09 and 10 are the same screen** — the megaphone open view, differing only in what the right rail holds. At the sizes they shipped at, a reader could not tell them apart, and the thing each caption pointed to was a fraction of a 1640px window:
+
+| | was | now |
+|---|---|---|
+| the question | a whole app window; the outlined region and the two buttons that answer it sat 400px apart | **`the-question.webp`**, 1090×505 at ~1:1 — the tag, the region, the panel and both buttons |
+| the contact sheet | six tiles at a 2.3× downscale; the `needs you` marker rendered about 5px tall | **`needs-you.webp`** — two tiles, one marked, one not |
+| the verdict | the numbers were a small block in the corner of another megaphone screen | **`verdict.webp`**, 470×180, and **`not-checked.webp`** for the claim about the unearned tick |
+| the seam | **removed.** Both sides of the divider look identical, so the shot does not show the one thing a seam is for | filed `[P1 · S]` with the capture change |
+
+⚠️ **Cropping was in the external review's recommendations and I sized the images instead** — `width=` only makes an unreadable picture bigger, which that report said in as many words. Three unreferenced captures went with them; `docs/` is now **632 KB**, from 1,333 KB before this branch.
+
+### A second review of the README, and the eight facts it was still wrong about
+
+A worktree session ran four passes over the rendered page — UX copy, AI-writing detection, clarity and onboarding, layout and visual — and fact-checked every claim against the code and GitHub's API. **Its md5 matched the live file exactly**, so nothing in it was stale. Eight findings were factual rather than aesthetic:
+
+| the claim | what was true |
+|---|---|
+| **`offline only` badge** | the app now asks GitHub daily on launch. The page contradicted itself 150 lines apart, and **the edit that made it false was made the same evening** |
+| **`10.2%`, quoted alone** | `docs/PRODUCT.md` says verbatim *"Never quote 10.2% on its own as the refusal rate"* and flags it **STALE IN THE UNSAFE DIRECTION**. The interrupt rate is **12.8%**, which appeared nowhere |
+| **the fade question** | deleted from the README, still live in `server/validate.py`. A user would meet a question the docs said did not exist |
+| **"3.11 exactly"** | quoting `requires-python = ">=3.11"` as its evidence — a floor, disproving the claim it was cited for |
+| **"Download Devoid 1.1.0"** | linked to a releases page whose only release is v1.0.0 |
+| **the fallback engine path** | promised in a cross-reference to Troubleshooting, printed nowhere in the file. The **only** internal anchor, and it pointed at the section containing it |
+| **the engine floor** | Devoid needs v6.3.3; the newest published engine release was v6.3.0. Following the README's link got you an engine Devoid refuses |
+| **badge `#E2402A`** | **4.20:1** against shields' white text — fails WCAG AA — and it doubled as the app's *this goes* red, so the badge strip contradicted the page's own "colour is never the only signal" claim |
+
+**And two measured layout defects:** the only two screenshots without a `width` attribute rendered **445×288** on desktop and **107×70** at 400px — a 15.3× downscale of images whose alt text promised detail invisible at either size — and two tables shipped an empty `| | |` header row, which GFM renders as a blank bordered band and a screen reader announces as blank column headers.
+
+🔴 **`check:claims` had a badge-contrast check and it passed this.** Its threshold read `< 3`, which is WCAG's **large-text** bar; shields sets its label in ~11px bold, so the bar is **4.5:1**. `#E2402A` at 4.20 sat between the two numbers. **A threshold copied from the wrong row of the spec is indistinguishable from no threshold at all for everything in between.**
+
+Three checks added and falsified: the AA threshold corrected, a `docs/` screenshot with no `width=`, and an empty table header row. The last one immediately found **five more** empty headers in files the report never looked at — `CONTRIBUTING.md`, `docs/PRODUCT.md`, `docs/DEVELOPMENT.md` and `docs/CHANGELOG.md` twice.
+
+### The gate for stale counts had been passing while eleven of them shipped
+
+`check:claims` was built earlier the same evening *specifically* to catch a hardcoded count of the engine's options drifting. It passed. Meanwhile the number was wrong in **eleven live places** — `CLAUDE.md` twice, `docs/PRODUCT.md` three times, `map.yaml`, `web/app.js`, `server/cli.py`, a test's own docstring, an API fixture note. Eight said **63**, three said **64**. The parser reports **64**.
+
+**Two reasons, and they are the same mistake twice:**
+
+| the reason | what it cost |
+|---|---|
+| the pattern matched `options` and never `flags` | **every occurrence in this repository says flags.** The falsifier that proved the check worked injected `"63 options"` — a string shaped like the **check** rather than like the **defect** |
+| it read three files | the claim lived in eleven, including two source files and a test |
+
+🔴 **A gate falsified against a synthetic instance is falsified against nothing.** This repo's own rule is that a check is finished when it has been run against the defect and failed — and this one was, against a defect written to match it. **Falsify against an instance you did not author**, or against the real one if it is still there.
+
+All eleven now read *"every flag"*, which cannot go stale. The check reads **fifteen files** and matches both words, and it distinguishes a **claim** from a **citation** by quote parity — so `CLAUDE.md` and `DEVLOG.md` can keep quoting *"the 63 options"* as the defect they record without the gate firing on their own history. Falsified three ways: a real unquoted claim fails it, a citation does not, and the correct count does not.
+
+### `check:design`'s scope depended on what was lying in the directory
+
+`git status --porcelain` lists **untracked** files, and `check:design` fed all of them to the detector. Two scratch renders of the README left at the repo root — `.readme-render.html` and its light twin — entered the design contract and failed it with **17 findings**, every one a correct reading of **GitHub's own stylesheet** rather than of this app.
+
+⚠️ **The defect is not the failure, it is the scope.** A saved article, an editor backup or a downloaded page could turn the design gate red, and a clean checkout and a working one scanned different file sets — so the gate measured the directory as much as the product. An untracked file ships nowhere.
+
+Untracked paths are now dropped **unless they are under `web/`**, because new shipped surface is untracked until it is added and excluding it would open the opposite hole. Falsified both ways: the same deliberately defective page is **ignored at the root** and **fails under `web/`**.
+
+### The README is a front door again
+
+Rebuilt against eight pieces of direct feedback. The philosophy section is gone; the install block leads; the requirement list shrank to the one thing Devoid genuinely cannot fetch for you. Screenshots pair two-up at half width instead of stacking full-bleed, and every image is **WebP** — `docs/` went from **1333 KB to 857 KB**, the banner alone from 342 KB to 69 KB.
+
+### The conventions this repo runs on, written down
 
 The banner is [DEVOID Banner V2_Warp](DEVOID%20Logo%20Assets/), resized to 1640px for its 820px display width. The rest is `CLAUDE.md`: the full lifecycle, the final pre-merge checkpoint, merge-vs-release, and commit/branch/PR naming — verified line by line against Dior's Builds and the engine repo rather than summarised from memory.
 
@@ -42,7 +195,7 @@ Two fresh readers and two auditors were run over the README, `docs/DEVELOPMENT.m
 
 **Fixed in this release:**
 
-| | |
+| the defect | the fix |
 |---|---|
 | `main.js` accepted a **system Python 3.10** while `pyproject.toml` declares `>=3.11` and the failure dialog says 3.11 | floor raised to 3.11, so the three sources agree |
 | The update dialog told the user the app **"is not code-signed"** | it is signed, just not by an authority another Mac trusts. Message corrected |

@@ -2,7 +2,7 @@
 
 ⚠️ **Only flags the person actually took over are passed explicitly.** Everything
 else is left absent so ``--auto`` still applies its recommendation. A UI that sends
-all 64 flags makes ``--auto`` a no-op and the tool stops thinking (``CLAUDE.md``,
+every flag makes ``--auto`` a no-op and the tool stops thinking (``CLAUDE.md``,
 "every control is tri-state"). This module is where that rule is *enforced*, not
 merely intended: an override whose value equals the parser's own default is
 dropped, and an unknown flag name is rejected rather than shelled out.

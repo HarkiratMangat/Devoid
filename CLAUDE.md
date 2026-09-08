@@ -208,9 +208,13 @@ This is a standing preference, stated at the top of the first session here (*"As
 
 ## The rules that are specific to this project
 
-**Never add a control that maps 1:1 onto one of the skill's 63 flags.** The point is that the person using it does not learn them. New surface belongs in a preset (a goal) or in a question the app asks — never as a passthrough.
+**A control may expose an engine capability. It may never expose an engine FLAG.** The test is the label: *"Keep the fade"* is a control; *"--recover-fade-alpha"* is a passthrough. Every control carries an outcome-phrased label and a hint in the person's own words, and the person never types or reads a flag name.
 
-**Every control is tri-state.** `--auto` applies its recommendation **only where an option was left at its default**. A UI that sends all 63 flags makes `--auto` a no-op and the tool stops thinking. Controls read `auto · <value>` until deliberately taken over.
+⚠️ **THIS RULE READ "never add a control that maps 1:1 onto one of the engine's flags" UNTIL 2026-09-07 20:56 EDT, AND THE SHIPPED APP BROKE IT.** `web/canvas.js:89-94` is six controls that map exactly one-to-one — *Cut and follow* → `--remove-region-track`, *Keep the fade* → `--recover-fade-alpha`, *Cut anyway* → `--assume-remove`, and three more. They are the product working: `docs/PRODUCT.md` argues in its own words that **"options presented as outcomes need no learning at all"**, which is an argument FOR the drawer and against the old rule.
+
+🔴 **A rule the product's best feature violates is a rule nobody can apply**, and this one was quoted through a whole session — by me, out of this file, at the top of every context window — while the app that contradicts it sat one directory away. **The tell was available: the rule names a mechanism (1:1 mapping) where the design cares about an experience (does the person meet a flag).** A rule written about the implementation cannot survive the implementation changing.
+
+**Every control is tri-state.** `--auto` applies its recommendation **only where an option was left at its default**. A UI that sends every flag makes `--auto` a no-op and the tool stops thinking. Controls read `auto · <value>` until deliberately taken over.
 
 **Never infer a size target, and never report a verification the run did not earn.** Both are measured failure modes with history; `docs/PRODUCT.md` carries the evidence. "Not checked" is a first-class state with the same visual weight as done and failed.
 
@@ -377,7 +381,7 @@ linksee-memory map reconcile           # re-run every check
 
 ## Testing
 
-🔴 **`npm test` RUNS ALL ELEVEN GATES. Use it.** Until 2026-09-07 12:03 EDT there was no aggregate and every session re-listed them by hand from a commit message — which is a checklist living in prose, and it was nearly short by one twice in one day. ⚠️ **The order is load-bearing and cannot be alphabetised:** `gate:ui` writes the captures and the `.boxes.json` sidecars that `check:greyscale` then measures, so greyscale must run after it. `check:tracker` runs last because it is about the branch, not the code.
+🔴 **`npm test` RUNS ALL FOURTEEN GATES. Use it.** Until 2026-09-07 12:03 EDT there was no aggregate and every session re-listed them by hand from a commit message — which is a checklist living in prose, and it was nearly short by one twice in one day. ⚠️ **The order is load-bearing and cannot be alphabetised:** `gate:ui` writes the captures and the `.boxes.json` sidecars that `check:greyscale` then measures, so greyscale must run after it. `check:tracker` runs last because it is about the branch, not the code.
 
 🔴 **A CLAIM IN A DOCUMENT IS CODE NOBODY COMPILES, AND `npm run check:claims` IS THE ANSWER (2026-09-07 18:31 EDT).** Five wrong claims shipped in one afternoon and no gate could see any of them, because every gate read the product and none read what the product's documents said about it. They shared one shape: **true of one artefact, on one machine, at one moment, written as a property of the software.**
 
@@ -388,8 +392,13 @@ linksee-memory map reconcile           # re-run every check
 | a `v1.0.0` badge | over a `package.json` reading `1.0.1`, stale the day it was written |
 | a `#22D3EE` swatch | **1.81:1** on white — a number `DESIGN.md` already records, with a second cyan carried for exactly this. Fixed in one place, left in another |
 | *"the published build is arm64"* | `electron-builder.yml` pins no architecture; it builds for whatever machine runs it |
+| **the three `REQUIRED_BINARIES`, treated as present** | `startServer` passed the shell's `PATH` to the server. A **Finder-launched app has no shell**, so the packaged build could not see `/opt/homebrew/bin` and called itself degraded on a Mac where the tools worked. Found 2026-09-07 18:59 EDT, and it is the same tell inverted: the tool names appear in `REQUIRED_BINARIES` and in three documents, and in **no code that says where they live** |
+
+⛔ **AND THE GATE HAS A HOLE IT CANNOT CLOSE (2026-09-07 19:18 EDT).** `check:claims` compares the documents against **this repository's code**. A claim about anything **outside** it has no gate. One shipped the same evening, into three documents: *"the engine repository publishes no releases and is private"* — `isPrivate: false`, **nine** releases. It came from a handoff note about **one merge** shipping no release, generalised into a property of the repository, with "private" asserted on top and never checked; the gate passed on all three documents. ⚠️ **It was argued from this repo's own correct principle** — *never ship a path that fails at runtime* — which made an unchecked premise read as rigour. **If a claim's truth lives on a server, verify it with a command and cite the command.**
 
 ⚠️ **The tell was available every time and nobody looked for it:** a constant that appears in comments and configuration but in **no conditional** is describing a habit, not a rule. The gate is falsified against all seven of the defects above; `npm run check:claims` on its own runs in under a second.
+
+🔴 **AND THE FALSIFIER ITSELF CAN BE VACUOUS — MEASURED 2026-09-07 19:20 EDT.** `check:claims` was written to catch a stale count of the engine's options, was falsified, passed, and **eleven wrong counts shipped past it** in eight files it never read, all of them saying **flags** where its pattern said **options**. The falsifier had injected `"63 options"` — a string shaped like the **check**, not like the **defect**. ⚠️ **A gate proven against an instance you wrote yourself is proven against your own assumption.** Falsify against a real occurrence, or against one somebody else authored; if the defect is still in the tree, that is the falsifier.
 
 🔴 **A CHECK IS NOT FINISHED WHEN IT PASSES. IT IS FINISHED WHEN IT HAS BEEN RUN AGAINST THE DEFECT AND FAILED.** 2026-09-07 12:03 EDT: eight mistakes in one session were all one shape — the artifact was verified and the thing it connects to was not. A first-run installer whose promised command is a hard error in a virtualenv, into a bundle with no pip. An unscoped query that made a correct index look empty. A ported gate that passed on a deleted item, twice. A threshold sitting exactly on its own noise floor. "map 17/17 verified" quoted as coverage while the nodes named none of the day's work. **This file already said "verification proves EXISTENCE, never CONNECTION" through all eight.** Another sentence is not the fix; the falsifier is. Where it was run — the density rule, the tracker gate, `check:design`, the greyscale control pair — the check held. Where it was skipped, the code was broken.
 
