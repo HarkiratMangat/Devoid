@@ -1,6 +1,6 @@
 {
   "name": "devoid",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A local desktop app for removing the background from animated images \u2014 GIF, WebP, AVIF, APNG, and static PNG/JPEG \u2014 and fitting the result to a size or format target.",
   "main": "main.js",
   "scripts": {

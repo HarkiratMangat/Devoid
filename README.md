@@ -7,9 +7,9 @@
 <a href="https://github.com/HarkiratMangat/Devoid/releases/latest"><img src="https://img.shields.io/badge/%E2%AC%87%20Download%20for%20macOS-9B3551?style=for-the-badge" alt="Download for macOS" height="40"></a>
 
 <p>
-<img src="https://img.shields.io/github/v/release/HarkiratMangat/Devoid?style=flat-square&label=&color=4A3B52" alt="latest release">
+<a href="https://github.com/HarkiratMangat/Devoid/releases/latest"><img src="https://img.shields.io/github/v/release/HarkiratMangat/Devoid?style=flat-square&label=&color=4A3B52" alt="latest release"></a>
 <img src="https://img.shields.io/badge/Apple%20silicon-E8E8ED?style=flat-square" alt="Apple silicon">
-<img src="https://img.shields.io/github/license/HarkiratMangat/Devoid?style=flat-square&label=&color=3D4451" alt="licence">
+<a href="https://github.com/HarkiratMangat/Devoid/blob/main/LICENSE"><img src="https://img.shields.io/github/license/HarkiratMangat/Devoid?style=flat-square&label=&color=3D4451" alt="licence"></a>
 </p>
 
 <p><a href="#download-and-install">Download</a> &nbsp;·&nbsp; <a href="#the-engines-question">What it asks you</a> &nbsp;·&nbsp; <a href="#using-it">Using it</a> &nbsp;·&nbsp; <a href="#if-something-goes-wrong">If something goes wrong</a></p>

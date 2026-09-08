@@ -8,7 +8,7 @@
 
 ```markdown
 <p>
-<a href="https://github.com/HarkiratMangat/Devoid/releases/latest"><img src="https://img.shields.io/github/v/release/HarkiratMangat/Devoid?style=flat-square&label=&color=4A3B52" alt="latest release"></a>
+<a href="https://github.com/HarkiratMangat/Devoid/releases/latest"><img src="https://img.shields.io/badge/vX.Y.Z-4A3B52?style=flat-square" alt="vX.Y.Z"></a>
 <a href="https://github.com/HarkiratMangat/Devoid/blob/main/README.md"><img src="https://img.shields.io/badge/README-FFE9B8?style=flat-square" alt="README"></a>
 <a href="https://github.com/HarkiratMangat/Devoid/blob/main/LICENSE"><img src="https://img.shields.io/github/license/HarkiratMangat/Devoid?style=flat-square&label=&color=3D4451" alt="licence"></a>
 </p>
@@ -35,7 +35,8 @@ Full write-up — every defect found and fixed — is in [`docs/CHANGELOG.md`](h
 
 ## Rules that make this a convention, not a one-off
 
-- **The badge row is fixed.** Same three badges, same colors (`4A3B52` version · `FFE9B8` README · `3D4451` license), same order, every release — `4A3B52`/`3D4451` are the exact values `README.md`'s own badge row uses; `FFE9B8` (`accretion-gold`, `docs/DESIGN.md`) is reserved for the README badge specifically, so it never collides with the other two. Don't invent a new color per release.
+- **The badge row is fixed in shape and color, NOT in content.** Same three badges, same colors (`4A3B52` version · `FFE9B8` README · `3D4451` license), same order, every release — `4A3B52`/`3D4451` are the exact values `README.md`'s own badge row uses; `FFE9B8` (`accretion-gold`, `docs/DESIGN.md`) is reserved for the README badge specifically, so it never collides with the other two. Don't invent a new color per release.
+- ⚠️ **THE VERSION BADGE MUST BE STATIC, NEVER `github/v/release` (corrected 2026-09-08).** `img.shields.io/github/v/release/...` queries GitHub live and always resolves to whatever is CURRENTLY the newest release — used inside a release note, that means every past release's own page silently updates to show the NEWEST version's badge the moment a new one ships, misrepresenting its own history. Harkirat, catching it on v1.0.0 and v1.1.0 both showing "v1.2.0" the day v1.2.0 shipped: *"we can't use a dynamic badge because it also updates the badge on prior release notes."* Use `img.shields.io/badge/vX.Y.Z-4A3B52?style=flat-square` instead — a literal string baked into the URL, filled in per release, that can never drift. The dynamic `github/v/release` badge is still correct in `README.md`, which is a living document that SHOULD always say "latest"; it is wrong everywhere it would be frozen into a specific version's own page.
 - **The body stays short. The CHANGELOG carries the detail.** This file is bullets and one sentence; `docs/CHANGELOG.md` is where the defects, the measurements and the reasoning live. If a release note needs a table or a multi-paragraph explanation, that content belongs in the CHANGELOG entry, linked from here — not inlined.
 - **The bullets go in the `<details>`, not loose in the body.** That's what keeps the `.dmg` download visible without scrolling on the releases page.
 - **The `[!IMPORTANT]` block is fixed, not conditional.** Same unsigned-app / right-click-to-open text, every release — most people land on the releases page, not the README, so this is the one place that first-run instruction is guaranteed to reach them. Only revise its wording the day signing actually changes (a paid Apple ID, notarisation); don't drop it "because it's not new."
