@@ -12,12 +12,17 @@
     return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
   }
 
-  /* Max-channel distance -- the same test server/render.py's _ledger uses to
-     classify a pixel against a reference colour (tol=20 there when nothing
-     better is measured). Reused rather than invented: same repo, same shape
-     of comparison, same unmeasured default. Anti-aliased edges land inside
-     this tolerance; a differently-coloured neighbour does not. */
-  var DEFAULT_TOLERANCE = 20;
+  /* Max-channel distance. Measured against the corpus's one real
+     ambiguous-protection case (megaphone.src.gif, region 002864, bbox
+     94,56,164,145): the true navy pixels cluster tightly at distance 17-19
+     (1,117 of 6,230 bbox px), then a hard gap -- the next value is 21, and
+     values climb gradually (a real anti-aliasing gradient) up to 39 before
+     jumping to an unrelated colour cluster at 46+. 30 sits in that gap: it
+     sweeps in the AA tail (1,133 px, +16 over a bare exact-cluster cutoff)
+     without reaching the next colour. ⚠️ This is ONE asset -- the corpus has
+     no second real case to check this against; re-measure before trusting
+     it on a differently-coloured region. */
+  var DEFAULT_TOLERANCE = 30;
 
   function pixelMatchesHex(r, g, b, hex, tolerance) {
     var t = typeof tolerance === 'number' ? tolerance : DEFAULT_TOLERANCE;

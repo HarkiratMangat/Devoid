@@ -35,6 +35,26 @@ Harkirat: *"your idea for a 'why it works this way' section isn't wrong, but the
 
 
 
+### `[P2 · S · Sonnet5-High]` `09-seam.webp` still needs a real crop before it can ship *(filed 2026-09-08 17:35 EDT, successor to "09-seam.webp does not show a seam doing anything")*
+
+**The mechanism is confirmed fixed, and that is not the same thing as the screenshot being fixed.** `web/regionmask.js`'s pixel mask landed and the seam now genuinely differs between its two sides — measured, not guessed: 52,011 vs 54,058 background px removed on the megaphone's `protection` question. `gate:ui`'s own verification capture (`local/window-shots/09-seam.png`) proves the mechanism.
+
+⚠️ **A first pass this session claimed this was "recaptured" into `docs/shots/09-seam.webp` and the README.** Neither happened — `gate:ui` writes to `local/`, which is gitignored, and nobody copied the file into the tracked, shipped location. Caught only because the raw capture was sent to Harkirat and looked at with fresh eyes rather than described from memory: *"i can't figure out wtf you're description is talking about or wtf i'm looking it or wtf the screenshot is trying to show me."*
+
+**Why the raw capture still fails, specifically.** It is the full Electron window — sidebar icons, top-bar buttons, a starfield background — none of it relevant to the one thing the screenshot needs to show. The dashed seam divider is a thin, low-contrast line on a dark ground. The hatch marking the disputed region is small and sits inside a small red box, easy to miss entirely. The two numbers that actually prove the difference (52,011 / 54,058) have no visual line connecting them back to the hatch. This is the exact legibility failure the original filing was about, on a fresh capture.
+
+**Concrete next action:** crop tightly to the wipe + the disputed box, the way `the-question.webp` is cropped to 1930×800 — not the whole window. Possibly zoom further into just the box and the seam line either side of it, since even a tight window-crop may still bury the one pixel-level detail that matters. Needs an actual design pass, not a bigger claim about an uncropped file.
+
+### `[P2 · M · Sonnet5-High]` The question-card fallback has the identical bbox-not-shape defect the seam view just had *(filed 2026-09-08 17:40 EDT)*
+
+`web/regionmask.js`'s per-pixel colour mask was wired into `renderQuestionRegions` (`web/app.js`) — the live-seam overlay. `web/wipe.js`'s `drawHatchedRegion(host, side, bbox)` is the OTHER renderer for the same disputed-region question — the fallback used when `seamCanHelp()` says the two candidate answers are too visually similar to compare directly (PLAN.md 3.0b) — and it still clips a plain rectangle (`ctx.rect(x0,y0,bw,bh); ctx.clip();`) with a diagonal hatch inside it. Same defect, second code path.
+
+⚠️ **Currently unreached by the corpus's one real ambiguous-protection asset**, since the megaphone's seam DOES help (confirmed this session — the two sides measurably differ). That is a mitigating fact about the current corpus, not a proof the card path can't fire on some other asset; it was not tested as unreachable, only observed to not fire in the runs watched this session.
+
+**Also worth folding in if this is picked up:** the seam-view mask samples ONE static frame of `#before` (whatever frame the browser happens to be showing when `art.complete` first becomes true — effectively frame 0). The disputed region's own definition is multi-frame (`frames_enclosed`/`frames_checked`, e.g. "held on 102 of 144 frames"), so a mask computed from one frame could be wrong for frames where the enclosure's shape or position actually differs. Not a regression — the old rectangle was equally frame-agnostic — but an unstated scope limit that should be named if the card path gets the same treatment, rather than silently inherited a second time.
+
+**Concrete next action:** either reuse `web/regionmask.js`'s `regionMaskDataURL` inside `drawHatchedRegion` (it already has a decoded frame via `side.frames[i]`, so this may be a small change), or determine and document that the card path is provably unreachable for every asset this app currently supports and downgrade this item accordingly — but that determination has to be made, not assumed.
+
 ## ✅ Considered and NOT fixed — a real decision, not an oversight
 
 ### Notarisation, self-updates and a screen-reader pass are NOT being done *(decided 2026-09-07 11:05 EDT)*
