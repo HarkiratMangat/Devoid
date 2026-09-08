@@ -20,7 +20,15 @@ What shipped, when, and why. Newest first.
 
 ---
 
-## v1.2.0 — 2026-09-08 16:55 EDT (#4) — the region mark stops lying about its own shape
+## v1.2.1 — 2026-09-08 18:00 EDT (#5) — badges that link where they say, and don't drift after they ship
+
+**Two real bugs, both found by looking at the published pages rather than trusting the markup.** Minor: neither changes what the app does, only what its own documentation says and links to.
+
+`README.md`'s version and license badges were bare `<img>` tags with no `<a>` wrapper — clicking either opened the raw shields.io image instead of `releases/latest` or `LICENSE`. The download badge already had its wrapper; these two didn't. Fixed to match.
+
+🔴 **The release-note template's version badge used `img.shields.io/github/v/release`, a DYNAMIC endpoint, inside a page that is supposed to be a frozen snapshot of one release.** It always resolves to whatever is CURRENTLY the newest release, so every past release's own page silently updated to show the newest badge the moment a new version shipped — v1.0.0 and v1.1.0 both read "v1.2.0" the day v1.2.0 shipped. Harkirat caught it live, looking at the actual releases list. Changed to a static per-release badge (`img.shields.io/badge/vX.Y.Z-...`), which cannot drift; backfilled onto all three already-published releases.
+
+## v1.2.0 — 2026-09-08 16:55 EDT (#4 · `61d8cbd`) — the region mark stops lying about its own shape
 
 **Started as three deferred `[P1]`s and a `[P2]`; grew a UX-copy fix and a real regression along the way.** Behaviour changed in three places, which puts this at moderate whatever the diff size — the bars are in `CLAUDE.md`.
 
