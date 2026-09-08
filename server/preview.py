@@ -54,6 +54,11 @@ _lock = threading.Lock()
 #: as a second opinion for a future consumer that has no decoded frames to
 #: measure from itself (a server-side batch view, say), not because it is the
 #: one this app's UI actually trusts.
+#: ⚠️ VERIFIED, NOT JUST ASSERTED (2026-09-08). Traced loadPair -> fetchPair
+#: in the code graph: the fetched payload's `seam_useful` key is never read on
+#: that path. The deferred worry that a "provisional constant silently chooses
+#: the interaction" does not hold today -- there is no live consumer for it to
+#: mislead. Re-check this comment before wiring seam_useful into anything new.
 SEAM_THRESHOLD = 0.02
 
 

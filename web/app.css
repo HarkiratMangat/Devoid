@@ -995,7 +995,16 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
    region that never gets the property paints nothing rather than covering
    both halves again. */
 .qregion:before{content:"";position:absolute;inset:0;border-radius:inherit;
-  clip-path:inset(0 0 0 var(--qseam,100%));background:
+  clip-path:inset(0 0 0 var(--qseam,100%));
+  /* ⚠️ THE MASK, NOT THE BOX (2026-09-08). --qmask is a per-pixel colour-match
+     PNG from regionmask.js, alpha-only -- it shapes which pixels of the hatch
+     below actually show, so a diagonal band reads as a diagonal band instead
+     of the rectangle around it. Unset (--qmask,none) degrades to the old
+     full-box hatch, never to nothing. */
+  -webkit-mask-image:var(--qmask,none);mask-image:var(--qmask,none);
+  -webkit-mask-size:100% 100%;mask-size:100% 100%;
+  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+  background:
     repeating-linear-gradient(45deg,rgba(226,64,42,.30) 0 3px,transparent 3px 8px),
     rgba(226,64,42,.14)}
 .qregion b{position:absolute;left:0;bottom:calc(100% + var(--s1));

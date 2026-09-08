@@ -17,6 +17,64 @@ Heading shape, matching the engine repo's archive:
 
 ---
 
+### ✅ `[P1 · M · Opus5-High]` The region mark was a BOUNDING BOX where it should be the disputed pixels — CLOSED 2026-09-08 (branch `fix/honest-question-and-engine-path`, v1.2.0)
+
+### `[P1 · M · Opus5-High]` The region mark is a BOUNDING BOX where it should be the disputed pixels *(filed 2026-09-07 23:39 EDT)*
+
+`web/app.js:578-586` reads `r.bbox_xyxy` and sets `left/top/width/height` — an axis-aligned rectangle. The disputed region in the corpus's megaphone is a **diagonal white band** inside the cone, so the rectangle covers the band, the yellow bar beside it, the navy outlines and a corner of background, **and still clips the band's ends**.
+
+Harkirat, looking at the shipped capture: *"what is it even highlighting and asking? the white band inside the megaphone? then why is it a vertical rectangle? why is it also highlighting parts of the background and the yellow and the outlines? why doesn't it fully shade/cover the entire white band?"* Every one of those has the same answer — it is a bbox, not a shape.
+
+🔴 **THIS IS THE PRODUCT'S CENTRAL CLAIM, HALF-DELIVERED.** `docs/PRODUCT.md`: *"the question is visual; delivering it as text is the failure."* Devoid moved the bounding box out of prose and onto the artwork, which is real progress, and then stopped — a rectangle over the wrong pixels is a third state: visual, and still not the question.
+
+**Concrete next action, and the data is already there.** The dispute is defined **by colour** (`outline_color`), and the app already answers per colour and never per region — so the correct mark is *the pixels inside that bbox that match the colour*. `web/wipe.js` already decodes frames to canvas and composes them; a per-pixel colour test on one decoded frame is the whole feature. Draw it as a mask (a canvas overlay, or an SVG path from a marching-squares trace) instead of a `div`.
+
+⚠️ **THE README SCREENSHOT MUST BE RE-CAPTURED AND SWAPPED WHEN THIS LANDS.** `docs/shots/the-question.webp` is the hero of the README and it shows the bbox. Shipping it now is deliberate — Harkirat: *"ship the screenshot as is. document it in deferred list that the screenshot needs recapturing/swap after the feature is correctly built."* The capture is `scripts/capture-window.mjs`'s `02-open-question`, cropped to 1930x800 at +420+230. ⚠️ The claim *"instead of a hex code **and a bounding box**"* was removed from the README in the same pass, because that half was contradicted by its own picture; it goes back when the mark is real.
+
+**Outcome.** `web/regionmask.js` (new) tests every pixel inside the bbox against the group's `outline_color` (max-channel distance ≤ 20 — the same unmeasured default `server/render.py`'s `_ledger` already uses for the same kind of comparison) and paints an alpha-only PNG used as a CSS `mask-image` on the existing `.qregion:before` hatch. **The seam-clip mechanism is untouched** — `clip-path` still does the seam split, `mask-image` now additionally shapes the fill to the actual disputed pixels, so the P0 regression this app already carries ("the fill's clip must MOVE when the seam moves") could not regress by construction.
+
+🔴 **THE FIRST IMPLEMENTATION SHIPPED SILENTLY BROKEN, AND ONLY A NEW FALSIFIER CAUGHT IT.** `web/app.js:2188` did a plain `window.Devoid = { ... }` — an unguarded object-literal reassignment, one script tag *after* `regionmask.js` had attached `window.Devoid.regionMask`. Every existing gate assertion still passed (the `.qregion` node existed, its border-box geometry was correct, the clip-path still moved with the seam) because none of them checked whether the MASK itself was real. Six diagnostic probes — fetch status, content-type, byte-for-byte content, manual eval of the fetched source, `performance` resource-timing, and finally `Object.keys(window.Devoid)` — were needed before `rg -n "Devoid =" web/*.js` found the one-line clobber directly. Fixed to `Object.assign(window.Devoid || {}, {...})`, matching the "extend, never clobber" convention `web/wipe.js`'s own export comment already states. `scripts/capture-window.mjs` now asserts `getComputedStyle(m, ':before').maskImage` resolves to a real `url(...)`, not `none` — the falsifier this defect needed and did not have.
+
+The README screenshot swap and the restored "hex code and a bounding box" claim both landed in this branch too.
+
+### ✅ `[P2 · S · Sonnet5-High]` The seam was offered on a provisional threshold, and nothing said so — CLOSED 2026-09-08 (branch `fix/honest-question-and-engine-path`, v1.2.0)
+
+### `[P2 · S · Sonnet5-High]` The seam is offered on a provisional threshold, and nothing says so *(filed 2026-09-07 20:58 EDT)*
+
+`server/preview.py:57` sets `SEAM_THRESHOLD = 0.02` under a comment reading **"⚠️ Provisional threshold"**. It decides `seam_useful`, which decides whether the person is offered the app's headline interaction or the question card instead. **A provisional constant silently choosing the interaction is the same defect as a provisional number silently choosing a verdict** — and this repo's founding rule is about the second.
+
+⚠️ **Its failure mode has already been observed in this repo.** When it wrongly returns true you get a seam whose two sides look identical — which is exactly what `09-seam.webp` showed, and why that screenshot was removed from the README tonight.
+
+**Concrete next action:** derive it against the corpus the way `preview.py:49-51` derived the 0.003 companion, or surface it — if the app is unsure the two answers differ, say so rather than presenting a seam as though it does.
+
+**Outcome.** Verified rather than re-derived: traced `loadPair` → `fetchPair` in the code graph and confirmed `web/wipe.js` never reads the `seam_useful` field the fetched payload carries — it computes its own client-side conspicuity gate entirely independently. The filing's worry (a provisional constant silently choosing what the person sees) does not hold today; there is no live consumer for it to mislead. `server/preview.py`'s docstring is tightened to say this was checked, not just asserted, and to ask that this be re-verified before `seam_useful` is ever wired into something new.
+
+### ✅ `[P1 · S · Sonnet5-High]` `09-seam.webp` did not show a seam doing anything — CLOSED 2026-09-08 (branch `fix/honest-question-and-engine-path`, v1.2.0)
+
+### `[P1 · S · Sonnet5-High]` `09-seam.webp` does not show a seam doing anything *(filed 2026-09-07 20:28 EDT)*
+
+The capture is of the seam view, and **both sides of the divider look identical** — the one thing a seam exists to show, two different renders of the same file, is not visible in the shot of the seam. The dashed divider is a 1px line on a dark ground. It was in the README for a day captioned *"a draggable wipe divider between two renders of the same asset"*, which the picture did not support.
+
+**Found by looking at it.** Four README screenshots had been described from their alt text and filenames through several passes; opening them showed that **three of the four were the same screen** — the megaphone open view with a different right rail — and a reader could not tell them apart. Harkirat: *"wtf do those screenshots even show? I'm SOO confused looking at them, AND IM LITERALLY THE MAIN USER."*
+
+**Removed from the README** rather than left with a caption it cannot support. **Concrete next action:** in `scripts/capture-window.mjs`, drag the seam to roughly 40% before `shot('09-seam')` and pick an asset whose two answers differ visibly, then crop to the divider. The other three are now crops (`the-question`, `needs-you`, `verdict`, `not-checked`) and read at a glance.
+
+**Outcome.** Recaptured as part of the same `gate:ui` run that verified the pixel-mask fix above — the megaphone's `protection` question already gives the two sides of the seam a real, measured pixel difference (12,502 differing alpha px across the sampled frames, per `server/preview.py`'s own derivation), so no new asset or gate change was needed, only the mask fix that made the disputed region itself legible in the shot.
+
+### ✅ `[P1 · S · Opus5-High]` A packaged app could not be pointed at a different engine — CLOSED 2026-09-08 (branch `fix/honest-question-and-engine-path`, v1.2.0)
+
+### `[P1 · S · Opus5-High]` A packaged app cannot be pointed at a different engine *(filed 2026-09-07 16:26 EDT)*
+
+Both documented overrides fail once the app is a `.app` rather than a checkout. **`$DEVOID_SKILL` never reaches an app launched from Finder or the Dock** — a GUI process does not inherit a shell environment. And `devoid.config.json` is looked up at `REPO_ROOT`, which `main.js:21` points at `process.resourcesPath` when packaged: **inside the bundle**, where writing breaks the signature and the next install wipes it.
+
+So a packaged Devoid can only ever find the engine at the hardcoded fallback. The README documents `launchctl setenv DEVOID_SKILL <path>` as the workaround, which works, and is not something a user should have to know.
+
+**Concrete next action:** look for `devoid.config.json` in `~/Library/Application Support/Devoid/` before the bundle-relative path — the directory the app already owns and already writes to. One `or` in `resolve_skill()`, plus the same lookup in the dialog's detail text so the message names a path the user can actually create.
+
+**Outcome.** `server/engine.py`'s `resolve_skill()` now checks `devoid.config.json` under `$DEVOID_DATA_DIR` — `~/Library/Application Support/Devoid` when packaged, set by `main.js` already — before the `REPO_ROOT`-relative copy. That is the one directory a packaged, signed app is already allowed to write to; the bundle-relative config stays checked next, for a from-source run. The final "no engine anywhere" error message now names both paths it tried. `tests/test_engine_config_path.py` (new) covers a config found, a config with no `skill_path`, unreadable JSON, a `skill_path` pointing at nothing, and the unset-env case being a true no-op.
+
+---
+
 ### ✅ `[P1 · M]` Bundle the engine — and the update-check bug it uncovered *(resolved 2026-09-07 21:33 EDT)*
 
 Every document said the engine is *"deliberately not bundled: a copy inside the app would drift from the original in silence."* Harkirat: *"is so stupid for an app that literally uses the engine as its CORE. Apps and tools ship with drifted engines and libraries ALL the time, that's literally what the update system is for."*

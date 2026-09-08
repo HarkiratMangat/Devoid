@@ -79,6 +79,30 @@ def resolve_skill() -> tuple[Path, str]:
             raise EngineUnavailable(f"$DEVOID_SKILL points at {p}, which is not a file")
         return p, "env"
 
+    # ⚠️ CHECKED BEFORE REPO_ROOT's copy (2026-09-08). Packaged, REPO_ROOT is
+    # inside the .app bundle -- read-only under signing, wiped on the next
+    # install -- so a config there can only ever be the one shipped with the
+    # build, never one a person wrote. main.js already sets DEVOID_DATA_DIR to
+    # `app.getPath('userData')` when packaged (~/Library/Application
+    # Support/Devoid), the one place the packaged app is already allowed to
+    # write; a config left there is the only way to point a packaged Devoid at
+    # a different engine at all.
+    data_dir = os.environ.get("DEVOID_DATA_DIR")
+    if data_dir:
+        user_cfg = Path(data_dir).expanduser() / "devoid.config.json"
+        if user_cfg.is_file():
+            try:
+                raw = json.loads(user_cfg.read_text())
+            except (OSError, ValueError) as exc:
+                raise EngineUnavailable(f"{user_cfg} is not readable JSON: {exc}") from exc
+            if raw.get("skill_path"):
+                p = Path(raw["skill_path"]).expanduser()
+                if not p.is_file():
+                    raise EngineUnavailable(
+                        f"{user_cfg}'s skill_path points at {p}, which is not a file"
+                    )
+                return p, "config"
+
     cfg = REPO_ROOT / "devoid.config.json"
     if cfg.is_file():
         try:
@@ -97,10 +121,11 @@ def resolve_skill() -> tuple[Path, str]:
         return FALLBACK_SKILL, "fallback"
     if BUNDLED_SKILL.is_file():
         return BUNDLED_SKILL, "bundled"
+    checked_user_cfg = f"{Path(data_dir).expanduser() / 'devoid.config.json'}" if data_dir else "no DEVOID_DATA_DIR set"
     raise EngineUnavailable(
-        "no engine: $DEVOID_SKILL unset, no devoid.config.json skill_path, the "
-        f"documented fallback {FALLBACK_SKILL} does not exist, and no copy is "
-        "bundled with this build"
+        "no engine: $DEVOID_SKILL unset, no skill_path in devoid.config.json "
+        f"(checked {checked_user_cfg} and {cfg}), the documented fallback "
+        f"{FALLBACK_SKILL} does not exist, and no copy is bundled with this build"
     )
 
 

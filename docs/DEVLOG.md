@@ -650,3 +650,22 @@ The supplied `devoid_wordmark_transparent.png` renders on a dark navy ground in 
 - **The frozen contract is what made six parallel agents possible.** `docs/API-CONTRACT.md` was written and frozen *before* any of them started; the only integration failures were a settings-schema field (`answers`, which `render.py` needed and `jobs.py` did not know about) and the reachability class above. Both were cheap. An unfrozen contract would have made the merge the whole job.
 - **Two audits found things the build could not.** A build session is committed to its own approach; an audit session is not. The `--auto` re-run, the width axis, the artwork's size and the focus ring at 1.00:1 all came from auditing, not from building.
 - **Every retraction in this file came from checking a measurement against a surface that could actually produce it.** Two of them were confident, specific and wrong. The tell in both was that nothing was ever verified in the surface the claim was about.
+
+---
+
+## The mask that never rendered, and six diagnostics before the real one — 2026-09-08 16:45 EDT
+
+Replacing the bounding-box region mark with a real per-pixel colour mask (`web/regionmask.js`) shipped, passed `npm test`'s full 16-gate run, and the screenshot still showed the exact same rectangle it always had. Every mechanical check was green: `node --check` on both files, a fresh Node unit test for the colour-distance math, the file served with `200 OK` and the correct `text/javascript` content-type, its bytes byte-for-byte identical to what was written to disk.
+
+**The diagnostic order, because the cheap check was tried last:**
+
+1. Confirmed `window.Devoid` existed but `.regionMask` did not (`hasNS:true, hasRM:false`).
+2. Confirmed the script tag itself fetched correctly — `fetch('/regionmask.js')` returned 200, right content-type.
+3. Fetched the exact served text and printed its head/tail — identical to the source file.
+4. Manually `eval()`'d that fetched text inside the page — it successfully set `window.Devoid.regionMask`.
+5. Checked `performance.getEntriesByType('resource')` for the script — a real network load had happened, non-zero size.
+6. `Object.keys(window.Devoid)` — no `regionMask` among them, despite `wipe`, `plotter`, `suggest` and everything else being present.
+
+Only then: `rg -n "Devoid =" web/*.js`. One hit outside the expected `window.Devoid = window.Devoid || {}` guard pattern every other file uses — `web/app.js:2188`, a plain `window.Devoid = { openAsset, ... }` object literal, one script tag *after* `regionmask.js` (non-deferred, so it runs before app.js) had already attached `.regionMask`. The literal assignment silently deleted it, every load, with no thrown error and nothing to see in any of the first five checks.
+
+**The lesson:** a script that loads, serves correctly, and evaluates correctly in total isolation can still never take effect if something loaded after it reassigns the shared object it attached to. None of "does the file exist", "is it valid JS", "does fetching it work", or "does running it manually work" can see a *subsequent* clobber — only reading every assignment to the shared namespace can. `web/wipe.js`'s own export comment already states the rule this violated: "extend `window.Devoid`, never clobber it." Fixed with `Object.assign(window.Devoid || {}, {...})`; `scripts/capture-window.mjs` gained a real assertion (`getComputedStyle(m, ':before').maskImage` must resolve to a `url(...)`, not `none`) so this class of silent failure has a falsifier from here on.

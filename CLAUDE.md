@@ -149,6 +149,8 @@ This is step 1 of what Harkirat means by *"full merge flow"* and every phrase of
 
 ⚠️ **Run `git branch --show-current` before `git fetch origin main:main`.** Git refuses that refspec when the target is checked out — and `gh pr merge --delete-branch` **auto-switches the local checkout back to `main`**, so straight after a merge it fails on `main` specifically. Use `git pull` for that one, or move off it first.
 
+**The GitHub Release body follows [`docs/release-note-template.md`](docs/release-note-template.md), every time.** Fixed badge row, a one-sentence headline, the bullets folded into a `<details>`, a link to `docs/CHANGELOG.md` for the detail, the same footer. It exists because the v1.1.0 release note ran 65 lines and buried the `.dmg` download.
+
 ### A MERGE is not a RELEASE
 
 **The tag rides with the merge**, under the merge's own approval — not a third gate. **The merge-yes IS the version-number-yes.** ⚠️ **A MAJOR bump is always asked separately.**

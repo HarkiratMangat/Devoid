@@ -20,7 +20,33 @@ What shipped, when, and why. Newest first.
 
 ---
 
-## v1.1.0 — 2026-09-07 21:03 EDT (#3) — Devoid fetches what it needs, and stops overstating what it found
+## v1.2.0 — 2026-09-08 16:55 EDT (#4) — the region mark stops lying about its own shape
+
+**Started as three deferred `[P1]`s and a `[P2]`; grew a UX-copy fix and a real regression along the way.** Behaviour changed in three places, which puts this at moderate whatever the diff size — the bars are in `CLAUDE.md`.
+
+### 🔴 The disputed region was a rectangle. Now it is the disputed pixels.
+
+`web/app.js`'s `renderQuestionRegions` drew `r.bbox_xyxy` as a plain box — covering the megaphone's diagonal white band along with the yellow bar beside it, the navy outlines, and a corner of background, while still clipping the band's own ends. Harkirat, looking at the shipped capture: *"why is it also highlighting parts of the backgorund and the yellow and the outlines? why doesnt it fully shade/cover the entire white band?"*
+
+`web/regionmask.js` (new) answers that literally: every pixel inside the bbox is tested against the group's `outline_color` (max-channel distance ≤ 20, the same unmeasured default `server/render.py`'s `_ledger` already uses), and the result is an alpha-only PNG applied as a CSS `mask-image` on the *existing* `.qregion:before` hatch. The seam-clip mechanism — `clip-path: inset(...)` driven by `--qseam` — is untouched; the mask composes with it rather than replacing it, so the P0 regression this app already carries ("the fill's clip must MOVE when the seam moves") cannot regress by construction.
+
+🔴 **THE FIRST VERSION OF THIS SHIPPED SILENTLY BROKEN.** `web/app.js:2188` did a plain `window.Devoid = { ... }` one script tag after `regionmask.js` had attached `window.Devoid.regionMask` to the same object — an unguarded reassignment, clobbering it on every load. Every existing gate assertion still passed, because none of them checked whether the mask was real, only that the `.qregion` node and its clip-path existed. Fixed to `Object.assign(window.Devoid || {}, {...})`, matching the "extend, never clobber" convention `web/wipe.js`'s own export comment already states elsewhere in this file. `scripts/capture-window.mjs` now asserts the computed `mask-image` resolves to a real `url(...)`, not `none` — the falsifier this defect needed and did not have. See `docs/DEVLOG.md` for the six diagnostic steps it took to find a one-line bug.
+
+`docs/shots/the-question.webp` and `docs/shots/09-seam.webp` are recaptured; the README's *"instead of a hex code and a bounding box"* claim, removed when this was only half-true, is back.
+
+### A packaged app can now be pointed at a different engine
+
+`server/engine.py`'s `resolve_skill()` checks `devoid.config.json` under `$DEVOID_DATA_DIR` — `~/Library/Application Support/Devoid` when packaged, which `main.js` already sets and the app already owns — before the bundle-relative copy, which is read-only under signing and wiped on the next install. The final "no engine anywhere" error now names both config paths it tried.
+
+### The seam's provisional threshold — verified inert, not re-derived
+
+`server/preview.py`'s `SEAM_THRESHOLD` was filed as a worry that a provisional number silently decides what a person sees. Traced in the code graph instead of re-argued: `web/wipe.js` never reads the `seam_useful` field the fetched payload carries — it computes its own client-side gate entirely independently. The docstring now says this was checked, not just asserted.
+
+### "is this yours?" — the one un-unified label
+
+`/impeccable clarify` found it: every other spot for this exact keep/cut decision — the question card, the wipe tags, the verdict labels one line below this one — already says "keep"/"cut". `renderQuestionRegions`'s live per-region prompt was the one holdout. Changed to `keep or cut?`.
+
+## v1.1.0 — 2026-09-07 21:03 EDT (#3 · `708e119`) — Devoid fetches what it needs, and stops overstating what it found
 
 ⚠️ **This was going to be `v1.0.1`.** The branch began as documentation and then grew a behaviour change, and the bars in `CLAUDE.md` are explicit: minor is defined by the **absence** of a behaviour change. New dialogs, a new first-launch install offer and a corrected `PATH` are all "the product behaves differently inside capabilities it already had" — the moderate bar, verbatim. One branch, one version, one tag; the documentation work below is a section of it, not an entry of its own.
 
