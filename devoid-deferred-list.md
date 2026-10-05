@@ -19,10 +19,6 @@ The project-local tracker for open work, real TODOs, and reminders specific to t
 
 ## 🐞 Open — real TODOs with an available fix, not yet done
 
-### `[P1 · S · Sonnet5-Medium]` `check:detector` and `check:design` fail on any machine whose impeccable skill is the 2026-09-16 build *(filed 2026-10-04 20:40 EDT)*
-
-Both scripts run `~/.claude/skills/impeccable/scripts/detect.mjs`, which that skill version no longer ships: it replaced the script with a CLI, `scripts/impeccable detect [paths] --json`. So `npm test` stops at `check:detector` with `MODULE_NOT_FOUND` and never reaches `check:design`, `gate:ui`, `check:greyscale` or `check:tracker`; the last three have to be run by hand. Found 2026-10-04 while merging v1.2.2, so it is unrelated to that change. The new CLI still reports exactly the one accepted finding (`repeating-stripes-gradient`, `web/index.html`), so the design contract holds; only the two scripts' path and output shape need porting, and `check_detector.mjs`'s own proof that the detector can report a defect must be re-run against the new CLI rather than assumed.
-
 ### `[P2 · M · Opus5-High]` The "Why it works this way" table needs a redesign *(filed 2026-09-08 00:01 EDT)*
 
 Harkirat: *"your idea for a 'why it works this way' section isn't wrong, but the execution needs a redesign someday. not right now."*

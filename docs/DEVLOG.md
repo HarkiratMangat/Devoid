@@ -19,6 +19,14 @@ The **story** behind the app: the traps, the reasoning behind decisions, the thi
 
 ---
 
+## 2026-10-04 21:05 EDT — a gate that depended on a file inside someone else's skill
+
+`npm test` had been quietly unrunnable since the impeccable skill updated on 2026-09-16: `check:detector` and `check:design` execute `~/.claude/skills/impeccable/scripts/detect.mjs`, a path this repo does not own, and the new build ships a launcher instead.
+
+- **It surfaced two weeks late and through a masked exit code.** The first run of the full suite in the background reported exit 0 because the wrapper's own `echo` succeeded; the real exit was 1. Read the log, not the notification.
+- **The old failure was a stack trace, not a sentence.** A gate that depends on an external tool should say which path is missing and what replaced it. Both now do.
+- **The accepted-finding contract held through the change.** The new detector still reports exactly one `repeating-stripes-gradient` on the shipped surface, so this was a port of the plumbing, not of the design rule.
+
 ## 2026-10-04 20:38 EDT — typos corrected by inference, and a rename that raced its own upload
 
 Three small traps from naming the assets, kept because each cost a round or nearly did.
