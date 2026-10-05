@@ -1,0 +1,20 @@
+<!-- @dsCard group="Instruments" height=470 subtitle="drag the seam" -->
+<div class="wipe chk" style="--seam:46%">
+  <img src="/_blob/bddbc28c83499b6f1cc003ad20cbc984" alt="The original, background intact">
+  <img class="after" src="/_blob/b88f4fb692f9aa5b23e6cd8641458dea" alt="The cut, background removed">
+  <div class="seam"></div>
+  <span class="wipetag l">keep it</span><span class="wipetag r">cut it</span>
+</div>
+<script>
+document.querySelectorAll('.wipe').forEach(function (w) {
+  var q = w.querySelector('.qregion');
+  function set(x) {
+    var r = w.getBoundingClientRect(), p = Math.max(4, Math.min(96, (x - r.left) / r.width * 100));
+    w.style.setProperty('--seam', p + '%');
+    if (q) { var l = parseFloat(q.dataset.l), wd = parseFloat(q.dataset.w);
+      q.style.setProperty('--qseam', Math.max(0, Math.min(100, (p - l) / wd * 100)) + '%'); }
+  }
+  w.addEventListener('pointerdown', function (e) { w.setPointerCapture(e.pointerId); set(e.clientX); });
+  w.addEventListener('pointermove', function (e) { if (w.hasPointerCapture(e.pointerId)) set(e.clientX); });
+});
+</script>

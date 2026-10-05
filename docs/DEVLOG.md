@@ -19,6 +19,14 @@ The **story** behind the app: the traps, the reasoning behind decisions, the thi
 
 ---
 
+## 2026-10-04 20:38 EDT — typos corrected by inference, and a rename that raced its own upload
+
+Three small traps from naming the assets, kept because each cost a round or nearly did.
+
+- **Two names arrived with a typo in them.** `workmark-navy` and `banner-wrap` were both read as their obvious intent (`wordmark`, `warp`), and said so in the report. The first had evidence: an earlier rename of `DEVOID Workmark_BG.png` to `Wordmark` was already sitting in the working tree. A correction made by inference needs its evidence stated, or it is a guess wearing a fix.
+- **A file operation and the upload of that file went out in one message.** The rename ran first and the upload then failed on a path that no longer existed. Operations that touch the same file are dependent, whatever the tool; they do not belong in one batch.
+- **The exported README made a claim the code did not hold.** "Every token name matches a CSS custom property in the app" was false for `r-pill`. `npm run check:claims` cannot see it because it reads this repo's code against this repo's documents, and the export had only just joined them. Comparing the tokens against `web/app.css` programmatically found it; reading the sentence back would not have.
+
 ## 2026-09-08 00:15 EDT — a warning is not a colour, it is a finding
 
 `npm test` came back red on the greyscale gate. Scrolling past the failure to find it, the pytest block read:

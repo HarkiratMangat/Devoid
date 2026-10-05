@@ -1,0 +1,24 @@
+<!-- @dsCard group="World" height=240 subtitle="drawn once to fit, never tiled; repaints with the lighting" -->
+<div style="position:relative;height:208px;border-radius:var(--r2);overflow:hidden;background:var(--void);background-image:radial-gradient(58% 44% at 18% 86%,var(--neb-violet),transparent 72%),radial-gradient(46% 38% at 82% 8%,var(--neb-blue),transparent 70%)">
+  <canvas id="sky" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+</div>
+<script>
+var cv = document.getElementById('sky'), host = cv.parentElement;
+function rng(seed) { return function () { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }; }
+function paint() {
+  var w = host.clientWidth, h = host.clientHeight; if (!w || !h) return;
+  var dpr = Math.min(window.devicePixelRatio || 1, 2), R = rng(7);
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+  var emitting = document.documentElement.getAttribute('data-theme') === 'emitting', n = Math.round(w * h / 3300);
+  for (var i = 0; i < n; i++) {
+    var x = R() * w, y = R() * h, m = Math.pow(R(), 2.4), r = 0.42 + m * 1.18;
+    var alpha = (emitting ? 0.34 : 0.92) * (0.30 + m * 0.7), warm = R();
+    var col = emitting ? (warm > 0.86 ? '58,54,84' : '18,17,26') : (warm > 0.93 ? '255,228,196' : warm > 0.62 ? '207,220,255' : '255,255,255');
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fillStyle = 'rgba(' + col + ',' + alpha.toFixed(3) + ')'; ctx.fill();
+  }
+}
+paint();
+new MutationObserver(paint).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+window.addEventListener('resize', paint);
+</script>

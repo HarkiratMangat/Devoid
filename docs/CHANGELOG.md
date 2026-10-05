@@ -20,7 +20,27 @@ What shipped, when, and why. Newest first.
 
 ---
 
-## v1.2.1 — 2026-09-08 18:00 EDT (#5) — badges that link where they say, and don't drift after they ship
+## v1.2.2 — 2026-10-04 20:38 EDT (#6) — the design system, exported where the next session will find it
+
+**Minor: nothing about what the app does changed.** This merge adds documentation and renames and moves image files, which is the shape of the minor bar rather than an exception to it.
+
+### The design system, exported
+
+`docs/design-system/` (45 files, 340 KB) is an export of the Devoid design system, built from `web/app.css`, `web/fonts.css`, `docs/DESIGN.md` and the `PENCIL` marks in `web/app.js`: 43 colour tokens in both lighting states with usage notes and measured contrast, the type styles, five spacing steps, five radii, one shadow, a README and static preview per component, and the two fonts with their OFL licence. `docs/design-system/EXPORT.md` is the way in, and `CLAUDE.md` now points at it.
+
+It is a view of the code and not a second source of truth. Before export, every colour token was compared against `web/app.css` in both states (43 of 43 match) along with the spacing steps, which found one wrong sentence: the README said every token name is a CSS custom property in the app, and `r-pill` is a literal there. Fixed in the document.
+
+The artifact's generated cards, `manifest.json` and README index are left out of the export on purpose: they were stale when exported, still listing two logo files.
+
+### Logo assets named
+
+Seventeen assets in `DEVOID Logo Assets/` now carry pretty names (`DEVOID Wordmark Navy.png`, `DEVOID Banner Warp.png`), each with a URL name in the design system. Seven redundant ones were removed from the design system and moved into `Isolated/`, where the old names also survive in `Isolated/Legacy Names/`. The two `.icns` files moved to `Isolated/` as well, which is gitignored, so git records them as deleted; the build icon is `build/icon.icns` and is untouched. The app's own wordmarks keep their names, because `web/app.css` loads them by path.
+
+### Carried in this merge
+
+Five superseded handoffs moved to `docs/Handoffs Archive/`, and `.gitignore` now ignores the macOS `Icon?` file. An uncommitted edit to `docs/release-note-template.md` was left out: it swaps the footer for a badge image whose link may not survive an `<img>`, and nobody has checked.
+
+## v1.2.1 — 2026-09-08 18:00 EDT (#5 · `521802d`) — badges that link where they say, and don't drift after they ship
 
 **Two real bugs, both found by looking at the published pages rather than trusting the markup.** Minor: neither changes what the app does, only what its own documentation says and links to.
 
