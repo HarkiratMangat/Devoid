@@ -75,5 +75,5 @@ Void `#110E1B` is violet-tinted, not neutral black: real deep-sky is, and it kee
 - **Contrast:** every pair computed in both states. Worst 5.12:1.
 - **Squint:** a real 5px blur on the live page, both states.
 - **Swap:** Archivo replaced with `system-ui` and the axis stripped, screenshotted against the real thing.
-- **Detector:** `node ~/.claude/skills/impeccable/scripts/detect.mjs` — exactly one accepted finding, `repeating-stripes-gradient` (the alpha checkerboard).
+- **Detector:** `~/.claude/skills/impeccable/scripts/impeccable detect --json <files>` — exactly one accepted finding, `repeating-stripes-gradient` (the alpha checkerboard).
 - **Focus:** real Tab presses, not `.focus()` — programmatic focus does not trigger `:focus-visible` and will tell you the ring is missing when it is not.

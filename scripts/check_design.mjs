@@ -26,7 +26,9 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DETECT = join(process.env.HOME, '.claude/skills/impeccable/scripts/detect.mjs');
+/* PORTED 2026-10-04: the skill's 2026-09-16 build replaced `scripts/detect.mjs` with a launcher,
+   `impeccable detect [paths] --json`, which exits 2 when it finds anything and 0 on a clean file. */
+const IMPECCABLE = join(process.env.HOME, '.claude/skills/impeccable/scripts/impeccable');
 const UI = /\.(html|css|jsx?|tsx?|vue|svelte|astro|scss|sass|less)$/;
 const ACCEPTED = {"repeating-stripes-gradient": 1};
 /* always scanned, changed or not — the contract is about the shipped surface */
@@ -63,8 +65,14 @@ const files = [...new Set([...CORE, ...changed])]
   .filter((f) => f && UI.test(f) && existsSync(join(ROOT, f)) && !SKIP.some((p) => f.startsWith(p)))
   .map((f) => join(ROOT, f));
 
+if (!existsSync(IMPECCABLE)) {
+  console.error(`check_design: the impeccable CLI is not at ${IMPECCABLE}.`);
+  console.error('  The 2026-09-16 skill build replaced scripts/detect.mjs with this launcher; reinstall or update the skill.');
+  process.exit(1);
+}
+
 let raw = '';
-try { raw = execFileSync('node', [DETECT, '--json', ...files], { encoding: 'utf8' }); }
+try { raw = execFileSync(IMPECCABLE, ['detect', '--json', ...files], { encoding: 'utf8' }); }
 catch (e) { raw = (e.stdout || '') + (e.stderr || ''); }
 
 if (/DEGRADED/i.test(raw)) {

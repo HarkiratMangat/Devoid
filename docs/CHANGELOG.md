@@ -20,7 +20,17 @@ What shipped, when, and why. Newest first.
 
 ---
 
-## v1.2.2 — 2026-10-04 20:38 EDT (#6) — the design system, exported where the next session will find it
+## v1.2.3 — 2026-10-04 21:05 EDT (#7) — the two design gates run again
+
+**Minor: nothing about what the app does changed.** `check:detector` and `check:design` were dead on any machine with the 2026-09-16 impeccable skill, which replaced the script they ran (`detect.mjs`) with a launcher (`impeccable detect`). They are ported, and `npm test` reaches `check:tracker` again.
+
+They now name the missing path and exit 1 if the launcher is absent, rather than dying on `MODULE_NOT_FOUND`. Falsified three ways: no launcher, a defect injected into the shipped CSS, and the canary swapped for a clean file. `CLAUDE.md`, `docs/DESIGN.md` and `.interface-design/system.md` carry the new command.
+
+`CLAUDE.md`'s commit-trailer rule changed: the Claude line names the model that is actually making the commit, never a fixed name. It had said `Claude Opus 5`.
+
+`docs/release-note-template.md`'s footer is now a badge (♡ Made with love by Dior) instead of a `<div>` with a text link. The badge is wrapped in an `<a>` to the same Discord profile: as a bare `<img>` it would not have linked anywhere, which is the defect v1.2.1 fixed for the README's badges. Release notes already published keep the old footer.
+
+## v1.2.2 — 2026-10-04 20:38 EDT (#6 · `3def26c`) — the design system, exported where the next session will find it
 
 **Minor: nothing about what the app does changed.** This merge adds documentation and renames and moves image files, which is the shape of the minor bar rather than an exception to it.
 

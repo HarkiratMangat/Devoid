@@ -17,6 +17,12 @@ Heading shape, matching the engine repo's archive:
 
 ---
 
+### ✅ `[P1 · S · Sonnet5-Medium]` `check:detector` and `check:design` fail on any machine whose impeccable skill is the 2026-09-16 build — CLOSED 2026-10-04 21:05 EDT (branch `fix/port-detector-gates`, v1.2.3) *(filed 2026-10-04 20:40 EDT)*
+
+Both scripts run `~/.claude/skills/impeccable/scripts/detect.mjs`, which that skill version no longer ships: it replaced the script with a CLI, `scripts/impeccable detect [paths] --json`. So `npm test` stops at `check:detector` with `MODULE_NOT_FOUND` and never reaches `check:design`, `gate:ui`, `check:greyscale` or `check:tracker`; the last three have to be run by hand. Found 2026-10-04 while merging v1.2.2, so it is unrelated to that change. The new CLI still reports exactly the one accepted finding (`repeating-stripes-gradient`, `web/index.html`), so the design contract holds; only the two scripts' path and output shape need porting, and `check_detector.mjs`'s own proof that the detector can report a defect must be re-run against the new CLI rather than assumed.
+
+**Outcome.** Both scripts now call `~/.claude/skills/impeccable/scripts/impeccable detect --json`, and fail loudly with the missing path named when the launcher is absent instead of dying on `MODULE_NOT_FOUND`. `check:detector` reports presence on the canary again (4 findings, 3 rules; the repeating-gradient rule stays silent on CSS, as `docs/DESIGN.md` records), and `check:design` reports exactly the one accepted finding. Falsified three ways: with `HOME` pointing nowhere both exit 1 with the path; with `#FF00FF` and `border-radius:17px` appended to `web/app.css` `check:design` fails naming both; with the canary swapped for a clean file `check:detector` fails with `THE FIXTURE RETURNED ZERO FINDINGS`. The commands in `CLAUDE.md`, `docs/DESIGN.md` and `.interface-design/system.md` were updated; `docs/PLAN.md` and the `docs/superpowers/` plans still quote the old command, as a record of what was true then.
+
 ### ✅ `[P1 · M · Opus5-High]` The region mark was a BOUNDING BOX where it should be the disputed pixels — CLOSED 2026-09-08 (branch `fix/honest-question-and-engine-path`, v1.2.0)
 
 ### `[P1 · M · Opus5-High]` The region mark is a BOUNDING BOX where it should be the disputed pixels *(filed 2026-09-07 23:39 EDT)*

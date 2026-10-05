@@ -15,16 +15,25 @@
  * broken and no absence it reports anywhere else means a thing.
  */
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const DETECT = join(process.env.HOME, '.claude/skills/impeccable/scripts/detect.mjs');
+/* PORTED 2026-10-04: the skill's 2026-09-16 build replaced `scripts/detect.mjs` with a launcher,
+   `impeccable detect [paths] --json`, which exits 2 when it finds anything and 0 on a clean file. */
+const IMPECCABLE = join(process.env.HOME, '.claude/skills/impeccable/scripts/impeccable');
 const FIXTURE = join(HERE, 'fixtures', 'detector-canary.css');
+
+if (!existsSync(IMPECCABLE)) {
+  console.error(`check_detector: the impeccable CLI is not at ${IMPECCABLE}.`);
+  console.error('  The 2026-09-16 skill build replaced scripts/detect.mjs with this launcher; reinstall or update the skill.');
+  process.exit(1);
+}
 
 let raw = '';
 try {
-  raw = execFileSync('node', [DETECT, '--json', FIXTURE], { encoding: 'utf8' });
+  raw = execFileSync(IMPECCABLE, ['detect', '--json', FIXTURE], { encoding: 'utf8' });
 } catch (e) {
   // the detector exits non-zero WHEN IT FINDS THINGS, which is the pass case
   raw = (e.stdout || '') + (e.stderr || '');

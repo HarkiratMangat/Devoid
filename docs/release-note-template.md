@@ -30,7 +30,7 @@ Full write-up — every defect found and fixed — is in [`docs/CHANGELOG.md`](h
 
 ---
 
-<div align="center"><sub>♡ Made with love by <a href="https://discord.com/users/1139845545754632283">dior</a></sub></div>
+<a href="https://discord.com/users/1139845545754632283"><img src="https://img.shields.io/badge/%E2%99%A1%20Made%20with%20love%20by-Dior-%23C93C4D?style=flat-square&labelColor=0E0F1E&link=https://discord.com/users/1139845545754632283" alt="Made with love by dior" /></a>
 ```
 
 ## Rules that make this a convention, not a one-off
