@@ -19,6 +19,10 @@ The project-local tracker for open work, real TODOs, and reminders specific to t
 
 ## 🐞 Open — real TODOs with an available fix, not yet done
 
+### `[P1 · S · Sonnet5-Medium]` `check:detector` and `check:design` fail on any machine whose impeccable skill is the 2026-09-16 build *(filed 2026-10-04 20:40 EDT)*
+
+Both scripts run `~/.claude/skills/impeccable/scripts/detect.mjs`, which that skill version no longer ships: it replaced the script with a CLI, `scripts/impeccable detect [paths] --json`. So `npm test` stops at `check:detector` with `MODULE_NOT_FOUND` and never reaches `check:design`, `gate:ui`, `check:greyscale` or `check:tracker`; the last three have to be run by hand. Found 2026-10-04 while merging v1.2.2, so it is unrelated to that change. The new CLI still reports exactly the one accepted finding (`repeating-stripes-gradient`, `web/index.html`), so the design contract holds; only the two scripts' path and output shape need porting, and `check_detector.mjs`'s own proof that the detector can report a defect must be re-run against the new CLI rather than assumed.
+
 ### `[P2 · M · Opus5-High]` The "Why it works this way" table needs a redesign *(filed 2026-09-08 00:01 EDT)*
 
 Harkirat: *"your idea for a 'why it works this way' section isn't wrong, but the execution needs a redesign someday. not right now."*
@@ -54,6 +58,10 @@ Harkirat: *"your idea for a 'why it works this way' section isn't wrong, but the
 **Also worth folding in if this is picked up:** the seam-view mask samples ONE static frame of `#before` (whatever frame the browser happens to be showing when `art.complete` first becomes true — effectively frame 0). The disputed region's own definition is multi-frame (`frames_enclosed`/`frames_checked`, e.g. "held on 102 of 144 frames"), so a mask computed from one frame could be wrong for frames where the enclosure's shape or position actually differs. Not a regression — the old rectangle was equally frame-agnostic — but an unstated scope limit that should be named if the card path gets the same treatment, rather than silently inherited a second time.
 
 **Concrete next action:** either reuse `web/regionmask.js`'s `regionMaskDataURL` inside `drawHatchedRegion` (it already has a decoded frame via `side.frames[i]`, so this may be a small change), or determine and document that the card path is provably unreachable for every asset this app currently supports and downgrade this item accordingly — but that determination has to be made, not assumed.
+
+### `[P3 · XS · Sonnet5-Medium]` Re-export `docs/design-system/` after the next token change *(filed 2026-10-04 20:38 EDT)*
+
+The export was taken from `web/app.css` at v1.2.1 and is not regenerated automatically. After any change to a colour, type, spacing, radius or shadow value, re-run the extraction and republish, and re-open the live Design System artifact in a normal browser once so its generated cards rebuild (they were stale on 2026-10-04: still two logo files). The comparison that proved the export matched the code is worth keeping as a script rather than re-writing: 43 colour tokens in both states and the spacing steps against `web/app.css`.
 
 ## ✅ Considered and NOT fixed — a real decision, not an oversight
 

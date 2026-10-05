@@ -1,0 +1,185 @@
+/* Devoid — generated from tokens.json */
+:root, [data-theme="collapsed"] {
+  --void: #110e1b; /* The ground of the whole window: deep space, violet-tinted and never neutral black. Body text on it: `graphite` 15.75:1 collapsed, 16.27:1 emitting; `graphite-3` 5.97:1 and 6.44:1. */
+  --singularity: #030209; /* The deepest tone of the void. Fills the accretion core's disk and the lamp's collapsed ground. Never a surface for text. */
+  --bench: #221d37; /* The bench: toolbar chrome, the drawer, the decision column, tooltips. Text on it: `graphite` 13.37:1 / 18.74:1, `graphite-2` 6.78:1 / 8.31:1, `graphite-3` 5.07:1 / 7.42:1 (collapsed / emitting). */
+  --raise: #2c2547; /* One step above `bench`: hover, the open or selected tile, the needs-you tile, tooltips. About 4 L* per rung on the surface ladder. */
+  --sprocket: #1a162a; /* Tile and film-strip ground, the edge strip. `graphite-2` on it: 7.38:1 collapsed, 5.74:1 emitting. */
+  --well: #020204; /* The recessed ground under artwork (a tile's window, the matte toggle, the ledger bar). Artwork is judged on it, so never tint it. */
+  --graphite: #e8e9f2; /* Primary text and icons on `void`, `bench`, `raise` and `sprocket`. */
+  --graphite-2: #a6a6bc; /* Secondary text: file names, control labels, ledger captions. On `bench` 6.78:1 collapsed, 8.31:1 emitting. */
+  --graphite-3: #8e8ea8; /* Tertiary text: breadcrumbs, state words, film-strip headings. Floor is 5.07:1 on `bench` collapsed; never lighter than this. */
+  --score: rgba(255,255,255,.16); /* Hairlines and resting borders (a tile's inset ring, dividers, dashed control rules). A line, never text. */
+  --score-2: rgba(255,255,255,.42); /* Stronger borders: button outline, hovered tile ring, the value chip, the lamp's rim. */
+  --mark: rgba(255,255,255,.62); /* The strongest neutral line: the hovered lamp border and the accretion core's ring. */
+  --ruby: #e2402a; /* Rubylith: this goes. The removal wash, the needs-you ring, a refused or blocked mark, and the one destructive colour. Same value in both states. As a mark on `void` it measures 4.54:1 collapsed and 3.65:1 emitting: carry a shape or word with it. */
+  --ruby-bg: #3a150e; /* Quiet ground for a ruby message: the blocked banner, the removed segment of the ledger bar. Pair with `ruby-ink`. */
+  --ruby-ink: #ff8168; /* Ruby as text: the needs-you word, the loss figure, the blocked banner word. On `ruby-bg` 6.64:1 collapsed, 5.74:1 emitting. */
+  --cyan: #22d3ee; /* This stays: the cut line, the selected tile, focus in the collapsed state, the primary fill. Emitting needs its own value because #22d3ee measures 1.81:1 on white. As a mark on `void`: 10.54:1 collapsed, 4.06:1 emitting. */
+  --cyan-bg: #0b2c33; /* Quiet ground for a cyan message: the `auto` chip, the kept segment of the ledger bar. Pair with `cyan-ink`. */
+  --cyan-ink: #5fe0f5; /* Cyan as text, on `cyan-bg`: 9.47:1 collapsed, 5.32:1 emitting. */
+  --go-ink: #04212a; /* Text on a `cyan` fill (the primary button). 9.25:1 collapsed, 4.67:1 emitting; it flips with the lighting state. */
+  --qregion-ink: #1f0403; /* The disputed region's own label, set ON `ruby`. 4.64:1. */
+  --ok: #46c98a; /* A status MARK only (the done tick, the safe ledger figure), never a surface. 7.68:1 and 5.87:1 on `bench`. */
+  --ok-bg: #12332a; /* Reserved quiet ground for an ok message; no shipped surface paints it yet. */
+  --amber: #e3b04b; /* A status MARK only: not checked, confirm, conflict, a blank ledger. Never a surface. 8.14:1 and 6.72:1 on `bench`. */
+  --amber-bg: #332608; /* The confirm banner's ground. Pair with `amber` text. */
+  --horizon: #ffe9b8; /* The accretion disk's warm edge: the lighting toggle's rim and the empty table's horizon. Decoration, not text. */
+  --focus: #22d3ee; /* The 2px focus ring. Cyan on the void; an ink ring on the light ground, where cyan failed 3:1 (1.40 to 1.81). 14.95:1 on `void` emitting. */
+  --star: #ffffff; /* A star in the field, and the crisp ring on the lamp's collapsed cut. Inverts to a dark mote in the light state so both carry the same grain. */
+  --star-cold: #cfdcff; /* The cooler star tint for the field's second tile. */
+  --neb-violet: rgba(104,66,186,.42); /* The off-centre violet bloom behind the table, and the stage's vignette edge. It must stay transparent at the centre: lensing never reaches artwork. */
+  --neb-blue: rgba(42,96,178,.26); /* The cold blue bloom, top right of the table. */
+  --chk-a: #0c0a16; /* Alpha checkerboard, cell A. Notation for 'something transparent is here'; quiet on purpose. */
+  --chk-b: #08060f; /* Alpha checkerboard, cell B. Absent only from the empty table, where nothing transparent is shown. */
+  --sw-chroma: #4c6357; /* The chroma swatch AT REST, deliberately muted so a verification control never out-shouts the artwork. */
+  --sw-chroma-live: #00ff7f; /* The real key green, shown on hover, when chosen, and as the ground when matte is chroma. */
+  --ring-inner: #ffffff; /* Inner tone of the two-tone selection ring, used where a ground can be white, black, a checker or chroma. */
+  --ring-outer: #0b0a12; /* Outer tone of the two-tone ring: whichever tone the ground swallows, the other still shows. */
+  --lit-1: #fff9ec; /* The lamp's lit side, start of the gradient. */
+  --lit-2: #f6f2e7; /* The lamp's lit side, middle stop. */
+  --lit-3: #e7e3d8; /* The lamp's lit side, end stop. */
+  --rim-core: rgba(255,246,222,1); /* Centre of the lamp's travelling rim: a hot accretion edge. */
+  --rim-mid: rgba(255,214,150,.42); /* The rim's warm shoulder. */
+  --rim-edge: rgba(255,190,110,0); /* The rim's transparent end, so it feathers into both grounds. */
+  --bloom: rgba(255,252,244,.95); /* The emitting state's bloom, a white hole giving light back. */
+  --float: 0 2px 8px rgba(0,0,0,.4), 0 20px 50px rgba(0,0,0,.4); /* The drawer and tab tooltips: the only elements that float. */
+}
+[data-theme="emitting"] {
+  --void: #efeef6;
+  --singularity: #d6d5e4;
+  --bench: #ffffff;
+  --raise: #f2f1fa;
+  --sprocket: #d6d5e4;
+  --well: #e2e1ee;
+  --graphite: #12111a;
+  --graphite-2: #4e4c60;
+  --graphite-3: #55536a;
+  --score: rgba(18,17,26,.16);
+  --score-2: rgba(18,17,26,.55);
+  --mark: rgba(18,17,26,.70);
+  --ruby: #e2402a;
+  --ruby-bg: #fbe6e2;
+  --ruby-ink: #a82d18;
+  --cyan: #0e7f96;
+  --cyan-bg: #def3f7;
+  --cyan-ink: #0e6b80;
+  --go-ink: #ffffff;
+  --qregion-ink: #1f0403;
+  --ok: #12734a;
+  --ok-bg: #e1f2e9;
+  --amber: #7a5500;
+  --amber-bg: #f7eeda;
+  --horizon: #b08029;
+  --focus: #1b1a24;
+  --star: #12111a;
+  --star-cold: #3a3654;
+  --neb-violet: rgba(120,96,190,.13);
+  --neb-blue: rgba(60,110,180,.10);
+  --chk-a: #ffffff;
+  --chk-b: #e8e7f2;
+  --sw-chroma: #4c6357;
+  --sw-chroma-live: #00ff7f;
+  --ring-inner: #ffffff;
+  --ring-outer: #0b0a12;
+  --lit-1: #fff9ec;
+  --lit-2: #f6f2e7;
+  --lit-3: #e7e3d8;
+  --rim-core: rgba(255,246,222,1);
+  --rim-mid: rgba(255,214,150,.42);
+  --rim-edge: rgba(255,190,110,0);
+  --bloom: rgba(255,252,244,.95);
+  --float: 0 1px 3px rgba(20,28,27,.10), 0 16px 40px rgba(20,28,27,.14);
+}
+:root {
+  --s1: 6px; /* Tight gaps: inside a tile's caption, the film strip, between stacked list items. */
+  --s2: 10px; /* Default control gap and tile padding. */
+  --s3: 16px; /* Section padding, the grid gap on the contact sheet. */
+  --s4: 26px; /* Page gutters. */
+  --s5: 38px; /* Large breaks, and the square drawer-close target. */
+  --r-xs: 4px; /* Focus ring corners, the cut line's blade handle, the ledger bar. */
+  --r-sm: 6px; /* Lamp, swatches, small controls, the region label. */
+  --r: 8px; /* Buttons, tab buttons, tile windows, inputs, drawers' popovers. */
+  --r2: 12px; /* Tiles (the contact-sheet frame) and the wipe. */
+  --r-pill: 20px; /* Chips and tags (`auto`, the wipe tags). Written as a literal in the code. */
+  --font-sans: Archivo, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Spline Sans Mono", monospace;
+  --text-figure: 500 34px/1 var(--font-sans); /* The ledger's removed-pixel count: the first number worth looking at. */
+  --text-h1: 700 30px/1.1 var(--font-sans); /* The open asset's name. The code sets font-stretch: 104% on it. */
+  --text-h2: 600 22px/1.2 var(--font-sans); /* Section headings. */
+  --text-h3: 600 18px/1.3 var(--font-sans); /* The question under the wipe. */
+  --text-body: 400 14px/1.5 var(--font-sans); /* Body copy and drawer headings (drawer headings at 600). */
+  --text-meta: 400 12px/1.5 var(--font-sans); /* Control labels and button text. */
+  --text-mono-meta: 400 12px/1.5 var(--font-mono); /* Breadcrumbs, film-strip headings, ledger text: anything that reports an instrument reading. */
+  --text-micro: 400 11px/1.5 var(--font-mono); /* File names under tiles, state words, tags and chips (chips take weight 500). 11px is the floor for anything functional. */
+}
+.figure {
+  font-family: var(--font-sans);
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.h1 {
+  font-family: var(--font-sans);
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+.h2 {
+  font-family: var(--font-sans);
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.h3 {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.meta {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.mono-meta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.micro {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+@font-face {
+  font-family: "Archivo";
+  src: url("fonts/Archivo-latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Spline Sans Mono";
+  src: url("fonts/SplineSansMono-latin.woff2") format("woff2");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}

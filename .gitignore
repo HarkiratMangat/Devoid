@@ -1,4 +1,5 @@
 .DS_Store
+Icon?
 node_modules/
 __pycache__/
 *.pyc

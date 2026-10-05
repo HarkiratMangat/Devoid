@@ -13,6 +13,7 @@ A local desktop app for removing backgrounds from animated images. It is a front
 | `docs/CHANGELOG.md` | what shipped, `vMAJOR.MODERATE.MINOR`, one version per merged PR |
 | `devoid-resolved-list.md` | the archive, with each item's original wording plus its outcome |
 
+**The design system, as data.** `docs/design-system/` is an export of the Devoid design system: tokens in both lighting states with usage notes and measured contrast, component guidelines with static previews, and asset naming. **Start at `docs/design-system/EXPORT.md`.** It is a view of `web/app.css` and `docs/DESIGN.md`, not a second source of truth: where they disagree, the code wins, and the export is regenerated rather than hand-edited.
 
 ## Conventions — inherited from Dior's Builds, unchanged
 

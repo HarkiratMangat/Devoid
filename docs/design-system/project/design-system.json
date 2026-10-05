@@ -1,0 +1,228 @@
+{
+ "v": 3,
+ "assetGroups": {
+  "Corpus": {
+   "files": {
+    "growth.gif": {
+     "blob": "b88f4fb692f9aa5b23e6cd8641458dea",
+     "name": "growth.gif",
+     "size": 268330,
+     "type": "image/gif"
+    },
+    "growth.src.gif": {
+     "blob": "bddbc28c83499b6f1cc003ad20cbc984",
+     "name": "growth.src.gif",
+     "size": 613582,
+     "type": "image/gif"
+    }
+   },
+   "name": "Corpus",
+   "order": [
+    "growth.src.gif",
+    "growth.gif"
+   ],
+   "tile": "l"
+  },
+  "Logos": {
+   "name": "Logos",
+   "tile": "l",
+   "order": [
+    "wordmark-app-collapsed.png",
+    "wordmark-app-emitting.png",
+    "wordmark-transparent.png",
+    "wordmark-navy.png",
+    "typeface-bevel-transparent.png",
+    "typeface-bevel-navy.png",
+    "typeface-flat-transparent.png",
+    "typeface-flat-vector.svg"
+   ],
+   "files": {
+    "wordmark-app-collapsed.png": {
+     "name": "wordmark-app-collapsed.png",
+     "blob": "a21d245eb0d09ca1cfe110c84e171a83",
+     "size": 47676,
+     "type": "image/png"
+    },
+    "wordmark-app-emitting.png": {
+     "name": "wordmark-app-emitting.png",
+     "blob": "2093087262c40277cf7dd73251d2b2e5",
+     "size": 47284,
+     "type": "image/png"
+    },
+    "wordmark-transparent.png": {
+     "name": "wordmark-transparent.png",
+     "blob": "31ccf713b18c4fe86ddf871d42835d0f",
+     "size": 1123798,
+     "type": "image/png"
+    },
+    "wordmark-navy.png": {
+     "name": "wordmark-navy.png",
+     "blob": "bfb44f6f9446313d580635c802bc2b80",
+     "size": 1087845,
+     "type": "image/png"
+    },
+    "typeface-bevel-transparent.png": {
+     "name": "typeface-bevel-transparent.png",
+     "blob": "58a7657ad9ab1bcfce801c2740d4c050",
+     "size": 526357,
+     "type": "image/png"
+    },
+    "typeface-bevel-navy.png": {
+     "name": "typeface-bevel-navy.png",
+     "blob": "ac403ef211262655cb2bd4a8aaaffb56",
+     "size": 483799,
+     "type": "image/png"
+    },
+    "typeface-flat-transparent.png": {
+     "name": "typeface-flat-transparent.png",
+     "blob": "540d4af5368f68f9dd7937f7ed87a29e",
+     "size": 47955,
+     "type": "image/png"
+    },
+    "typeface-flat-vector.svg": {
+     "name": "typeface-flat-vector.svg",
+     "blob": "ce8707caf55a577e3b6100750b83bde5",
+     "size": 2571,
+     "type": "image/svg+xml"
+    }
+   }
+  },
+  "Vortex": {
+   "name": "Vortex",
+   "tile": "l",
+   "order": [
+    "vortex-navy.png",
+    "vortex-transparent.png"
+   ],
+   "files": {
+    "vortex-navy.png": {
+     "name": "vortex-navy.png",
+     "blob": "0e37b41942bb55b2648669a451bbec6d",
+     "size": 1681522,
+     "type": "image/png"
+    },
+    "vortex-transparent.png": {
+     "name": "vortex-transparent.png",
+     "blob": "21ba3954d3214c15a9d6c5f57682e246",
+     "size": 1517303,
+     "type": "image/png"
+    }
+   }
+  },
+  "Backgrounds": {
+   "name": "Backgrounds",
+   "tile": "l",
+   "order": [
+    "nebula-grid.png",
+    "nebula-no-grid.png",
+    "nebula-no-grid-upscayl1x.png"
+   ],
+   "files": {
+    "nebula-grid.png": {
+     "name": "nebula-grid.png",
+     "blob": "2a83b7cac7878d68c4f3b15c9a06c96b",
+     "size": 4001673,
+     "type": "image/png"
+    },
+    "nebula-no-grid.png": {
+     "name": "nebula-no-grid.png",
+     "blob": "56a9f96699100e99dbe6807949ac9ae8",
+     "size": 3976465,
+     "type": "image/png"
+    },
+    "nebula-no-grid-upscayl1x.png": {
+     "name": "nebula-no-grid-upscayl1x.png",
+     "blob": "3f9ea6140c32816daaf3686e3984d529",
+     "size": 2307714,
+     "type": "image/png"
+    }
+   }
+  },
+  "Banners": {
+   "name": "Banners",
+   "tile": "l",
+   "order": [
+    "banner-no-warp.png",
+    "banner-warp.png",
+    "banner-warp-fade.png",
+    "banner-warp-vignette.png"
+   ],
+   "files": {
+    "banner-no-warp.png": {
+     "name": "banner-no-warp.png",
+     "blob": "fba852f698cca63acfa57cbce1436807",
+     "size": 2972284,
+     "type": "image/png"
+    },
+    "banner-warp.png": {
+     "name": "banner-warp.png",
+     "blob": "d2933a81cba6d4eaca47f5469641abd8",
+     "size": 3080222,
+     "type": "image/png"
+    },
+    "banner-warp-fade.png": {
+     "name": "banner-warp-fade.png",
+     "blob": "2fe7496dfbf60a775bc88d223b497163",
+     "size": 3655220,
+     "type": "image/png"
+    },
+    "banner-warp-vignette.png": {
+     "name": "banner-warp-vignette.png",
+     "blob": "6d17b2d8d210e1a0762cbde60f551a6b",
+     "size": 2819129,
+     "type": "image/png"
+    }
+   }
+  },
+  "App Icon": {
+   "name": "App Icon",
+   "tile": "l",
+   "order": [
+    "app-icon-square-1024.jpeg",
+    "app-icon-rounded-2048.png"
+   ],
+   "files": {
+    "app-icon-square-1024.jpeg": {
+     "name": "app-icon-square-1024.jpeg",
+     "blob": "ad96b97635b5b0715e9a6e015e73de6a",
+     "size": 526241,
+     "type": "image/jpeg"
+    },
+    "app-icon-rounded-2048.png": {
+     "name": "app-icon-rounded-2048.png",
+     "blob": "d3539844a57123bfca98bd7e6c99a875",
+     "size": 5097477,
+     "type": "image/png"
+    }
+   }
+  }
+ },
+ "blobs": {},
+ "createdOnFiles": {
+  "at": "2026-10-04T23:29:18Z",
+  "v": 1
+ },
+ "docs": {
+  "readme": "project/README.md",
+  "sections": []
+ },
+ "groups": [
+  "Logos",
+  "Vortex",
+  "Backgrounds",
+  "Banners",
+  "App Icon",
+  "Corpus"
+ ],
+ "lastChange": {
+  "by": "Harkirat",
+  "via": "Claude Code",
+  "at": "2026-10-05T00:18:27Z",
+  "note": "Chosen asset names, 7 assets removed, App Icon group added"
+ },
+ "layout": "files",
+ "libraries": [],
+ "namespace": "Devoid",
+ "sections": {},
+ "title": "Devoid"
+}
